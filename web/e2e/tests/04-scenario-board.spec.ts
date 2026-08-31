@@ -47,7 +47,7 @@ test.describe("Phase 4 - Scenario Board (status, notes, evidence, gate badge)", 
       page.getByTestId(`smoke-runner:scenario-item:btn-passed__${OTHER_ID}`).click(),
     ]);
 
-    await expect(page.getByTestId("smoke-runner:run-detail:badge__gate")).toContainText("READY FOR UAT");
+    await expect(page.getByTestId("smoke-runner:run-detail:badge__gate")).toContainText("READY");
     await expect(page.locator(".stat-card.pass .num")).toHaveText("3");
 
     // Reload to confirm the state actually persisted server-side, not just optimistic UI.
@@ -55,7 +55,7 @@ test.describe("Phase 4 - Scenario Board (status, notes, evidence, gate badge)", 
     // must be asserted with toHaveValue() — toContainText() on the card
     // would never see it regardless of whether the value is actually there.
     await page.goto(`/${E2E_SITE_KEY}/${runId}`);
-    await expect(page.getByTestId("smoke-runner:run-detail:badge__gate")).toContainText("READY FOR UAT");
+    await expect(page.getByTestId("smoke-runner:run-detail:badge__gate")).toContainText("READY");
     await expect(page.getByTestId(`smoke-runner:scenario-item:input-notes__${NORMAL_ID}`)).toHaveValue(
       "BUG-123 broke this"
     );

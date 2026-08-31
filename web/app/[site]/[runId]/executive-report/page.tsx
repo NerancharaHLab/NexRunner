@@ -45,7 +45,7 @@ export default async function ExecutiveReportPage({ params }: PageProps) {
         <div className="report-header">
           <div>
             <h1>EXECUTIVE VERIFICATION REPORT</h1>
-            <p className="subtitle">Pre-UAT Smoke Test Sign-off Matrix &amp; Audit Trail</p>
+            <p className="subtitle">{run.environment} Smoke Test Sign-off Matrix &amp; Audit Trail</p>
           </div>
           <div className="meta-stamp">
             <div>
@@ -86,18 +86,22 @@ export default async function ExecutiveReportPage({ params }: PageProps) {
         <table className="report-table">
           <tbody>
             <tr>
-              <th style={{ width: "20%" }}>Hospital Site</th>
-              <td style={{ width: "30%" }}>{run.siteName}</td>
               <th style={{ width: "20%" }}>System Version</th>
               <td style={{ width: "30%" }}>{run.version || "-"}</td>
+              <th style={{ width: "20%" }}>Environment</th>
+              <td style={{ width: "30%" }}>{run.environment}</td>
             </tr>
             <tr>
+              <th>Test Cycle</th>
+              <td>{run.testCycle}</td>
+              <th>Run ID</th>
+              <td>{run.rowKey}</td>
+            </tr>
+            <tr>
+              <th>Hospital Site</th>
+              <td>{run.siteName}</td>
               <th>Delivery Batch</th>
               <td>{run.deliveryBatch || "-"}</td>
-              <th>Test Cycle / Run ID</th>
-              <td>
-                {run.testCycle} ({run.rowKey})
-              </td>
             </tr>
             <tr>
               <th>Primary HN</th>
@@ -219,7 +223,7 @@ export default async function ExecutiveReportPage({ params }: PageProps) {
             </div>
           </div>
           <div className="sig-box">
-            <div className="sig-title">APPROVED FOR UAT (CLIENT / EXECUTIVE)</div>
+            <div className="sig-title">APPROVED FOR {run.environment} (CLIENT / EXECUTIVE)</div>
             <div className="sig-line" />
             <div className="sig-sub">( ................................................................ )</div>
             <div className="sig-sub">Project Manager / Client Representative</div>

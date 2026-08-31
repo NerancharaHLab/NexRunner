@@ -22,12 +22,11 @@ function buildReportText(run: RunEntity, scenarios: ScenarioWithResult[]): strin
     .map((s) => `${s.id} ${s.name} [BLOCKED] (Note: ${s.notes || "N/A"})`);
   const issues = [...failedList, ...blockedList];
 
-  const readyText =
-    run.gateResult === "READY"
-      ? `🟢 READY FOR ${run.environment} (Pass Rate: ${run.passRatePercent}%)`
-      : `🔴 NOT READY FOR ${run.environment} (Pass Rate: ${run.passRatePercent}%)`;
+  // Macro-to-micro order: Version -> Environment -> Test Cycle -> Date (same principle as the
+  // Scenario Board's context summary and the Executive Report's traceability table).
+  const readyText = `${run.gateResult === "READY" ? "🟢 READY" : "🔴 NOT READY"}: [${run.version || "-"}] ${run.environment} — ${run.testCycle} (${run.executedDate}) (Pass Rate: ${run.passRatePercent}%)`;
 
-  let text = `📢 **[Smoke Test Summary Report] - Pre-UAT Verification Sign-off**\n`;
+  let text = `📢 **[Smoke Test Summary Report] - ${run.environment} Verification Sign-off**\n`;
   text += `🏥 Hospital Site: ${run.siteName} | Version: ${run.version || "-"} | Delivery Batch: ${run.deliveryBatch || "-"}\n`;
   text += `🗓 Date: ${run.executedDate} | Test Cycle: ${run.testCycle} | Environment: ${run.environment} | Run ID: ${run.rowKey}\n`;
   text += `👤 Tester: ${run.tester || "[not specified]"}\n\n`;

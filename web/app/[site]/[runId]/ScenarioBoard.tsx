@@ -161,6 +161,12 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
   const visibleScenarios = scenarios.filter((s) => matchesFilter(s.status, filterMode));
   const hasUnfinished = notRunCount > 0;
 
+  // Macro-to-micro order: Version -> Environment -> Test Cycle -> Date. Version is dropped
+  // entirely (not shown as an empty bullet) when the run has none.
+  const contextSummary = [run.version, run.environment, run.testCycle, run.executedDate]
+    .filter(Boolean)
+    .join(" • ");
+
   const FILTER_TABS: { mode: FilterMode; label: string; count: number }[] = [
     { mode: "all", label: "All", count: total },
     { mode: "notrun", label: "Not Run", count: notRunCount },
@@ -224,12 +230,15 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
               <div className="label">Pass Rate</div>
             </div>
           </div>
-          <span
-            className={`gate-badge ${run.gateResult === "READY" ? "ready" : "notready"}`}
-            data-testid="smoke-runner:run-detail:badge__gate"
-          >
-            {run.gateResult === "READY" ? "✅ READY FOR UAT" : "❌ NOT READY FOR UAT"}
-          </span>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+            <span
+              className={`gate-badge ${run.gateResult === "READY" ? "ready" : "notready"}`}
+              data-testid="smoke-runner:run-detail:badge__gate"
+            >
+              {run.gateResult === "READY" ? "✅ READY" : "❌ NOT READY"}
+            </span>
+            {contextSummary && <span className="context-summary">{contextSummary}</span>}
+          </div>
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
           <button
