@@ -1039,6 +1039,14 @@ a.card:hover,
   gap: 10px;
   font-weight: 700;
   font-size: 0.98rem;
+  padding: 6px 10px;
+  margin: -6px -10px;
+  border-radius: var(--radius-md);
+  transition: background 0.12s var(--ease-standard);
+}
+
+.top-nav-brand:hover {
+  background: var(--bg-subtle);
 }
 
 .top-nav-mark {
@@ -1053,6 +1061,12 @@ a.card:hover,
   font-weight: 700;
   font-size: 0.8rem;
   flex-shrink: 0;
+  transition: transform 0.12s var(--ease-standard), box-shadow 0.12s var(--ease-standard);
+}
+
+.top-nav-brand:hover .top-nav-mark {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .manage-menu {

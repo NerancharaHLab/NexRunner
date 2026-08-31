@@ -56,6 +56,10 @@ durable record. Once a plan is approved and the work is done, its lasting record
 - [x] **[P1]** [REQ-010: Scenario Board / New Run UX Phase 2](specs/REQ-010_scenario_board_new_run_ux_phase2.md)
 - [x] **[P1]** [REQ-011: Tag-based Cross-Suite Filtering](specs/REQ-011_tag_based_filtering.md)
 - [x] **[P2]** [REQ-028: "ลืมรหัสผ่าน?" affordance บนหน้า Login](specs/REQ-028_forgot_password_login_affordance.md) — combined toggle pointing to Admin contact email; ปรับ CSS ตาม feedback ให้ดูเป็นปุ่มกดได้ชัดเจนขึ้น (chevron + hover underline/background)
+- [x] **[P4]** (bookkeeping-only, no spec file) TopNav "ST Smoke Test Runner" brand mark didn't read
+  as clickable — user feedback. Added `.top-nav-brand:hover` background pill + mark lift/shadow +
+  `title="Go to home"` tooltip so it's clear it links to `/`. `web/app/TopNav.tsx` +
+  `web/app/globals.css`. Verified: build clean, e2e 24/24, Puppeteer hover screenshot.
 
 ## This reorganization itself
 

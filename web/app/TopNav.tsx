@@ -37,7 +37,7 @@ export default async function TopNav() {
 
   return (
     <nav className="top-nav no-print">
-      <Link href="/" className="top-nav-brand">
+      <Link href="/" className="top-nav-brand" title="Go to home">
         <span className="top-nav-mark">ST</span>
         Smoke Test Runner
       </Link>
