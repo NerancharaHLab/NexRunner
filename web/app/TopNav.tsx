@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT, hasAnyRole } from "@/lib/types";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
+import ManageMenu, { type ManageMenuLink } from "./ManageMenu";
 
 export default async function TopNav() {
   const user = await getCurrentUser();
@@ -20,6 +21,17 @@ export default async function TopNav() {
   const isAdmin = user.roles.includes("admin");
   const initial = user.displayName.trim().charAt(0).toUpperCase() || "?";
 
+  const manageLinks: ManageMenuLink[] = [];
+  if (canEdit) {
+    manageLinks.push(
+      { href: "/admin/scenarios", label: "Manage Scenarios", testid: "smoke-runner:top-nav:link__admin-scenarios" },
+      { href: "/admin/sites", label: "Manage Sites", testid: "smoke-runner:top-nav:link__admin-sites" }
+    );
+  }
+  if (isAdmin) {
+    manageLinks.push({ href: "/admin/users", label: "Manage Users", testid: "smoke-runner:top-nav:link__admin-users" });
+  }
+
   return (
     <nav className="top-nav no-print">
       <Link href="/" className="top-nav-brand">
@@ -27,18 +39,7 @@ export default async function TopNav() {
         Smoke Test Runner
       </Link>
       <div className="top-nav-right">
-        {canEdit && (
-          <div className="top-nav-links">
-            <Link href="/admin/scenarios" data-testid="smoke-runner:top-nav:link__admin-scenarios">
-              Manage Scenarios
-            </Link>
-            {isAdmin && (
-              <Link href="/admin/users" data-testid="smoke-runner:top-nav:link__admin-users">
-                Manage Users
-              </Link>
-            )}
-          </div>
-        )}
+        <ManageMenu links={manageLinks} />
         <div className="user-chip">
           <span className="avatar">{initial}</span>
           <span>

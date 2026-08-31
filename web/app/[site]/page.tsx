@@ -29,7 +29,7 @@ export default async function SiteRunsPage({ params }: PageProps) {
         </div>
         <Link
           href={`/${site}/new`}
-          className="btn btn-primary"
+          className="btn btn-primary btn-lg"
           data-testid={`smoke-runner:run-history:btn__new-run`}
         >
           + Start New Run

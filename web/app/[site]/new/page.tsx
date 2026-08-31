@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getScenariosForSite } from "@/lib/scenarios";
+import { getSite } from "@/lib/azure/sites-table";
 import { listSuites } from "@/lib/azure/test-suites-table";
 import { listTags } from "@/lib/azure/tags-table";
 import { ENVIRONMENTS } from "@/lib/config";
@@ -18,6 +19,29 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
   const { error } = await searchParams;
   const siteFile = await getScenariosForSite(site);
   if (!siteFile) notFound();
+
+  // An inactive site is still reachable by direct URL (Run History/Run Detail/Reports all still
+  // work), but starting a *new* Run here is blocked — show a blocking message instead of the form.
+  // lib/runs.ts's createRun() backs this up server-side too, in case this page gets bypassed.
+  const siteEntry = await getSite(site);
+  if (siteEntry && !siteEntry.active) {
+    return (
+      <main className="container">
+        <Link href={`/${site}`} className="breadcrumb">
+          ← Back to Run List
+        </Link>
+        <div className="page-header">
+          <div>
+            <h1>Start New Test Run</h1>
+            <p className="subtitle">{siteFile.siteName}</p>
+          </div>
+        </div>
+        <div className="error-banner">
+          This site is inactive. Reactivate it in Manage Sites to start a new Run.
+        </div>
+      </main>
+    );
+  }
 
   const suggestedRunId = await suggestNextRunId(site);
   const today = new Date().toISOString().slice(0, 10);

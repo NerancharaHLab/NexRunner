@@ -37,16 +37,21 @@ test.describe("Phase 1 - Login, logout, role-conditional nav", () => {
 
   test("admin sees both admin nav links; qa_engineer sees neither", async ({ adminPage, qaEngineerPage }) => {
     await adminPage.goto("/");
+    // The "Manage ..." links live inside a dropdown now — open it before checking visibility.
+    await adminPage.getByTestId("smoke-runner:top-nav:btn__manage-menu").click();
     await expect(adminPage.getByTestId("smoke-runner:top-nav:link__admin-scenarios")).toBeVisible();
     await expect(adminPage.getByTestId("smoke-runner:top-nav:link__admin-users")).toBeVisible();
 
     await qaEngineerPage.goto("/");
+    // qa_engineer has no Manage permissions at all — the menu button itself doesn't render.
+    await expect(qaEngineerPage.getByTestId("smoke-runner:top-nav:btn__manage-menu")).toHaveCount(0);
     await expect(qaEngineerPage.getByTestId("smoke-runner:top-nav:link__admin-scenarios")).toHaveCount(0);
     await expect(qaEngineerPage.getByTestId("smoke-runner:top-nav:link__admin-users")).toHaveCount(0);
   });
 
   test("qa_lead sees the scenario admin link but not the user admin link", async ({ qaLeadPage: page }) => {
     await page.goto("/");
+    await page.getByTestId("smoke-runner:top-nav:btn__manage-menu").click();
     await expect(page.getByTestId("smoke-runner:top-nav:link__admin-scenarios")).toBeVisible();
     await expect(page.getByTestId("smoke-runner:top-nav:link__admin-users")).toHaveCount(0);
   });

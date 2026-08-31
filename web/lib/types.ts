@@ -40,6 +40,7 @@ export interface ScenarioSiteFile {
 export interface HospitalSiteEntry {
   id: SiteKey;
   name: string;
+  active: boolean;
 }
 
 /**
@@ -214,8 +215,19 @@ export interface ScenarioEntity {
 /** Azure Table Storage entity: table "Sites". PartitionKey = "SITE" (fixed), RowKey = site id. */
 export interface SiteEntity {
   partitionKey: string;
-  rowKey: string; // site id, e.g. "NUH"
+  rowKey: string; // site id, e.g. "NUH" — immutable after creation (it's the partition key every
+  // Scenario/Run/ScenarioResult for this site is filed under; renaming it would silently orphan
+  // all of that site's existing data, so no UI ever offers to change it after create).
   name: string;
+  // Optional, same backward-compatible tolerance as UserEntity.active — rows written before this
+  // feature existed have no `active` property at all and default to active. Never read this
+  // directly; use isActiveSite() below.
+  active?: boolean;
+}
+
+/** True unless the row was explicitly deactivated (`active === false`) — same tolerance as isActiveUser(). */
+export function isActiveSite(entity: { active?: boolean }): boolean {
+  return entity.active !== false;
 }
 
 /** Azure Table Storage entity: table "Runs". PartitionKey = siteKey, RowKey = runId. */

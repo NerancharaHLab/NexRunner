@@ -13,6 +13,13 @@ export default async function ScenariosAdminPickSitePage() {
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <Link
+            href="/admin/sites"
+            className="btn"
+            data-testid="smoke-runner:admin-scenarios:link__sites"
+          >
+            Manage Sites →
+          </Link>
+          <Link
             href="/admin/tags"
             className="btn"
             data-testid="smoke-runner:admin-scenarios:link__tags"

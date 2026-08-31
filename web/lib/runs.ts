@@ -8,6 +8,7 @@ import {
 } from "@/lib/azure/tables";
 import { deleteEvidenceBlob, uploadEvidenceBlob } from "@/lib/azure/blob";
 import { getSuite } from "@/lib/azure/test-suites-table";
+import { getSite } from "@/lib/azure/sites-table";
 import { listTags } from "@/lib/azure/tags-table";
 import { getScenariosForSite } from "@/lib/scenarios";
 import {
@@ -135,6 +136,13 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
   const siteFile = await getScenariosForSite(input.siteKey);
   if (!siteFile) {
     throw new CreateRunError(`Unknown siteKey: ${input.siteKey}`, 400);
+  }
+
+  // Defense-in-depth: the New Run page already blocks this at render time (no form shown for an
+  // inactive site), but a direct POST must not be able to bypass that.
+  const site = await getSite(input.siteKey);
+  if (site && !site.active) {
+    throw new CreateRunError("This site is inactive — new Runs cannot be started here", 400);
   }
 
   const existing = await listRunsForSite(input.siteKey);
