@@ -19,27 +19,27 @@ export default async function SiteRunsPage({ params }: PageProps) {
   return (
     <main className="container">
       <Link href="/" className="breadcrumb">
-        ← เลือกโรงพยาบาลอื่น
+        ← Choose Another Hospital
       </Link>
 
       <div className="page-header">
         <div>
           <h1>{siteFile.siteName}</h1>
-          <p className="subtitle">{runs.length} รอบทดสอบ</p>
+          <p className="subtitle">{runs.length} Test Runs</p>
         </div>
         <Link
           href={`/${site}/new`}
           className="btn btn-primary"
           data-testid={`smoke-runner:run-history:btn__new-run`}
         >
-          + เริ่มรอบทดสอบใหม่
+          + Start New Run
         </Link>
       </div>
 
       {runs.length === 0 && (
         <div className="card empty-state">
           <div className="empty-icon">—</div>
-          ยังไม่มีรอบทดสอบสำหรับไซต์นี้
+          No test runs for this site yet
         </div>
       )}
 

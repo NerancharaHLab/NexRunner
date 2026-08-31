@@ -19,25 +19,26 @@ export default async function SuitesListPage() {
   return (
     <main className="container">
       <Link href="/admin/scenarios" className="breadcrumb">
-        ← กลับไปจัดการ Scenario
+        ← Back to Manage Scenarios
       </Link>
 
       <div className="page-header">
         <div>
-          <h1>จัดการ Suite</h1>
+          <h1>Manage Suites</h1>
           <p className="subtitle">
-            รวมกลุ่ม Master Scenario เป็นชุดทดสอบ — เลือก Suite ตอนเริ่มรอบทดสอบใหม่เพื่อทดสอบเฉพาะ Scenario ในชุดนั้น
+            Group Master Scenarios into test Suites — select a Suite when starting a new Run to
+            test only the Scenarios in that Suite.
           </p>
         </div>
         <Link href="/admin/suites/new" className="btn btn-primary" data-testid="smoke-runner:admin-suites:btn__new">
-          + เพิ่ม Suite
+          + Add Suite
         </Link>
       </div>
 
       {suites.length === 0 && (
         <div className="card empty-state">
           <div className="empty-icon">—</div>
-          ยังไม่มี Suite
+          No Suites yet
         </div>
       )}
 
@@ -63,7 +64,7 @@ export default async function SuitesListPage() {
                 className="btn"
                 data-testid={`smoke-runner:admin-suites:btn-edit__${suite.id.replace(/[^a-zA-Z0-9]/g, "")}`}
               >
-                แก้ไข
+                Edit
               </Link>
               <form action={deleteSuiteAction}>
                 <input type="hidden" name="suiteId" value={suite.id} />
@@ -72,7 +73,7 @@ export default async function SuitesListPage() {
                   className="btn btn-danger-text"
                   data-testid={`smoke-runner:admin-suites:btn-delete__${suite.id.replace(/[^a-zA-Z0-9]/g, "")}`}
                 >
-                  ลบ
+                  Delete
                 </button>
               </form>
             </div>

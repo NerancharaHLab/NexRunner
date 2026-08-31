@@ -20,10 +20,10 @@ export default async function LoginPage({ searchParams }: PageProps) {
     const user = await getUserByEmail(email);
     const ok = user ? await verifyPassword(password, user.passwordHash) : false;
     if (!user || !ok) {
-      redirect(`/login?error=${encodeURIComponent("อีเมลหรือรหัสผ่านไม่ถูกต้อง")}`);
+      redirect(`/login?error=${encodeURIComponent("Incorrect email or password")}`);
     }
     if (!isActiveUser(user)) {
-      redirect(`/login?error=${encodeURIComponent("บัญชีถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ")}`);
+      redirect(`/login?error=${encodeURIComponent("This account has been deactivated. Please contact an administrator.")}`);
     }
 
     const token = await createSessionToken({ email: user.rowKey });
@@ -43,7 +43,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
         </span>
         <h1>Smoke Test Runner</h1>
         <p className="subtitle" style={{ marginTop: 6 }}>
-          เข้าสู่ระบบเพื่อดำเนินการทดสอบ
+          Log in to run your tests
         </p>
       </div>
 
@@ -80,7 +80,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
           style={{ width: "100%", justifyContent: "center", marginTop: 18 }}
           data-testid="smoke-runner:login:btn__submit"
         >
-          เข้าสู่ระบบ
+          Log In
         </button>
       </form>
     </main>

@@ -21,13 +21,13 @@ export default async function ChangePasswordPage({ searchParams }: PageProps) {
     const entity = await getUserByEmail(user.email);
     const validCurrent = entity ? await verifyPassword(current, entity.passwordHash) : false;
     if (!entity || !validCurrent) {
-      redirect(`/change-password?error=${encodeURIComponent("รหัสผ่านปัจจุบันไม่ถูกต้อง")}`);
+      redirect(`/change-password?error=${encodeURIComponent("Current password is incorrect")}`);
     }
     if (next.length < 8) {
-      redirect(`/change-password?error=${encodeURIComponent("รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร")}`);
+      redirect(`/change-password?error=${encodeURIComponent("New password must be at least 8 characters")}`);
     }
     if (next !== confirm) {
-      redirect(`/change-password?error=${encodeURIComponent("รหัสผ่านใหม่และการยืนยันไม่ตรงกัน")}`);
+      redirect(`/change-password?error=${encodeURIComponent("New password and confirmation do not match")}`);
     }
 
     const passwordHash = await hashPassword(next);
@@ -39,7 +39,7 @@ export default async function ChangePasswordPage({ searchParams }: PageProps) {
     <main className="container-narrow">
       <div className="page-header">
         <div>
-          <h1>เปลี่ยนรหัสผ่าน</h1>
+          <h1>Change Password</h1>
           <p className="subtitle">{user.displayName}</p>
         </div>
       </div>
@@ -47,14 +47,14 @@ export default async function ChangePasswordPage({ searchParams }: PageProps) {
       {error && <div className="error-banner">{error}</div>}
       {ok && (
         <div className="stat-pill pass" style={{ marginBottom: 16 }}>
-          เปลี่ยนรหัสผ่านสำเร็จ
+          Password changed successfully
         </div>
       )}
 
       <form action={changePasswordAction} className="card">
         <div className="field-row" style={{ gridTemplateColumns: "1fr" }}>
           <div>
-            <label htmlFor="current">รหัสผ่านปัจจุบัน</label>
+            <label htmlFor="current">Current Password</label>
             <input
               id="current"
               name="current"
@@ -65,7 +65,7 @@ export default async function ChangePasswordPage({ searchParams }: PageProps) {
             />
           </div>
           <div>
-            <label htmlFor="next">รหัสผ่านใหม่</label>
+            <label htmlFor="next">New Password</label>
             <input
               id="next"
               name="next"
@@ -77,7 +77,7 @@ export default async function ChangePasswordPage({ searchParams }: PageProps) {
             />
           </div>
           <div>
-            <label htmlFor="confirm">ยืนยันรหัสผ่านใหม่</label>
+            <label htmlFor="confirm">Confirm New Password</label>
             <input
               id="confirm"
               name="confirm"
@@ -91,10 +91,10 @@ export default async function ChangePasswordPage({ searchParams }: PageProps) {
         </div>
         <div className="form-footer" style={{ justifyContent: "space-between" }}>
           <Link href="/" className="breadcrumb">
-            ← กลับหน้าหลัก
+            ← Back to Home
           </Link>
           <button type="submit" className="btn btn-primary" data-testid="smoke-runner:change-password:btn__submit">
-            บันทึกรหัสผ่านใหม่
+            Save New Password
           </button>
         </div>
       </form>

@@ -20,7 +20,7 @@ export default async function NewSuitePage({ searchParams }: PageProps) {
     const id = String(formData.get("id") || "").trim();
     const name = String(formData.get("name") || "").trim();
     if (!id || !name) {
-      redirect(`/admin/suites/new?error=${encodeURIComponent("ต้องระบุ Suite ID และชื่อ Suite")}`);
+      redirect(`/admin/suites/new?error=${encodeURIComponent("Suite ID and Suite name are required")}`);
     }
     const scenarioIds = masterScenarios.map((sc) => sc.id).filter((scId) => formData.get(`sc_${scId}`) === "on");
     await createSuite({
@@ -35,12 +35,12 @@ export default async function NewSuitePage({ searchParams }: PageProps) {
   return (
     <main className="container">
       <Link href="/admin/suites" className="breadcrumb">
-        ← กลับไปรายการ Suite
+        ← Back to Suite List
       </Link>
 
       <div className="page-header">
         <div>
-          <h1>เพิ่ม Suite ใหม่</h1>
+          <h1>Add New Suite</h1>
         </div>
       </div>
 
@@ -48,8 +48,8 @@ export default async function NewSuitePage({ searchParams }: PageProps) {
 
       {masterScenarios.length === 0 && (
         <div className="error-banner">
-          ยังไม่มี Scenario ใน Master Library —{" "}
-          <Link href="/admin/master-scenarios">ไปเพิ่มที่ Master Library ก่อน</Link>
+          No Scenarios in the Master Library yet —{" "}
+          <Link href="/admin/master-scenarios">Add one in the Master Library first</Link>
         </div>
       )}
 
@@ -57,22 +57,22 @@ export default async function NewSuitePage({ searchParams }: PageProps) {
         <div className="field-row">
           <div>
             <label htmlFor="id">Suite ID</label>
-            <input id="id" name="id" placeholder="เช่น SMOKE-OPD" required data-testid="smoke-runner:admin-suite-form:input__id" />
+            <input id="id" name="id" placeholder="e.g. SMOKE-OPD" required data-testid="smoke-runner:admin-suite-form:input__id" />
           </div>
           <div>
-            <label htmlFor="name">ชื่อ Suite</label>
-            <input id="name" name="name" placeholder="เช่น Smoke — OPD Critical Path" required data-testid="smoke-runner:admin-suite-form:input__name" />
+            <label htmlFor="name">Suite Name</label>
+            <input id="name" name="name" placeholder="e.g. Smoke — OPD Critical Path" required data-testid="smoke-runner:admin-suite-form:input__name" />
           </div>
         </div>
 
         <div className="field-row" style={{ gridTemplateColumns: "1fr" }}>
           <div>
-            <label htmlFor="description">คำอธิบาย</label>
+            <label htmlFor="description">Description</label>
             <input id="description" name="description" data-testid="smoke-runner:admin-suite-form:input__description" />
           </div>
         </div>
 
-        <div className="section-label">Scenario ในชุดนี้ (จาก Master Library)</div>
+        <div className="section-label">Scenarios in this Suite (from Master Library)</div>
         {masterScenarios.map((sc) => (
           <label key={sc.id} className="checkbox-row" htmlFor={`sc_${sc.id}`} style={{ display: "flex", width: "100%" }}>
             <input
@@ -87,7 +87,7 @@ export default async function NewSuitePage({ searchParams }: PageProps) {
 
         <div className="form-footer">
           <button type="submit" className="btn btn-primary" data-testid="smoke-runner:admin-suite-form:btn__save">
-            บันทึก
+            Save
           </button>
         </div>
       </form>

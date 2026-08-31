@@ -43,7 +43,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
     );
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      alert(`อัปเดตไม่สำเร็จ: ${err.error || res.statusText}`);
+      alert(`Update failed: ${err.error || res.statusText}`);
       return;
     }
     const data = await res.json();
@@ -76,7 +76,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
   async function uploadEvidence(scenarioId: string, blob: Blob) {
     const current = scenarios.find((s) => s.id === scenarioId);
     if (current && current.evidence.length >= EVIDENCE_MAX_PER_SCENARIO) {
-      alert(`แนบได้สูงสุด ${EVIDENCE_MAX_PER_SCENARIO} รูปต่อ Scenario`);
+      alert(`You can attach up to ${EVIDENCE_MAX_PER_SCENARIO} images per Scenario`);
       return;
     }
     const formData = new FormData();
@@ -87,7 +87,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
     );
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      alert(`แนบรูปไม่สำเร็จ: ${err.error || res.statusText}`);
+      alert(`Attach failed: ${err.error || res.statusText}`);
       return;
     }
     const data = await res.json();
@@ -117,7 +117,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
     );
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      alert(`ลบรูปไม่สำเร็จ: ${err.error || res.statusText}`);
+      alert(`Delete failed: ${err.error || res.statusText}`);
       return;
     }
     const data = await res.json();
@@ -164,7 +164,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
             onClick={() => setShowLinearReport(true)}
             data-testid="smoke-runner:run-detail:btn__open-linear-report"
           >
-            สรุปผลส่ง Linear
+            Send Summary to Linear
           </button>
           <Link
             href={`/${site}/${runId}/executive-report`}
@@ -209,7 +209,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
             <input
               type="text"
               className="notes-input"
-              placeholder="หมายเหตุ / เลข Bug ID (ถ้ามี)..."
+              placeholder="Notes / Bug ID (optional)..."
               value={sc.notes}
               data-testid={`smoke-runner:scenario-item:input-notes__${id}`}
               onChange={(e) => setNotes(sc.id, e.target.value)}
@@ -218,14 +218,14 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
 
             <div className="evidence-area">
               <div className="evidence-head">
-                <span className="section-label">หลักฐานภาพ ({sc.evidence.length}/{EVIDENCE_MAX_PER_SCENARIO})</span>
+                <span className="section-label">Evidence ({sc.evidence.length}/{EVIDENCE_MAX_PER_SCENARIO})</span>
                 <button
                   type="button"
                   className="btn btn-sm"
                   onClick={() => document.getElementById(`evidence-file-${id}`)?.click()}
                   data-testid={`smoke-runner:scenario-item:btn-attach-evidence__${id}`}
                 >
-                  แนบรูป
+                  Attach Image
                 </button>
                 <input
                   type="file"
@@ -246,7 +246,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
                 data-testid={`smoke-runner:scenario-item:pastezone-evidence__${id}`}
                 onPaste={(e) => handleEvidencePaste(e, sc.id)}
               >
-                คลิกที่นี่แล้ววางรูป (Ctrl+V) หรือกดปุ่ม &quot;แนบรูป&quot;
+                Click here and paste an image (Ctrl+V), or use the &quot;Attach Image&quot; button
               </div>
               {sc.evidence.length > 0 && (
                 <div className="evidence-thumbs">
@@ -261,7 +261,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
                       <button
                         type="button"
                         className="evidence-thumb-remove"
-                        title="ลบรูป"
+                        title="Delete Image"
                         data-testid={`smoke-runner:scenario-item:btn-remove-evidence__${id}-${ev.id}`}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -298,7 +298,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
             onClick={() => setLightbox(null)}
             data-testid="smoke-runner:run-detail:btn__close-lightbox"
           >
-            ปิด
+            Close
           </button>
         </div>
       )}

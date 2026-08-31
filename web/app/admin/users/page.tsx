@@ -29,10 +29,10 @@ export default async function UsersAdminPage({
     const roles = ALL_ROLES.filter((r) => formData.get(`role_${r}`) === "on");
 
     if (!email || !password || !displayName || roles.length === 0) {
-      redirect(`/admin/users?error=${encodeURIComponent("กรอกข้อมูลให้ครบ และเลือกอย่างน้อย 1 Role")}`);
+      redirect(`/admin/users?error=${encodeURIComponent("Fill in all fields and select at least 1 Role")}`);
     }
     if (await getUserByEmail(email)) {
-      redirect(`/admin/users?error=${encodeURIComponent(`มี User อีเมล ${email} อยู่แล้ว`)}`);
+      redirect(`/admin/users?error=${encodeURIComponent(`A user with email ${email} already exists`)}`);
     }
 
     const passwordHash = await hashPassword(password);
@@ -46,7 +46,7 @@ export default async function UsersAdminPage({
     const email = String(formData.get("email") || "");
     const roles = ALL_ROLES.filter((r) => formData.get(`role_${r}`) === "on");
     if (roles.length === 0) {
-      redirect(`/admin/users?error=${encodeURIComponent("ต้องเลือกอย่างน้อย 1 Role")}`);
+      redirect(`/admin/users?error=${encodeURIComponent("At least 1 Role is required")}`);
     }
     await updateUserRoles(email, roles);
     redirect("/admin/users");
@@ -58,7 +58,7 @@ export default async function UsersAdminPage({
     const email = String(formData.get("email") || "");
     const nextActive = formData.get("nextActive") === "true";
     if (email === actingUser.email) {
-      redirect(`/admin/users?error=${encodeURIComponent("ปิดใช้งานบัญชีตัวเองไม่ได้")}`);
+      redirect(`/admin/users?error=${encodeURIComponent("You cannot deactivate your own account")}`);
     }
     await updateUserActive(email, nextActive);
     redirect("/admin/users");
@@ -69,7 +69,7 @@ export default async function UsersAdminPage({
     const actingUser = await requireRole(["admin"]);
     const email = String(formData.get("email") || "");
     if (email === actingUser.email) {
-      redirect(`/admin/users?error=${encodeURIComponent("ลบบัญชีตัวเองไม่ได้")}`);
+      redirect(`/admin/users?error=${encodeURIComponent("You cannot delete your own account")}`);
     }
     await deleteUser(email);
     redirect("/admin/users");
@@ -79,7 +79,7 @@ export default async function UsersAdminPage({
     <main className="container">
       <div className="page-header">
         <div>
-          <h1>จัดการผู้ใช้</h1>
+          <h1>Manage Users</h1>
           <p className="subtitle">Users</p>
         </div>
       </div>
@@ -87,11 +87,11 @@ export default async function UsersAdminPage({
       {error && <div className="error-banner">{error}</div>}
 
       <div className="card">
-        <div className="section-label">เพิ่มผู้ใช้ใหม่</div>
+        <div className="section-label">Add New User</div>
         <form action={createUserAction}>
           <div className="field-row">
             <div>
-              <label htmlFor="displayName">ชื่อที่แสดง</label>
+              <label htmlFor="displayName">Display Name</label>
               <input id="displayName" name="displayName" required data-testid="smoke-runner:admin-users:input__display-name" />
             </div>
             <div>
@@ -103,7 +103,7 @@ export default async function UsersAdminPage({
               <input id="password" name="password" type="password" required data-testid="smoke-runner:admin-users:input__password" />
             </div>
           </div>
-          <div className="section-label">Roles (เลือกได้มากกว่า 1)</div>
+          <div className="section-label">Roles (select one or more)</div>
           <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
             {ALL_ROLES.map((r) => (
               <label key={r} className="checkbox-row" htmlFor={`role_${r}`}>
@@ -120,20 +120,20 @@ export default async function UsersAdminPage({
           </div>
           <div className="form-footer">
             <button type="submit" className="btn btn-primary" data-testid="smoke-runner:admin-users:btn__create">
-              เพิ่มผู้ใช้
+              Add User
             </button>
           </div>
         </form>
       </div>
 
-      <div className="section-label">รายชื่อผู้ใช้</div>
+      <div className="section-label">User List</div>
       <div className="data-table-wrap">
         <table className="data-table">
           <thead>
             <tr>
-              <th>ผู้ใช้</th>
+              <th>User</th>
               <th>Roles</th>
-              <th>สถานะ</th>
+              <th>Status</th>
               <th></th>
             </tr>
           </thead>
@@ -173,7 +173,7 @@ export default async function UsersAdminPage({
                         </label>
                       ))}
                       <button type="submit" className="btn btn-sm" data-testid={`smoke-runner:admin-users:btn-update-role__${u.rowKey}`}>
-                        อัปเดต
+                        Update
                       </button>
                     </form>
                   </td>
@@ -185,8 +185,8 @@ export default async function UsersAdminPage({
                         type="submit"
                         className={`toggle-switch ${active ? "on" : "off"}`}
                         disabled={isSelf}
-                        aria-label={active ? "ปิดใช้งาน" : "เปิดใช้งาน"}
-                        title={active ? "ปิดใช้งาน" : "เปิดใช้งาน"}
+                        aria-label={active ? "Deactivate" : "Activate"}
+                        title={active ? "Deactivate" : "Activate"}
                         data-testid={`smoke-runner:admin-users:btn-toggle-active__${u.rowKey}`}
                       >
                         <span className="toggle-thumb" />
@@ -196,7 +196,7 @@ export default async function UsersAdminPage({
                           className="critical-badge"
                           data-testid={`smoke-runner:admin-users:badge-inactive__${u.rowKey}`}
                         >
-                          ปิดใช้งาน
+                          Inactive
                         </span>
                       )}
                     </form>
@@ -210,7 +210,7 @@ export default async function UsersAdminPage({
                         disabled={isSelf}
                         data-testid={`smoke-runner:admin-users:btn-delete__${u.rowKey}`}
                       >
-                        ลบ
+                        Delete
                       </button>
                     </form>
                   </td>

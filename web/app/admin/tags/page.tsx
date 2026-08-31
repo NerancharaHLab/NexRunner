@@ -19,27 +19,27 @@ export default async function TagsAdminPage() {
   return (
     <main className="container">
       <Link href="/admin/scenarios" className="breadcrumb">
-        ← กลับไปจัดการ Scenario
+        ← Back to Manage Scenarios
       </Link>
 
       <div className="page-header">
         <div>
-          <h1>จัดการ Tag</h1>
-          <p className="subtitle">Tag Catalog กลาง — ใช้แปะ Master Scenario แล้วกรองตอนสร้าง Run</p>
+          <h1>Manage Tags</h1>
+          <p className="subtitle">Central Tag Catalog — attach to Master Scenarios, then filter when starting a Run</p>
         </div>
         <Link href="/admin/tags/new" className="btn btn-primary" data-testid="smoke-runner:admin-tags:link__new">
-          + เพิ่ม Tag
+          + Add Tag
         </Link>
       </div>
 
       {tags.length === 0 ? (
-        <div className="empty-state">ยังไม่มี Tag — เริ่มสร้าง Tag แรกได้เลย</div>
+        <div className="empty-state">No Tags yet — go ahead and create the first one</div>
       ) : (
         <div className="data-table-wrap">
           <table className="data-table">
             <thead>
               <tr>
-                <th>ชื่อ Tag</th>
+                <th>Tag Name</th>
                 <th></th>
               </tr>
             </thead>
@@ -55,7 +55,7 @@ export default async function TagsAdminPage() {
                         className="btn-danger-text"
                         data-testid={`smoke-runner:admin-tags:btn-delete__${tag.id}`}
                       >
-                        ลบ
+                        Delete
                       </button>
                     </form>
                   </td>

@@ -17,7 +17,7 @@ export default async function NewTagPage({ searchParams }: PageProps) {
     await requireRole(CAN_EDIT_CONTENT);
     const name = String(formData.get("name") || "").trim();
     if (!name) {
-      redirect(`/admin/tags/new?error=${encodeURIComponent("ต้องระบุชื่อ Tag")}`);
+      redirect(`/admin/tags/new?error=${encodeURIComponent("Tag name is required")}`);
     }
     try {
       await createTag(name);
@@ -33,12 +33,12 @@ export default async function NewTagPage({ searchParams }: PageProps) {
   return (
     <main className="container">
       <Link href="/admin/tags" className="breadcrumb">
-        ← กลับไปรายการ Tag
+        ← Back to Tag List
       </Link>
 
       <div className="page-header">
         <div>
-          <h1>เพิ่ม Tag ใหม่</h1>
+          <h1>Add New Tag</h1>
         </div>
       </div>
 
@@ -47,11 +47,11 @@ export default async function NewTagPage({ searchParams }: PageProps) {
       <form action={createTagAction} className="card">
         <div className="field-row" style={{ gridTemplateColumns: "1fr" }}>
           <div>
-            <label htmlFor="name">ชื่อ Tag</label>
+            <label htmlFor="name">Tag Name</label>
             <input
               id="name"
               name="name"
-              placeholder="เช่น smoke, p1, regression"
+              placeholder="e.g. smoke, p1, regression"
               required
               data-testid="smoke-runner:admin-tag-form:input__name"
             />
@@ -60,7 +60,7 @@ export default async function NewTagPage({ searchParams }: PageProps) {
 
         <div className="form-footer">
           <button type="submit" className="btn btn-primary" data-testid="smoke-runner:admin-tag-form:btn__save">
-            บันทึก
+            Save
           </button>
         </div>
       </form>

@@ -19,15 +19,15 @@ export default async function MasterScenariosListPage() {
   return (
     <main className="container">
       <Link href="/admin/scenarios" className="breadcrumb">
-        ← กลับไปจัดการ Scenario
+        ← Back to Manage Scenarios
       </Link>
 
       <div className="page-header">
         <div>
           <h1>Master Scenario Library</h1>
           <p className="subtitle">
-            ต้นแบบ Scenario ส่วนกลาง — แต่ละโรงพยาบาล Clone จากที่นี่ไปใช้ได้ แก้ที่นี่ไม่กระทบของที่ Clone ไปแล้ว
-            จนกว่าจะ Clone ซ้ำ
+            Central Scenario templates — each hospital can clone from here for its own use. Editing
+            here does not affect what has already been cloned, until it&apos;s re-cloned.
           </p>
         </div>
         <Link
@@ -35,14 +35,14 @@ export default async function MasterScenariosListPage() {
           className="btn btn-primary"
           data-testid="smoke-runner:admin-master-scenarios:btn__new"
         >
-          + เพิ่ม Scenario
+          + Add Scenario
         </Link>
       </div>
 
       {scenarios.length === 0 && (
         <div className="card empty-state">
           <div className="empty-icon">—</div>
-          ยังไม่มี Scenario ใน Master Library
+          No Scenarios in the Master Library yet
         </div>
       )}
 
@@ -67,7 +67,7 @@ export default async function MasterScenariosListPage() {
                 className="btn"
                 data-testid={`smoke-runner:admin-master-scenarios:btn-edit__${sc.id.replace(/[^a-zA-Z0-9]/g, "")}`}
               >
-                แก้ไข
+                Edit
               </Link>
               <form action={deleteScenarioAction}>
                 <input type="hidden" name="scenarioId" value={sc.id} />
@@ -76,7 +76,7 @@ export default async function MasterScenariosListPage() {
                   className="btn btn-danger-text"
                   data-testid={`smoke-runner:admin-master-scenarios:btn-delete__${sc.id.replace(/[^a-zA-Z0-9]/g, "")}`}
                 >
-                  ลบ
+                  Delete
                 </button>
               </form>
             </div>

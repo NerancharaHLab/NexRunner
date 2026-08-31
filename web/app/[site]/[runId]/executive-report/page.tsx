@@ -36,7 +36,7 @@ export default async function ExecutiveReportPage({ params }: PageProps) {
     <main className="container">
       <div className="report-toolbar no-print">
         <Link href={`/${site}/${runId}`} className="breadcrumb">
-          ← กลับไปหน้า Run Detail
+          ← Back to Run Detail
         </Link>
         <PrintButton />
       </div>
@@ -72,8 +72,8 @@ export default async function ExecutiveReportPage({ params }: PageProps) {
             </div>
             <div className="gate-subtitle">
               {run.gateResult === "READY"
-                ? `ระบบผ่านการตรวจความพร้อมหลักครบถ้วน อนุมัติเปิดให้ผู้ใช้งานทดสอบรอบ ${run.environment} ได้ตามกำหนดการ`
-                : `ระบบยังมีข้อบกพร่องใน Critical Flow หรือยังมีรายการทดสอบไม่ผ่าน โปรดแก้ไข Bug ก่อนเริ่ม ${run.environment}`}
+                ? `The system has passed all core readiness checks. Approved to open ${run.environment} for user testing as scheduled.`
+                : `The system still has defects in a Critical Flow, or has failing test items. Please fix the bugs before starting ${run.environment}.`}
             </div>
           </div>
           <div>
@@ -168,7 +168,7 @@ export default async function ExecutiveReportPage({ params }: PageProps) {
             {criticalMatrix.length === 0 && (
               <tr>
                 <td colSpan={4} style={{ textAlign: "center", color: "var(--text-secondary)" }}>
-                  ไม่มี Critical Flow สำหรับไซต์นี้
+                  No Critical Flow for this site
                 </td>
               </tr>
             )}
@@ -192,7 +192,7 @@ export default async function ExecutiveReportPage({ params }: PageProps) {
                   <strong>{sc.id}</strong>
                 </td>
                 <td>{sc.name}</td>
-                <td>{sc.notes || "ยังไม่ได้ระบุรายละเอียด Bug"}</td>
+                <td>{sc.notes || "No bug details provided"}</td>
                 <td style={{ textAlign: "center" }}>
                   <span className={`stat-pill ${STATUS_PILL_CLASS[sc.status]}`}>{sc.status.toUpperCase()}</span>
                 </td>
@@ -201,7 +201,7 @@ export default async function ExecutiveReportPage({ params }: PageProps) {
             {defectLog.length === 0 && (
               <tr>
                 <td colSpan={4} style={{ textAlign: "center", color: "var(--pass-color)" }}>
-                  ✨ ไม่พบข้อบกพร่อง (No Defect Found) ในการทดสอบชุดนี้
+                  ✨ No Defect Found in this test run
                 </td>
               </tr>
             )}

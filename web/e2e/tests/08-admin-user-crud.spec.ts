@@ -53,7 +53,7 @@ test.describe("Phase 8 - Admin User CRUD, multi-role, deactivate, admin-only bou
     // Now qa_engineer + qa_lead can reach /admin/scenarios (permission boundary actually changed).
     const second = await loginAsNewContext(browser, email, password);
     await second.page.goto("/admin/scenarios");
-    await expect(second.page.locator("h1")).toContainText("จัดการ Scenario");
+    await expect(second.page.locator("h1")).toContainText("Manage Scenarios");
 
     // ---- deactivate while `second` is still logged in — must take effect immediately ----
     await page.goto("/admin/users");

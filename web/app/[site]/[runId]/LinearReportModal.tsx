@@ -10,9 +10,9 @@ interface Props {
   onClose: () => void;
 }
 
-// Builds the same Thai-language summary text as the old app's
-// exportLinearReport() — meant to be pasted manually into a Linear comment,
-// not pushed via API (confirmed with the user).
+// Builds the same plain-text summary as the old app's exportLinearReport() —
+// meant to be pasted manually into a Linear comment, not pushed via API
+// (confirmed with the user).
 function buildReportText(run: RunEntity, scenarios: ScenarioWithResult[]): string {
   const failedList = scenarios
     .filter((s) => s.status === "failed")
@@ -30,7 +30,7 @@ function buildReportText(run: RunEntity, scenarios: ScenarioWithResult[]): strin
   let text = `📢 **[Smoke Test Summary Report] - Pre-UAT Verification Sign-off**\n`;
   text += `🏥 Hospital Site: ${run.siteName} | Version: ${run.version || "-"} | Delivery Batch: ${run.deliveryBatch || "-"}\n`;
   text += `🗓 Date: ${run.executedDate} | Test Cycle: ${run.testCycle} | Environment: ${run.environment} | Run ID: ${run.rowKey}\n`;
-  text += `👤 Tester: ${run.tester || "[ยังไม่ได้ระบุชื่อ]"}\n\n`;
+  text += `👤 Tester: ${run.tester || "[not specified]"}\n\n`;
   text += `📊 Overall Status: ${readyText}\n\n`;
   text += `• Total Scenarios: ${run.totalScenarios} Scenarios\n`;
   text += `• 🟢 Passed: ${run.passed} Scenarios\n`;
@@ -53,8 +53,8 @@ function buildReportText(run: RunEntity, scenarios: ScenarioWithResult[]): strin
   text += `✅ Recommendation / Sign-off:\n`;
   text +=
     run.gateResult === "READY"
-      ? `ระบบผ่านการตรวจความพร้อมหลักครบถ้วน อนุมัติเปิดให้ผู้ใช้งานทดสอบรอบ ${run.environment} ได้ตามกำหนดการ`
-      : `ระบบยังมีข้อบกพร่องใน Scenario สำคัญ โปรดแก้ไข Bug ก่อนเริ่มรอบ ${run.environment}`;
+      ? `The system has passed all core readiness checks. Approved to open ${run.environment} for user testing as scheduled.`
+      : `The system still has defects in critical Scenarios. Please fix the bugs before starting ${run.environment}.`;
 
   return text;
 }
@@ -87,14 +87,14 @@ export default function LinearReportModal({ run, scenarios, onClose }: Props) {
     >
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>สรุปผลส่ง Linear</h3>
+          <h3>Linear Summary Report</h3>
           <button
             type="button"
             className="btn btn-sm"
             onClick={onClose}
             data-testid="smoke-runner:linear-report:btn__close"
           >
-            ปิด
+            Close
           </button>
         </div>
         <textarea
@@ -112,7 +112,7 @@ export default function LinearReportModal({ run, scenarios, onClose }: Props) {
             onClick={handleCopy}
             data-testid="smoke-runner:linear-report:btn__copy"
           >
-            {copied ? "คัดลอกแล้ว!" : "คัดลอกไปยัง Clipboard"}
+            {copied ? "Copied!" : "Copy to Clipboard"}
           </button>
         </div>
       </div>

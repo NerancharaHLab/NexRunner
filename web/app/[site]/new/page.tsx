@@ -61,12 +61,12 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
   return (
     <main className="container">
       <Link href={`/${site}`} className="breadcrumb">
-        ← กลับไปรายการ Run
+        ← Back to Run List
       </Link>
 
       <div className="page-header">
         <div>
-          <h1>เริ่มรอบทดสอบใหม่</h1>
+          <h1>Start New Test Run</h1>
           <p className="subtitle">{siteFile.siteName}</p>
         </div>
       </div>
@@ -74,7 +74,7 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
       {error && <div className="error-banner">{error}</div>}
 
       <form action={startRun} className="card">
-        <div className="section-label">ข้อมูลรอบทดสอบ</div>
+        <div className="section-label">Test Run Info</div>
         <div className="field-row">
           <div>
             <label htmlFor="runId">Run ID</label>
@@ -153,10 +153,10 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
           </div>
         </div>
 
-        <div className="section-label">Suite (เลือกได้หลายชุด — ไม่เลือกเลย = ทดสอบทุก Scenario ของไซต์นี้)</div>
+        <div className="section-label">Suites (select multiple — none selected = test every Scenario for this site)</div>
         {suites.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: 4 }}>
-            ยังไม่มี Suite — <Link href="/admin/suites">ไปสร้างที่หน้าจัดการ Suite</Link>
+            No Suites yet — <Link href="/admin/suites">create one on the Manage Suites page</Link>
           </p>
         ) : (
           suites.map((suite) => (
@@ -178,16 +178,16 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
           ))
         )}
 
-        <div className="section-label">Tag Filter (กรองเพิ่มจาก Suite ด้านบน ถ้าเลือกไว้ — ไม่เลือกเลย = ไม่กรองด้วย Tag)</div>
+        <div className="section-label">Tag Filter (applies on top of the Suites above, if selected — none selected = no Tag filter)</div>
         {tags.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: 4 }}>
-            ยังไม่มี Tag — <Link href="/admin/tags">ไปสร้างที่หน้าจัดการ Tag</Link>
+            No Tags yet — <Link href="/admin/tags">create one on the Manage Tags page</Link>
           </p>
         ) : (
           <>
             <div style={{ marginBottom: 4 }}>
               <label htmlFor="tagIncludeMode" style={{ fontSize: "0.85rem" }}>
-                เงื่อนไข Tag ที่ต้องมี:{" "}
+                Include Tag condition:{" "}
               </label>
               <select
                 id="tagIncludeMode"
@@ -195,13 +195,13 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
                 defaultValue="OR"
                 data-testid="smoke-runner:new-run:select__tag-include-mode"
               >
-                <option value="OR">มีอย่างน้อย 1 Tag ที่เลือก (OR)</option>
-                <option value="AND">ต้องมีครบทุก Tag ที่เลือก (AND)</option>
+                <option value="OR">Has at least 1 selected Tag (OR)</option>
+                <option value="AND">Must have every selected Tag (AND)</option>
               </select>
             </div>
             <div className="field-row" style={{ gridTemplateColumns: "1fr 1fr" }}>
               <div>
-                <div style={{ fontSize: "0.85rem", marginBottom: 4 }}>ต้องมี Tag (Include)</div>
+                <div style={{ fontSize: "0.85rem", marginBottom: 4 }}>Must have (Include)</div>
                 {tags.map((tag) => (
                   <label
                     key={tag.id}
@@ -220,7 +220,7 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
                 ))}
               </div>
               <div>
-                <div style={{ fontSize: "0.85rem", marginBottom: 4 }}>ต้องไม่มี Tag (Exclude)</div>
+                <div style={{ fontSize: "0.85rem", marginBottom: 4 }}>Must not have (Exclude)</div>
                 {tags.map((tag) => (
                   <label
                     key={tag.id}
@@ -264,7 +264,7 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
 
         <div className="form-footer">
           <button type="submit" className="btn btn-primary" data-testid="smoke-runner:new-run:btn__start">
-            เริ่มรอบทดสอบ
+            Start Test Run
           </button>
         </div>
       </form>

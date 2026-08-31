@@ -50,10 +50,10 @@ export class TagAlreadyExistsError extends Error {}
 export async function createTag(name: string): Promise<TagDef> {
   const trimmed = name.trim();
   const id = sanitizeTagId(trimmed);
-  if (!id) throw new Error("ต้องระบุชื่อ Tag");
+  if (!id) throw new Error("Tag name is required");
   const existing = await getTag(id);
   if (existing) {
-    throw new TagAlreadyExistsError(`Tag "${existing.name}" มีอยู่แล้ว (เช็คตัวเล็ก/ใหญ่ด้วย)`);
+    throw new TagAlreadyExistsError(`Tag "${existing.name}" already exists (case-insensitive)`);
   }
   const table = await getTagsTable();
   const entity: TagEntity = { partitionKey: TAG_PARTITION, rowKey: id, name: trimmed };

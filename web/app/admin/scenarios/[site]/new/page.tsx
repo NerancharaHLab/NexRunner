@@ -25,7 +25,7 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
     await requireRole(CAN_EDIT_CONTENT);
     const id = String(formData.get("id") || "").trim();
     if (!id) {
-      redirect(`/admin/scenarios/${site}/new?error=${encodeURIComponent("ต้องระบุ Scenario ID")}`);
+      redirect(`/admin/scenarios/${site}/new?error=${encodeURIComponent("Scenario ID is required")}`);
     }
     const allTags = await listTags();
     await createScenario(site, {
@@ -45,12 +45,12 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
   return (
     <main className="container">
       <Link href={`/admin/scenarios/${site}`} className="breadcrumb">
-        ← กลับไปรายการ Scenario
+        ← Back to Scenario List
       </Link>
 
       <div className="page-header">
         <div>
-          <h1>เพิ่ม Scenario ใหม่</h1>
+          <h1>Add New Scenario</h1>
           <p className="subtitle">{siteFile.siteName}</p>
         </div>
       </div>
@@ -61,7 +61,7 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
         <div className="field-row">
           <div>
             <label htmlFor="id">Scenario ID</label>
-            <input id="id" name="id" placeholder="เช่น SC-18" required data-testid="smoke-runner:admin-scenario-form:input__id" />
+            <input id="id" name="id" placeholder="e.g. SC-18" required data-testid="smoke-runner:admin-scenario-form:input__id" />
           </div>
           <div>
             <label htmlFor="flow">Flow</label>
@@ -74,8 +74,8 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
             </select>
           </div>
           <div>
-            <label htmlFor="role">ผู้เกี่ยวข้อง (Role)</label>
-            <input id="role" name="role" placeholder="เช่น แพทย์ OPD / พยาบาล" data-testid="smoke-runner:admin-scenario-form:input__role" />
+            <label htmlFor="role">Role</label>
+            <input id="role" name="role" placeholder="e.g. OPD Doctor / Nurse" data-testid="smoke-runner:admin-scenario-form:input__role" />
           </div>
         </div>
 
@@ -86,20 +86,20 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
 
         <div className="field-row" style={{ gridTemplateColumns: "1fr" }}>
           <div>
-            <label htmlFor="name">ชื่อ Scenario</label>
+            <label htmlFor="name">Scenario Name</label>
             <input id="name" name="name" required data-testid="smoke-runner:admin-scenario-form:input__name" />
           </div>
         </div>
 
         <div className="field-row" style={{ gridTemplateColumns: "1fr" }}>
           <div>
-            <label htmlFor="desc">คำอธิบาย</label>
+            <label htmlFor="desc">Description</label>
             <input id="desc" name="desc" data-testid="smoke-runner:admin-scenario-form:input__desc" />
           </div>
         </div>
 
         <div style={{ marginBottom: 12 }}>
-          <label htmlFor="steps">ขั้นตอนทดสอบ (Test Steps)</label>
+          <label htmlFor="steps">Test Steps</label>
           <textarea
             id="steps"
             name="steps"
@@ -112,7 +112,7 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label htmlFor="criteria">เกณฑ์การผ่าน (Expected Pass Criteria)</label>
+          <label htmlFor="criteria">Expected Pass Criteria</label>
           <textarea
             id="criteria"
             name="criteria"
@@ -126,7 +126,7 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
         <div className="section-label">Tag</div>
         {tags.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: 12 }}>
-            ยังไม่มี Tag — <Link href="/admin/tags/new">ไปสร้างที่หน้าจัดการ Tag</Link>
+            No Tags yet — <Link href="/admin/tags/new">create one on the Manage Tags page</Link>
           </p>
         ) : (
           tags.map((tag) => (
@@ -144,7 +144,7 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
 
         <div className="form-footer">
           <button type="submit" className="btn btn-primary" data-testid="smoke-runner:admin-scenario-form:btn__save">
-            บันทึก
+            Save
           </button>
         </div>
       </form>

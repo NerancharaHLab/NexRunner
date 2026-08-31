@@ -20,32 +20,32 @@ export interface DataChainField {
 }
 
 export const DATA_CHAIN_FIELDS: DataChainField[] = [
-  { id: "ver", label: "SYSTEM VERSION", type: "text", placeholder: "เช่น v1.0.0", span: 1 },
+  { id: "ver", label: "SYSTEM VERSION", type: "text", placeholder: "e.g. v1.0.0", span: 1 },
   {
     id: "delivery",
     label: "DELIVERY BATCH",
     type: "text",
-    placeholder: "เช่น D 1 หรือ งวดที่ 1",
+    placeholder: "e.g. D 1 or Batch 1",
     span: 1,
   },
-  { id: "runid", label: "RUN ID", type: "text", placeholder: "เช่น SM-RUN-001", span: 1 },
-  { id: "cycle", label: "TEST CYCLE", type: "text", placeholder: "เช่น Cycle 1", span: 1 },
+  { id: "runid", label: "RUN ID", type: "text", placeholder: "e.g. SM-RUN-001", span: 1 },
+  { id: "cycle", label: "TEST CYCLE", type: "text", placeholder: "e.g. Cycle 1", span: 1 },
   { id: "date", label: "DATE EXECUTED", type: "date", span: 1 },
   {
     id: "tester",
     label: "TESTER NAME",
     type: "text",
-    placeholder: "ระบุชื่อผู้ทดสอบ...",
+    placeholder: "Enter tester name...",
     span: 1,
   },
-  { id: "hn", label: "PRIMARY HN", type: "text", placeholder: "เช่น HN 6600001...", span: 1 },
-  { id: "vn", label: "PRIMARY VN", type: "text", placeholder: "เช่น VN 6600001...", span: 1 },
-  { id: "an", label: "PRIMARY AN", type: "text", placeholder: "เช่น AN 6600001...", span: 1 },
+  { id: "hn", label: "PRIMARY HN", type: "text", placeholder: "e.g. HN 6600001...", span: 1 },
+  { id: "vn", label: "PRIMARY VN", type: "text", placeholder: "e.g. VN 6600001...", span: 1 },
+  { id: "an", label: "PRIMARY AN", type: "text", placeholder: "e.g. AN 6600001...", span: 1 },
   {
     id: "bill",
     label: "BILL NO. / INV",
     type: "text",
-    placeholder: "เช่น INV-660001...",
+    placeholder: "e.g. INV-660001...",
     span: 1,
   },
 ];

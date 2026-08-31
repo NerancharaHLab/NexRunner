@@ -30,11 +30,11 @@ export default async function TopNav() {
         {canEdit && (
           <div className="top-nav-links">
             <Link href="/admin/scenarios" data-testid="smoke-runner:top-nav:link__admin-scenarios">
-              จัดการ Scenario
+              Manage Scenarios
             </Link>
             {isAdmin && (
               <Link href="/admin/users" data-testid="smoke-runner:top-nav:link__admin-users">
-                จัดการผู้ใช้
+                Manage Users
               </Link>
             )}
           </div>
@@ -52,11 +52,11 @@ export default async function TopNav() {
           className="btn btn-sm"
           data-testid="smoke-runner:top-nav:link__change-password"
         >
-          เปลี่ยนรหัสผ่าน
+          Change Password
         </Link>
         <form action={logoutAction}>
           <button type="submit" className="btn btn-sm" data-testid="smoke-runner:top-nav:btn__logout">
-            ออกจากระบบ
+            Log Out
           </button>
         </form>
       </div>

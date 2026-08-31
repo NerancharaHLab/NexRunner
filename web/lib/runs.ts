@@ -165,7 +165,7 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
     scopedScenarios = siteFile.scenarios.filter((s) => unionIdSet.has(s.id));
     if (scopedScenarios.length === 0) {
       throw new CreateRunError(
-        "Suite ที่เลือกไม่มี Scenario ที่ Clone มาที่ไซต์นี้เลย — Clone จาก Master ก่อน",
+        "The selected Suite has no Scenario cloned to this site yet — clone from Master first",
         400
       );
     }
@@ -199,7 +199,7 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
     });
     if (scopedScenarios.length === 0) {
       throw new CreateRunError(
-        "ตัวกรอง Tag (รวม Suite ถ้าเลือกไว้) ไม่ตรงกับ Scenario ใดเลยในไซต์นี้",
+        "The Tag filter (combined with the Suite filter, if selected) doesn't match any Scenario in this site",
         400
       );
     }
@@ -431,10 +431,10 @@ export async function addEvidence(
   file: { buffer: Buffer; contentType: string }
 ): Promise<{ evidence: EvidenceItem[] }> {
   if (!EVIDENCE_ALLOWED_CONTENT_TYPES.includes(file.contentType)) {
-    throw new CreateRunError("รองรับเฉพาะไฟล์รูปภาพ (PNG, JPEG, WEBP, GIF)", 400);
+    throw new CreateRunError("Only image files are supported (PNG, JPEG, WEBP, GIF)", 400);
   }
   if (file.buffer.length > EVIDENCE_MAX_FILE_SIZE_BYTES) {
-    throw new CreateRunError("ไฟล์ใหญ่เกินไป (สูงสุด 5MB ต่อรูป)", 400);
+    throw new CreateRunError("File too large (max 5MB per image)", 400);
   }
 
   const siteFile = await getScenariosForSite(siteKey);
@@ -450,7 +450,7 @@ export async function addEvidence(
   const evidence = parseEvidence(previous?.evidenceJson);
 
   if (evidence.length >= EVIDENCE_MAX_PER_SCENARIO) {
-    throw new CreateRunError(`แนบได้สูงสุด ${EVIDENCE_MAX_PER_SCENARIO} รูปต่อ Scenario`, 400);
+    throw new CreateRunError(`You can attach up to ${EVIDENCE_MAX_PER_SCENARIO} images per Scenario`, 400);
   }
 
   const evidenceId = randomUUID();

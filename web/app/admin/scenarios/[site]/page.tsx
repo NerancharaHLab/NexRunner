@@ -25,12 +25,12 @@ export default async function ScenariosAdminListPage({ params }: PageProps) {
   return (
     <main className="container">
       <Link href="/admin/scenarios" className="breadcrumb">
-        ← เลือกโรงพยาบาลอื่น
+        ← Choose Another Hospital
       </Link>
 
       <div className="page-header">
         <div>
-          <h1>จัดการ Scenario</h1>
+          <h1>Manage Scenarios</h1>
           <p className="subtitle">{siteFile.siteName}</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -39,14 +39,14 @@ export default async function ScenariosAdminListPage({ params }: PageProps) {
             className="btn"
             data-testid={`smoke-runner:admin-scenarios:link__clone-from-master__${site}`}
           >
-            Clone จาก Master Library →
+            Clone from Master Library →
           </Link>
           <Link
             href={`/admin/scenarios/${site}/new`}
             className="btn btn-primary"
             data-testid="smoke-runner:admin-scenarios:btn__new"
           >
-            + เพิ่ม Scenario
+            + Add Scenario
           </Link>
         </div>
       </div>
@@ -54,7 +54,7 @@ export default async function ScenariosAdminListPage({ params }: PageProps) {
       {siteFile.scenarios.length === 0 && (
         <div className="card empty-state">
           <div className="empty-icon">—</div>
-          ยังไม่มี Scenario สำหรับไซต์นี้
+          No Scenarios for this site yet
         </div>
       )}
 
@@ -79,7 +79,7 @@ export default async function ScenariosAdminListPage({ params }: PageProps) {
                 className="btn"
                 data-testid={`smoke-runner:admin-scenarios:btn-edit__${sc.id.replace(/[^a-zA-Z0-9]/g, "")}`}
               >
-                แก้ไข
+                Edit
               </Link>
               <form action={deleteScenarioAction}>
                 <input type="hidden" name="scenarioId" value={sc.id} />
@@ -88,7 +88,7 @@ export default async function ScenariosAdminListPage({ params }: PageProps) {
                   className="btn btn-danger-text"
                   data-testid={`smoke-runner:admin-scenarios:btn-delete__${sc.id.replace(/[^a-zA-Z0-9]/g, "")}`}
                 >
-                  ลบ
+                  Delete
                 </button>
               </form>
             </div>

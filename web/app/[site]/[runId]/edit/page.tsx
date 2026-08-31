@@ -46,12 +46,12 @@ export default async function EditRunPage({ params, searchParams }: PageProps) {
   return (
     <main className="container">
       <Link href={`/${site}/${runId}`} className="breadcrumb">
-        ← กลับไปหน้า Run Detail
+        ← Back to Run Detail
       </Link>
 
       <div className="page-header">
         <div>
-          <h1>แก้ไขข้อมูล Run</h1>
+          <h1>Edit Run</h1>
           <p className="subtitle">
             {run.siteName} — {run.rowKey} · Tester: {run.tester || "-"}
           </p>
@@ -61,7 +61,7 @@ export default async function EditRunPage({ params, searchParams }: PageProps) {
       {error && <div className="error-banner">{error}</div>}
 
       <form action={updateRunAction} className="card">
-        <div className="section-label">ข้อมูลรอบทดสอบ</div>
+        <div className="section-label">Test Run Info</div>
         <div className="field-row">
           <div>
             <label htmlFor="environment">Environment</label>
@@ -139,7 +139,7 @@ export default async function EditRunPage({ params, searchParams }: PageProps) {
 
         <div className="form-footer">
           <button type="submit" className="btn btn-primary" data-testid="smoke-runner:run-edit:btn__save">
-            บันทึก
+            Save
           </button>
         </div>
       </form>

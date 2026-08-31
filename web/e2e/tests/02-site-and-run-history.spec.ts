@@ -15,6 +15,6 @@ test.describe("Phase 2 - Site picker and Run history", () => {
   test("Run history page shows the '+ new run' action and a run count", async ({ adminPage: page }) => {
     await page.goto(`/${E2E_SITE_KEY}`);
     await expect(page.getByTestId("smoke-runner:run-history:btn__new-run")).toBeVisible();
-    await expect(page.locator(".page-header .subtitle")).toContainText("รอบทดสอบ");
+    await expect(page.locator(".page-header .subtitle")).toContainText("Test Runs");
   });
 });

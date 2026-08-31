@@ -33,7 +33,7 @@ export default async function CloneFromMasterPage({ params, searchParams }: Page
 
     if (selectedIds.length === 0) {
       redirect(
-        `/admin/scenarios/${site}/clone-from-master?error=${encodeURIComponent("เลือกอย่างน้อย 1 Scenario")}`
+        `/admin/scenarios/${site}/clone-from-master?error=${encodeURIComponent("Select at least 1 Scenario")}`
       );
     }
 
@@ -46,13 +46,13 @@ export default async function CloneFromMasterPage({ params, searchParams }: Page
   return (
     <main className="container">
       <Link href={`/admin/scenarios/${site}`} className="breadcrumb">
-        ← กลับไปรายการ Scenario
+        ← Back to Scenario List
       </Link>
 
       <div className="page-header">
         <div>
-          <h1>Clone จาก Master Library</h1>
-          <p className="subtitle">ไปยัง {siteFile.siteName}</p>
+          <h1>Clone from Master Library</h1>
+          <p className="subtitle">To {siteFile.siteName}</p>
         </div>
       </div>
 
@@ -61,8 +61,8 @@ export default async function CloneFromMasterPage({ params, searchParams }: Page
       {masterScenarios.length === 0 ? (
         <div className="card empty-state">
           <div className="empty-icon">—</div>
-          ยังไม่มี Scenario ใน Master Library —{" "}
-          <Link href="/admin/master-scenarios">ไปเพิ่มที่ Master Library ก่อน</Link>
+          No Scenarios in the Master Library yet —{" "}
+          <Link href="/admin/master-scenarios">Add one in the Master Library first</Link>
         </div>
       ) : (
         <form action={cloneAction} className="card">
@@ -93,7 +93,7 @@ export default async function CloneFromMasterPage({ params, searchParams }: Page
                     {sc.critical && <span className="critical-badge">Critical Flow</span>}
                     {alreadyExists && (
                       <span className="stat-pill block" style={{ marginLeft: 8 }}>
-                        มีอยู่แล้ว — Clone ทับ
+                        Already exists — will overwrite
                       </span>
                     )}
                   </div>
@@ -111,7 +111,7 @@ export default async function CloneFromMasterPage({ params, searchParams }: Page
               className="btn btn-primary"
               data-testid="smoke-runner:clone-from-master:btn__clone"
             >
-              Clone ไปยัง {siteFile.siteName}
+              Clone to {siteFile.siteName}
             </button>
           </div>
         </form>

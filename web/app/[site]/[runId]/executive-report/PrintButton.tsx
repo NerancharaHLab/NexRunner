@@ -8,7 +8,7 @@ export default function PrintButton() {
       onClick={() => window.print()}
       data-testid="smoke-runner:executive-report:btn__print"
     >
-      พิมพ์ / บันทึก PDF
+      Print / Save PDF
     </button>
   );
 }

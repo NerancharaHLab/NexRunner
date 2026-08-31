@@ -20,7 +20,7 @@ export default async function RunDetailPage({ params }: PageProps) {
   return (
     <main className="container">
       <Link href={`/${site}`} className="breadcrumb">
-        ← กลับไปรายการ Run
+        ← Back to Run List
       </Link>
 
       <div className="page-header">
@@ -37,12 +37,12 @@ export default async function RunDetailPage({ params }: PageProps) {
             {detail.run.tagIncludeNamesJson && (
               <>
                 {" "}
-                · Tag ต้องมี: {(JSON.parse(detail.run.tagIncludeNamesJson) as string[]).join(", ")} (
-                {detail.run.tagIncludeMode === "AND" ? "ครบทุกตัว" : "อย่างน้อย 1 ตัว"})
+                · Must have Tag: {(JSON.parse(detail.run.tagIncludeNamesJson) as string[]).join(", ")} (
+                {detail.run.tagIncludeMode === "AND" ? "all of them" : "at least 1"})
               </>
             )}
             {detail.run.tagExcludeNamesJson && (
-              <> · Tag ต้องไม่มี: {(JSON.parse(detail.run.tagExcludeNamesJson) as string[]).join(", ")}</>
+              <> · Must not have Tag: {(JSON.parse(detail.run.tagExcludeNamesJson) as string[]).join(", ")}</>
             )}
           </p>
         </div>
@@ -52,7 +52,7 @@ export default async function RunDetailPage({ params }: PageProps) {
             className="btn"
             data-testid="smoke-runner:run-detail:link__edit-run"
           >
-            แก้ไขข้อมูล Run
+            Edit Run
           </Link>
         )}
       </div>

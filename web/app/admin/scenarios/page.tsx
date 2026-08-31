@@ -8,8 +8,8 @@ export default async function ScenariosAdminPickSitePage() {
     <main className="container">
       <div className="page-header">
         <div>
-          <h1>จัดการ Scenario</h1>
-          <p className="subtitle">เลือกโรงพยาบาลที่ต้องการจัดการ</p>
+          <h1>Manage Scenarios</h1>
+          <p className="subtitle">Select a hospital to manage</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <Link
@@ -17,14 +17,14 @@ export default async function ScenariosAdminPickSitePage() {
             className="btn"
             data-testid="smoke-runner:admin-scenarios:link__tags"
           >
-            จัดการ Tag →
+            Manage Tags →
           </Link>
           <Link
             href="/admin/suites"
             className="btn"
             data-testid="smoke-runner:admin-scenarios:link__suites"
           >
-            จัดการ Suite →
+            Manage Suites →
           </Link>
           <Link
             href="/admin/master-scenarios"
@@ -40,7 +40,7 @@ export default async function ScenariosAdminPickSitePage() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>โรงพยาบาล / ไซต์</th>
+              <th>Hospital / Site</th>
               <th></th>
             </tr>
           </thead>
@@ -59,7 +59,7 @@ export default async function ScenariosAdminPickSitePage() {
                     className="btn btn-sm"
                     data-testid={`smoke-runner:admin-scenarios:link-manage__${s.id.toLowerCase()}`}
                   >
-                    จัดการ Scenario →
+                    Manage Scenarios →
                   </Link>
                 </td>
               </tr>

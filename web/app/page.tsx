@@ -12,14 +12,14 @@ export default async function HomePage() {
         <div>
           <h1>Smoke Test Runner</h1>
           <p className="subtitle">Let&apos;s Run Some Smoke Tests</p>
-          <p style={{ color: "var(--text-secondary)", marginTop: 4 }}>เลือกโรงพยาบาลเพื่อเริ่ม/ดูรอบทดสอบ</p>
+          <p style={{ color: "var(--text-secondary)", marginTop: 4 }}>Select a hospital to start or view a test run</p>
         </div>
       </div>
 
       {sites.length === 0 ? (
         <div className="card empty-state">
           <div className="empty-icon">—</div>
-          ยังไม่มีข้อมูลโรงพยาบาล
+          No hospitals yet
         </div>
       ) : (
         <div className="site-grid">
@@ -32,7 +32,7 @@ export default async function HomePage() {
             >
               <span className="site-tile-mark">{h.id.slice(0, 2).toUpperCase()}</span>
               <span className="site-tile-name">{h.name}</span>
-              <span className="site-tile-go">ดูรอบทดสอบ →</span>
+              <span className="site-tile-go">View Test Runs →</span>
             </Link>
           ))}
         </div>

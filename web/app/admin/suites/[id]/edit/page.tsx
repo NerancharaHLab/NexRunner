@@ -27,7 +27,7 @@ export default async function EditSuitePage({ params, searchParams }: PageProps)
     const name = String(formData.get("name") || "").trim();
     if (!newId || !name) {
       redirect(
-        `/admin/suites/${encodeURIComponent(suiteId)}/edit?error=${encodeURIComponent("ต้องระบุ Suite ID และชื่อ Suite")}`
+        `/admin/suites/${encodeURIComponent(suiteId)}/edit?error=${encodeURIComponent("Suite ID and Suite name are required")}`
       );
     }
     const scenarioIds = masterScenarios.map((sc) => sc.id).filter((scId) => formData.get(`sc_${scId}`) === "on");
@@ -50,12 +50,12 @@ export default async function EditSuitePage({ params, searchParams }: PageProps)
   return (
     <main className="container">
       <Link href="/admin/suites" className="breadcrumb">
-        ← กลับไปรายการ Suite
+        ← Back to Suite List
       </Link>
 
       <div className="page-header">
         <div>
-          <h1>แก้ไข Suite</h1>
+          <h1>Edit Suite</h1>
         </div>
       </div>
 
@@ -68,19 +68,19 @@ export default async function EditSuitePage({ params, searchParams }: PageProps)
             <input id="id" name="id" defaultValue={suite.id} required data-testid="smoke-runner:admin-suite-form:input__id" />
           </div>
           <div>
-            <label htmlFor="name">ชื่อ Suite</label>
+            <label htmlFor="name">Suite Name</label>
             <input id="name" name="name" defaultValue={suite.name} required data-testid="smoke-runner:admin-suite-form:input__name" />
           </div>
         </div>
 
         <div className="field-row" style={{ gridTemplateColumns: "1fr" }}>
           <div>
-            <label htmlFor="description">คำอธิบาย</label>
+            <label htmlFor="description">Description</label>
             <input id="description" name="description" defaultValue={suite.description} data-testid="smoke-runner:admin-suite-form:input__description" />
           </div>
         </div>
 
-        <div className="section-label">Scenario ในชุดนี้ (จาก Master Library)</div>
+        <div className="section-label">Scenarios in this Suite (from Master Library)</div>
         {masterScenarios.map((sc) => (
           <label key={sc.id} className="checkbox-row" htmlFor={`sc_${sc.id}`} style={{ display: "flex", width: "100%" }}>
             <input
@@ -96,14 +96,14 @@ export default async function EditSuitePage({ params, searchParams }: PageProps)
 
         <div className="form-footer">
           <button type="submit" className="btn btn-primary" data-testid="smoke-runner:admin-suite-form:btn__save">
-            บันทึก
+            Save
           </button>
         </div>
       </form>
 
       <form action={deleteSuiteAction} style={{ marginTop: 4 }}>
         <button type="submit" className="btn btn-danger-text" data-testid="smoke-runner:admin-suite-form:btn__delete">
-          ลบ Suite นี้
+          Delete this Suite
         </button>
       </form>
     </main>
