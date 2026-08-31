@@ -7,6 +7,7 @@ import {
   upsertScenarioResult,
 } from "@/lib/azure/tables";
 import { deleteEvidenceBlob, uploadEvidenceBlob } from "@/lib/azure/blob";
+import { getSuite } from "@/lib/azure/test-suites-table";
 import { getScenariosForSite } from "@/lib/scenarios";
 import {
   computeGateResult,
@@ -38,6 +39,29 @@ function parseEvidence(json: string | undefined): EvidenceItem[] {
   }
 }
 
+/**
+ * Narrows a site's full scenario list down to the ones a specific Run
+ * actually covers. A Run created without a Suite has no `scenarioIdsJson`
+ * and covers every scenario configured for the site — today's original,
+ * unchanged behavior. A Suite-scoped Run snapshots its scenario ids at
+ * creation time (see createRun()), so this must be used everywhere a run's
+ * scenario list or gate result is computed — both getRunDetail() (what the
+ * Scenario Board displays) and updateScenarioResult()'s aggregate/gate
+ * recompute. Missing the latter would mean a scoped run's gate could never
+ * reach READY, since out-of-scope scenarios would count as notrun forever.
+ */
+function scopeScenarios(siteScenarios: ScenarioDef[], run: RunEntity): ScenarioDef[] {
+  if (!run.scenarioIdsJson) return siteScenarios;
+  let ids: Set<string>;
+  try {
+    const parsed = JSON.parse(run.scenarioIdsJson);
+    ids = new Set(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return siteScenarios;
+  }
+  return siteScenarios.filter((s) => ids.has(s.id));
+}
+
 /** Shared by GET /api/runs/[site]/[runId] and the run detail page's server-side fetch. */
 export async function getRunDetail(
   siteKey: string,
@@ -53,7 +77,7 @@ export async function getRunDetail(
   if (!run) return undefined;
 
   const resultsByScenarioId = new Map(results.map((r) => [r.scenarioId, r]));
-  const scenarios: ScenarioWithResult[] = siteFile.scenarios.map((def) => {
+  const scenarios: ScenarioWithResult[] = scopeScenarios(siteFile.scenarios, run).map((def) => {
     const result = resultsByScenarioId.get(def.id);
     return {
       ...def,
@@ -79,6 +103,11 @@ export interface CreateRunInput {
   vn?: string;
   an?: string;
   bill?: string;
+  /** Optional — scope this Run to the union of these Suites' scenarios instead of every scenario
+   *  configured for the site. Real QA practice has no fixed Run-to-Suite cardinality (a Run can
+   *  cover 1 to many Suites depending on its objective/time budget), so this is a list, not a
+   *  single id. */
+  suiteIds?: string[];
 }
 
 export class CreateRunError extends Error {
@@ -108,7 +137,37 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
     );
   }
 
-  const total = siteFile.scenarios.length;
+  // Suite scoping: union every selected Suite's scenario ids together (a
+  // scenario can legitimately be in more than one selected Suite — dedupe
+  // via Set), then intersect with what's actually cloned to this site — a
+  // suite scenario the site never cloned from Master simply isn't included,
+  // not an error. Snapshot the resulting id list onto the Run itself
+  // (scopeScenarios() reads it back later) so editing a Suite's membership
+  // afterward never retroactively changes this Run's scope.
+  let scopedScenarios = siteFile.scenarios;
+  let suiteIdsJson: string | undefined;
+  let suiteNamesJson: string | undefined;
+  let scenarioIdsJson: string | undefined;
+  if (input.suiteIds && input.suiteIds.length > 0) {
+    const suites = await Promise.all(input.suiteIds.map((id) => getSuite(id)));
+    const missingIndex = suites.findIndex((s) => !s);
+    if (missingIndex !== -1) {
+      throw new CreateRunError(`Unknown suiteId: ${input.suiteIds[missingIndex]}`, 400);
+    }
+    const unionIdSet = new Set(suites.flatMap((s) => s!.scenarioIds));
+    scopedScenarios = siteFile.scenarios.filter((s) => unionIdSet.has(s.id));
+    if (scopedScenarios.length === 0) {
+      throw new CreateRunError(
+        "Suite ที่เลือกไม่มี Scenario ที่ Clone มาที่ไซต์นี้เลย — Clone จาก Master ก่อน",
+        400
+      );
+    }
+    suiteIdsJson = JSON.stringify(suites.map((s) => s!.id));
+    suiteNamesJson = JSON.stringify(suites.map((s) => s!.name));
+    scenarioIdsJson = JSON.stringify(scopedScenarios.map((s) => s.id));
+  }
+
+  const total = scopedScenarios.length;
 
   const run: RunEntity = {
     partitionKey: input.siteKey,
@@ -133,6 +192,7 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
     criticalPass: false,
     gateResult: "NOT READY",
     savedAt: new Date().toISOString(),
+    ...(suiteIdsJson && { suiteIdsJson, suiteNamesJson, scenarioIdsJson }),
   };
 
   await upsertRun(run);
@@ -244,22 +304,26 @@ export async function updateScenarioResult(
   await upsertScenarioResult(updated);
   resultsByScenarioId.set(scenarioId, updated);
 
-  // Recompute aggregate metrics across every scenario for this run.
+  // Recompute aggregate metrics + gate across only this run's scoped
+  // scenarios (scopeScenarios() — a Suite-scoped run must not count
+  // out-of-scope scenarios as "notrun" forever, or its gate could never
+  // reach READY).
+  const runScenarios = scopeScenarios(siteFile.scenarios, run);
   const resultsRecord = Object.fromEntries(resultsByScenarioId);
   let passed = 0,
     failed = 0,
     blocked = 0,
     notrun = 0;
-  for (const def of siteFile.scenarios) {
+  for (const def of runScenarios) {
     const status = resultsRecord[def.id]?.status ?? "notrun";
     if (status === "passed") passed++;
     else if (status === "failed") failed++;
     else if (status === "blocked") blocked++;
     else notrun++;
   }
-  const total = siteFile.scenarios.length;
+  const total = runScenarios.length;
   const { criticalPass, gateResult } = computeGateResult({
-    scenarios: siteFile.scenarios,
+    scenarios: runScenarios,
     results: resultsRecord,
   });
 

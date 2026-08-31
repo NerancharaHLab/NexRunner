@@ -31,6 +31,9 @@ export default async function RunDetailPage({ params }: PageProps) {
           <p className="subtitle">
             {detail.run.environment} · {detail.run.testCycle} · {detail.run.executedDate} · Tester:{" "}
             {detail.run.tester || "-"}
+            {detail.run.suiteNamesJson && (
+              <> · Suite: {(JSON.parse(detail.run.suiteNamesJson) as string[]).join(", ")}</>
+            )}
           </p>
         </div>
         {canEdit && (

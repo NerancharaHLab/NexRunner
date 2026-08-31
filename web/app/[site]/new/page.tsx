@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getScenariosForSite } from "@/lib/scenarios";
+import { listSuites } from "@/lib/azure/test-suites-table";
 import { ENVIRONMENTS } from "@/lib/config";
 import { createRun, CreateRunError, suggestNextRunId } from "@/lib/runs";
 import { requireUser } from "@/lib/auth/guard";
@@ -19,6 +20,7 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
 
   const suggestedRunId = await suggestNextRunId(site);
   const today = new Date().toISOString().slice(0, 10);
+  const suites = await listSuites();
 
   async function startRun(formData: FormData) {
     "use server";
@@ -40,6 +42,7 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
         vn: String(formData.get("vn") || ""),
         an: String(formData.get("an") || ""),
         bill: String(formData.get("bill") || ""),
+        suiteIds: suites.map((s) => s.id).filter((id) => formData.get(`suite_${id}`) === "on"),
       });
     } catch (err) {
       if (err instanceof CreateRunError) {
@@ -144,6 +147,31 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
             />
           </div>
         </div>
+
+        <div className="section-label">Suite (เลือกได้หลายชุด — ไม่เลือกเลย = ทดสอบทุก Scenario ของไซต์นี้)</div>
+        {suites.length === 0 ? (
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: 4 }}>
+            ยังไม่มี Suite — <Link href="/admin/suites">ไปสร้างที่หน้าจัดการ Suite</Link>
+          </p>
+        ) : (
+          suites.map((suite) => (
+            <label
+              key={suite.id}
+              className="checkbox-row"
+              htmlFor={`suite_${suite.id}`}
+              style={{ display: "flex", width: "100%" }}
+            >
+              <input
+                type="checkbox"
+                id={`suite_${suite.id}`}
+                name={`suite_${suite.id}`}
+                data-testid={`smoke-runner:new-run:chk-suite__${suite.id.replace(/[^a-zA-Z0-9]/g, "")}`}
+              />
+              <strong>{suite.name}</strong>
+              {suite.description && <span style={{ color: "var(--text-secondary)" }}>&nbsp;— {suite.description}</span>}
+            </label>
+          ))
+        )}
 
         <div className="section-label">Data Chain Tracker</div>
         <div className="field-row">

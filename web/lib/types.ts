@@ -47,6 +47,40 @@ export interface HospitalSiteEntry {
  */
 export const MASTER_SCENARIO_PARTITION = "__MASTER__";
 
+/** Azure Table Storage entity: table "Suites". PartitionKey = "SUITE" (fixed), RowKey = suite id.
+ *  A Suite is a named group of Master Scenario ids (many-to-many — a scenario can be in more than
+ *  one Suite) used to scope which scenarios a Run covers. See azure/test-suites-table.ts.
+ *  Note the file/table name is deliberately "Suites", spelled out fully in code — never
+ *  abbreviated near "Sites" (Hospital Sites, a completely different table) to avoid mix-ups. */
+export const SUITE_PARTITION = "SUITE";
+
+export interface SuiteEntity {
+  partitionKey: string;
+  rowKey: string; // suite id
+  suiteId: string; // original, unsanitized
+  name: string;
+  description: string;
+  scenarioIdsJson: string; // JSON-stringified string[] of Master Scenario ids
+}
+
+/** App-facing Suite shape (Table Storage internals hidden by azure/test-suites-table.ts). */
+export interface SuiteDef {
+  id: string;
+  name: string;
+  description: string;
+  scenarioIds: string[];
+}
+
+export function parseSuiteScenarioIds(entity: { scenarioIdsJson?: string }): string[] {
+  if (!entity.scenarioIdsJson) return [];
+  try {
+    const parsed = JSON.parse(entity.scenarioIdsJson);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export type Role = "admin" | "qa_lead" | "qa_engineer";
 
 export const ALL_ROLES: readonly Role[] = ["admin", "qa_lead", "qa_engineer"];
@@ -155,6 +189,18 @@ export interface RunEntity {
   criticalPass: boolean;
   gateResult: "READY" | "NOT READY";
   savedAt: string; // ISO timestamp, app-controlled (independent of Table Storage's own Timestamp)
+  // Suite scoping — all optional; absent on every Run created before this
+  // feature existed, which means "covers every scenario configured for the
+  // site" (today's original behavior, unchanged). suiteId/suiteName are
+  // traceability-only display fields (a Run can be scoped to 1-to-many
+  // Suites at once, per real QA practice — no fixed cardinality); their
+  // scenarios are unioned together. scenarioIdsJson is the actual snapshot
+  // of which scenario ids this Run covers, taken at creation time so
+  // editing a Suite's membership later never retroactively changes an
+  // already-created Run's scope — see lib/runs.ts's scopeScenarios().
+  suiteIdsJson?: string;
+  suiteNamesJson?: string;
+  scenarioIdsJson?: string;
 }
 
 /** One uploaded evidence screenshot (metadata only — bytes live in Blob Storage, see azure/blob.ts). */

@@ -11,13 +11,22 @@ export default async function ScenariosAdminPickSitePage() {
           <h1>จัดการ Scenario</h1>
           <p className="subtitle">เลือกโรงพยาบาลที่ต้องการจัดการ</p>
         </div>
-        <Link
-          href="/admin/master-scenarios"
-          className="btn"
-          data-testid="smoke-runner:admin-scenarios:link__master-library"
-        >
-          Master Scenario Library →
-        </Link>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Link
+            href="/admin/suites"
+            className="btn"
+            data-testid="smoke-runner:admin-scenarios:link__suites"
+          >
+            จัดการ Suite →
+          </Link>
+          <Link
+            href="/admin/master-scenarios"
+            className="btn"
+            data-testid="smoke-runner:admin-scenarios:link__master-library"
+          >
+            Master Scenario Library →
+          </Link>
+        </div>
       </div>
 
       <div className="data-table-wrap">
