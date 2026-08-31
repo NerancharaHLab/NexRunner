@@ -25,6 +25,9 @@ export default async function TopNav() {
   if (canEdit) {
     manageLinks.push(
       { href: "/admin/scenarios", label: "Manage Scenarios", testid: "smoke-runner:top-nav:link__admin-scenarios" },
+      { href: "/admin/master-scenarios", label: "Master Scenario Library", testid: "smoke-runner:top-nav:link__admin-master-scenarios" },
+      { href: "/admin/suites", label: "Manage Suites", testid: "smoke-runner:top-nav:link__admin-suites" },
+      { href: "/admin/tags", label: "Manage Tags", testid: "smoke-runner:top-nav:link__admin-tags" },
       { href: "/admin/sites", label: "Manage Sites", testid: "smoke-runner:top-nav:link__admin-sites" }
     );
   }

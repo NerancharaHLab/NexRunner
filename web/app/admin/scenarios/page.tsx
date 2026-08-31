@@ -11,36 +11,6 @@ export default async function ScenariosAdminPickSitePage() {
           <h1>Manage Scenarios</h1>
           <p className="subtitle">Select a hospital to manage</p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Link
-            href="/admin/sites"
-            className="btn"
-            data-testid="smoke-runner:admin-scenarios:link__sites"
-          >
-            Manage Sites →
-          </Link>
-          <Link
-            href="/admin/tags"
-            className="btn"
-            data-testid="smoke-runner:admin-scenarios:link__tags"
-          >
-            Manage Tags →
-          </Link>
-          <Link
-            href="/admin/suites"
-            className="btn"
-            data-testid="smoke-runner:admin-scenarios:link__suites"
-          >
-            Manage Suites →
-          </Link>
-          <Link
-            href="/admin/master-scenarios"
-            className="btn"
-            data-testid="smoke-runner:admin-scenarios:link__master-library"
-          >
-            Master Scenario Library →
-          </Link>
-        </div>
       </div>
 
       <div className="data-table-wrap">
