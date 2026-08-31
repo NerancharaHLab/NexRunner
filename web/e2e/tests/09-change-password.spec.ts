@@ -50,7 +50,7 @@ test.describe("Phase 9 - Self-service change password", () => {
       page.waitForURL("/"),
       page.getByTestId("smoke-runner:login:btn__submit").click(),
     ]);
-    await expect(page.locator("h1")).toContainText("เลือกโรงพยาบาล");
+    await expect(page.locator("h1")).toContainText("Smoke Test Runner");
 
     await context.close();
     await deleteUser(email);
