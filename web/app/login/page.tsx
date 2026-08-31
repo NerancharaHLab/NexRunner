@@ -83,6 +83,16 @@ export default async function LoginPage({ searchParams }: PageProps) {
           Log In
         </button>
       </form>
+
+      <details className="forgot-password">
+        <summary data-testid="smoke-runner:login:btn__forgot-password">ลืมรหัสผ่าน?</summary>
+        <p data-testid="smoke-runner:login:text__forgot-password-info">
+          ระบบยังไม่รองรับการรีเซ็ตรหัสผ่านอัตโนมัติ กรุณาติดต่อผู้ดูแลระบบที่{" "}
+          <a href="mailto:neranchara.kae@hlabconsulting.com" data-testid="smoke-runner:login:link__contact-admin">
+            neranchara.kae@hlabconsulting.com
+          </a>
+        </p>
+      </details>
     </main>
   );
 }

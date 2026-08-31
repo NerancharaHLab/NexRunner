@@ -106,6 +106,52 @@ p {
   padding: 72px 20px;
 }
 
+.forgot-password {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.forgot-password summary {
+  cursor: pointer;
+  color: var(--accent-color);
+  font-weight: 600;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 2px;
+  transition: background 0.12s var(--ease-standard), text-decoration-color 0.12s var(--ease-standard);
+}
+
+.forgot-password summary:hover {
+  background: var(--bg-subtle);
+  text-decoration-color: currentColor;
+}
+
+.forgot-password summary::before {
+  content: "▸";
+  font-size: 0.7em;
+  transition: transform 0.15s var(--ease-standard);
+}
+
+.forgot-password[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.forgot-password summary::-webkit-details-marker {
+  display: none;
+}
+
+.forgot-password p {
+  margin-top: 10px;
+  color: var(--text-secondary);
+}
+
 .breadcrumb {
   display: inline-flex;
   align-items: center;
