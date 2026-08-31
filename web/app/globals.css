@@ -729,6 +729,73 @@ a.card:hover,
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+.save-indicator {
+  position: absolute;
+  right: 4px;
+  bottom: -18px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pass-color);
+  opacity: 0;
+  transition: opacity 0.2s var(--ease-standard);
+  pointer-events: none;
+}
+
+.save-indicator.visible {
+  opacity: 1;
+}
+
+/* ---------- Scenario Board sticky mini bar + filter tabs ---------- */
+
+.sticky-mini-bar {
+  position: sticky;
+  top: 64px;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.mini-bar-stat {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.filter-tab {
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1px solid transparent;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s var(--ease-standard), color 0.12s var(--ease-standard);
+}
+
+.filter-tab:hover {
+  background: var(--border-subtle);
+}
+
+.filter-tab.active {
+  background: var(--accent-color);
+  color: #fff;
+}
+
 /* ---------- Top nav ---------- */
 
 .top-nav {

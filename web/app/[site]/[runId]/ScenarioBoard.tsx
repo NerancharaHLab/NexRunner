@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import type { EvidenceItem, RunEntity, ScenarioStatus } from "@/lib/types";
 import { EVIDENCE_MAX_PER_SCENARIO } from "@/lib/types";
@@ -21,8 +21,17 @@ const STATUS_LABELS: Record<ScenarioStatus, string> = {
   notrun: "⚪ Not Run",
 };
 
+type FilterMode = "all" | "notrun" | "failed" | "passed";
+
 function cleanId(id: string): string {
   return id.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+}
+
+function matchesFilter(status: ScenarioStatus, mode: FilterMode): boolean {
+  if (mode === "all") return true;
+  if (mode === "notrun") return status === "notrun";
+  if (mode === "failed") return status === "failed" || status === "blocked";
+  return status === "passed";
 }
 
 export default function ScenarioBoard({ site, runId, initialRun, initialScenarios }: Props) {
@@ -31,8 +40,11 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
   const [, startTransition] = useTransition();
   const [showLinearReport, setShowLinearReport] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [filterMode, setFilterMode] = useState<FilterMode>("all");
+  const [justSavedId, setJustSavedId] = useState<string | null>(null);
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  async function patchScenario(scenarioId: string, body: { status?: ScenarioStatus; notes?: string }) {
+  async function patchScenario(scenarioId: string, body: { status?: ScenarioStatus; notes?: string }): Promise<boolean> {
     const res = await fetch(
       `/api/runs/${site}/${runId}/scenarios/${encodeURIComponent(scenarioId)}`,
       {
@@ -44,10 +56,11 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       alert(`Update failed: ${err.error || res.statusText}`);
-      return;
+      return false;
     }
     const data = await res.json();
     setRun(data.run as RunEntity);
+    return true;
   }
 
   function setStatus(scenarioId: string, status: ScenarioStatus) {
@@ -64,9 +77,25 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
   }
 
   function commitNotes(scenarioId: string, notes: string) {
-    startTransition(() => {
-      patchScenario(scenarioId, { notes });
+    startTransition(async () => {
+      const ok = await patchScenario(scenarioId, { notes });
+      if (ok) {
+        if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
+        setJustSavedId(scenarioId);
+        savedTimeoutRef.current = setTimeout(() => setJustSavedId(null), 2000);
+      }
     });
+  }
+
+  function scrollToNextUnfinished() {
+    setFilterMode("all"); // guarantee the target card is actually rendered, whatever tab was active
+    const next = scenarios.find((s) => s.status === "notrun");
+    if (!next) return;
+    // Wait a tick for the "all" filter to re-render before scrolling, in case a narrower tab had
+    // just removed this card from the DOM.
+    setTimeout(() => {
+      document.getElementById(`scenario-${cleanId(next.id)}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 0);
   }
 
   function setEvidence(scenarioId: string, evidence: EvidenceItem[]) {
@@ -124,8 +153,53 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
     setEvidence(scenarioId, data.evidence as EvidenceItem[]);
   }
 
+  const total = scenarios.length;
+  const notRunCount = scenarios.filter((s) => s.status === "notrun").length;
+  const failedCount = scenarios.filter((s) => s.status === "failed" || s.status === "blocked").length;
+  const passedCount = scenarios.filter((s) => s.status === "passed").length;
+  const recordedCount = total - notRunCount;
+  const visibleScenarios = scenarios.filter((s) => matchesFilter(s.status, filterMode));
+  const hasUnfinished = notRunCount > 0;
+
+  const FILTER_TABS: { mode: FilterMode; label: string; count: number }[] = [
+    { mode: "all", label: "All", count: total },
+    { mode: "notrun", label: "Not Run", count: notRunCount },
+    { mode: "failed", label: "Failed", count: failedCount },
+    { mode: "passed", label: "Passed", count: passedCount },
+  ];
+
   return (
     <>
+      <div className="sticky-mini-bar" data-testid="smoke-runner:run-detail:mini-bar">
+        <span className={`gate-badge ${run.gateResult === "READY" ? "ready" : "notready"}`}>
+          {run.gateResult === "READY" ? "✅ READY" : "❌ NOT READY"}
+        </span>
+        <span className="mini-bar-stat">{run.passRatePercent}% Pass Rate</span>
+        <span className="mini-bar-stat">{recordedCount}/{total} recorded</span>
+        <div className="filter-tabs">
+          {FILTER_TABS.map((tab) => (
+            <button
+              key={tab.mode}
+              type="button"
+              className={`filter-tab ${filterMode === tab.mode ? "active" : ""}`}
+              onClick={() => setFilterMode(tab.mode)}
+              data-testid={`smoke-runner:run-detail:filter-tab__${tab.mode}`}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={scrollToNextUnfinished}
+          disabled={!hasUnfinished}
+          data-testid="smoke-runner:run-detail:btn__next-unfinished"
+        >
+          Next Unfinished →
+        </button>
+      </div>
+
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
           <div className="stat-card-row" style={{ flex: "1 1 320px" }}>
@@ -180,10 +254,15 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
         <LinearReportModal run={run} scenarios={scenarios} onClose={() => setShowLinearReport(false)} />
       )}
 
-      {scenarios.map((sc) => {
+      {visibleScenarios.map((sc) => {
         const id = cleanId(sc.id);
         return (
-          <div key={sc.id} className={`scenario-item ${sc.status}`} data-testid={`smoke-runner:scenario-item:card__${id}`}>
+          <div
+            key={sc.id}
+            id={`scenario-${id}`}
+            className={`scenario-item ${sc.status}`}
+            data-testid={`smoke-runner:scenario-item:card__${id}`}
+          >
             <div style={{ minWidth: 0 }}>
               <div className="scenario-id">
                 {sc.id}
@@ -206,15 +285,23 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
                 </button>
               ))}
             </div>
-            <input
-              type="text"
-              className="notes-input"
-              placeholder="Notes / Bug ID (optional)..."
-              value={sc.notes}
-              data-testid={`smoke-runner:scenario-item:input-notes__${id}`}
-              onChange={(e) => setNotes(sc.id, e.target.value)}
-              onBlur={(e) => commitNotes(sc.id, e.target.value)}
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                type="text"
+                className="notes-input"
+                placeholder="Notes / Bug ID (optional)..."
+                value={sc.notes}
+                data-testid={`smoke-runner:scenario-item:input-notes__${id}`}
+                onChange={(e) => setNotes(sc.id, e.target.value)}
+                onBlur={(e) => commitNotes(sc.id, e.target.value)}
+              />
+              <span
+                className={`save-indicator ${justSavedId === sc.id ? "visible" : ""}`}
+                data-testid={`smoke-runner:scenario-item:save-indicator__${id}`}
+              >
+                Saved ✓
+              </span>
+            </div>
 
             <div className="evidence-area">
               <div className="evidence-head">
