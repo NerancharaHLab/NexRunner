@@ -577,6 +577,10 @@ a.card:hover,
   border-left-color: var(--notrun-color);
 }
 
+.scenario-item.focused {
+  box-shadow: 0 0 0 2px var(--accent-color), var(--shadow-md);
+}
+
 .scenario-item .scenario-id {
   font-weight: 700;
   font-size: 0.92rem;

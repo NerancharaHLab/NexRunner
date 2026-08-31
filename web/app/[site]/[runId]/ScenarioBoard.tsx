@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import type { EvidenceItem, RunEntity, ScenarioStatus } from "@/lib/types";
 import { EVIDENCE_MAX_PER_SCENARIO } from "@/lib/types";
@@ -43,6 +43,9 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
   const [justSavedId, setJustSavedId] = useState<string | null>(null);
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [showPassAllConfirm, setShowPassAllConfirm] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
 
   async function patchScenario(scenarioId: string, body: { status?: ScenarioStatus; notes?: string }): Promise<boolean> {
     const res = await fetch(
@@ -96,6 +99,23 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
     setTimeout(() => {
       document.getElementById(`scenario-${cleanId(next.id)}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 0);
+  }
+
+  async function passAllRemaining() {
+    const targets = scenarios.filter((s) => s.status === "notrun");
+    setShowPassAllConfirm(false);
+    setBulkProgress({ done: 0, total: targets.length });
+    // Sequential, not Promise.all — updateScenarioResult() in lib/runs.ts does a
+    // read-all-results -> recompute-aggregate -> write-Run cycle per call. Concurrent calls would
+    // each read a stale snapshot of the others' in-flight writes and race the Run's final
+    // aggregate numbers. N is small (a smoke-test scenario count), so sequential is cheap enough.
+    for (let i = 0; i < targets.length; i++) {
+      const scenarioId = targets[i].id;
+      setScenarios((prev) => prev.map((s) => (s.id === scenarioId ? { ...s, status: "passed" } : s)));
+      await patchScenario(scenarioId, { status: "passed" });
+      setBulkProgress({ done: i + 1, total: targets.length });
+    }
+    setBulkProgress(null);
   }
 
   function setEvidence(scenarioId: string, evidence: EvidenceItem[]) {
@@ -161,6 +181,42 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
   const visibleScenarios = scenarios.filter((s) => matchesFilter(s.status, filterMode));
   const hasUnfinished = notRunCount > 0;
 
+  // Reset keyboard focus whenever the visible list changes shape (switching tabs), so it can
+  // never point past the end of a narrower filtered list.
+  useEffect(() => {
+    setFocusedIndex(0);
+  }, [filterMode]);
+
+  // Keyboard shortcuts: 1/2/3 = Pass/Fail/Block on the focused card, Up/Down move focus. Ignored
+  // entirely while typing in a Notes field, so e.g. "Bug 123" never triggers a status change.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const tag = (document.activeElement as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (visibleScenarios.length === 0) return;
+
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedIndex((i) => {
+          const next = e.key === "ArrowDown" ? Math.min(i + 1, visibleScenarios.length - 1) : Math.max(i - 1, 0);
+          const target = visibleScenarios[next];
+          if (target) {
+            document.getElementById(`scenario-${cleanId(target.id)}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+          return next;
+        });
+      } else if (e.key === "1" || e.key === "2" || e.key === "3") {
+        const target = visibleScenarios[focusedIndex];
+        if (!target) return;
+        const status: ScenarioStatus = e.key === "1" ? "passed" : e.key === "2" ? "failed" : "blocked";
+        setStatus(target.id, status);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleScenarios, focusedIndex]);
+
   // Macro-to-micro order: Version -> Environment -> Test Cycle -> Date. Version is dropped
   // entirely (not shown as an empty bullet) when the run has none.
   const contextSummary = [run.version, run.environment, run.testCycle, run.executedDate]
@@ -204,7 +260,48 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
         >
           Next Unfinished →
         </button>
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={() => setShowPassAllConfirm(true)}
+          disabled={!hasUnfinished || bulkProgress !== null}
+          data-testid="smoke-runner:run-detail:btn__pass-all-remaining"
+        >
+          {bulkProgress ? `Passing... ${bulkProgress.done}/${bulkProgress.total}` : "Pass All Remaining"}
+        </button>
       </div>
+
+      {showPassAllConfirm && (
+        <div className="modal-overlay" data-testid="smoke-runner:pass-all-confirm:modal__dialog" onClick={() => setShowPassAllConfirm(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Pass All Remaining?</h3>
+            </div>
+            <p>
+              This will mark {notRunCount} remaining Not Run scenario{notRunCount === 1 ? "" : "s"} as
+              Passed. Continue?
+            </p>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => setShowPassAllConfirm(false)}
+                data-testid="smoke-runner:pass-all-confirm:btn__cancel"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={passAllRemaining}
+                data-testid="smoke-runner:pass-all-confirm:btn__confirm"
+              >
+                Yes, Pass All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
@@ -263,14 +360,15 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
         <LinearReportModal run={run} scenarios={scenarios} onClose={() => setShowLinearReport(false)} />
       )}
 
-      {visibleScenarios.map((sc) => {
+      {visibleScenarios.map((sc, index) => {
         const id = cleanId(sc.id);
         return (
           <div
             key={sc.id}
             id={`scenario-${id}`}
-            className={`scenario-item ${sc.status}`}
+            className={`scenario-item ${sc.status} ${index === focusedIndex ? "focused" : ""}`}
             data-testid={`smoke-runner:scenario-item:card__${id}`}
+            onClick={() => setFocusedIndex(index)}
           >
             <div style={{ minWidth: 0 }}>
               <div className="scenario-id">
