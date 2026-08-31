@@ -10,11 +10,11 @@ Log ถาวรของงาน Migration จาก Static HTML/CSS/JS (local
 >
 > ℹ️ **หมายเหตุ (อัปเดตกฎ)**: ผู้ใช้ยืนยันให้เข้มขึ้น — งานทุกขนาด **แม้แก้ไฟล์เดียว/Text-CSS จุดเดียว** ก็ต้องผ่าน `EnterPlanMode` + บันทึก Task ลง `TODO.md` **ก่อน**เริ่มเขียนโค้ดเสมอ ไม่มีข้อยกเว้นสำหรับ "งานเล็ก" อีกต่อไป (เพิ่มเป็นกฎถาวรใน `AGENTS.md` แล้ว)
 
-- [ ] **[P1]** **กำลังทำตอนนี้** — ตั้งค่า Git Repository แบบ Trunk-based Development + Conventional Commits + Release Tagging:
-  - [ ] สร้าง `.gitignore` ที่ระดับ Root เพื่อควบคุมไฟล์ Sensitive, Build Artifacts, Storage Emulators, และ Logs
-  - [ ] รัน `git init -b main` และทำ Initial Commit บน `main`
-  - [ ] ปรับปรุงกฎใน `~/.gemini/config/AGENTS.md` (Global) และ `AGENTS.md` (Project) เพิ่มหมวดหมู่ Git Flow & Release Strategy
-  - [ ] ตรวจสอบความถูกต้องของ Git Status, Rules, และความสะอาดของ Repository
+- [x] **[P1]** ตั้งค่า Git Repository แบบ Trunk-based Development + Conventional Commits + Release Tagging:
+  - [x] สร้าง `.gitignore` ที่ระดับ Root เพื่อควบคุมไฟล์ Sensitive, Build Artifacts, Storage Emulators, และ Logs
+  - [x] รัน `git init -b main` และทำ Initial Commit บน `main`
+  - [x] ปรับปรุงกฎใน `~/.gemini/config/AGENTS.md` (Global) และ `AGENTS.md` (Project) เพิ่มหมวดหมู่ Git Flow & Release Strategy
+  - [x] ตรวจสอบความถูกต้องของ Git Status, Rules, และความสะอาดของ Repository
 
 - [ ] **[P1]** Master Scenario Library + Clone-to-Site (แผนเต็ม: `~/.claude/plans/streamed-wibbling-lamport.md`) ผู้ใช้ขอให้ Scenario ใช้ซ้ำได้หลาย รพ. ยืนยันผ่าน AskUserQuestion เป็นแบบ **Clone + Master** (ไม่ใช่ Live-shared/Many-to-many): แก้ที่ Master แล้วแต่ละ รพ. ต้องกด Re-clone เองถึงจะได้ของใหม่ (ทับของเดิม), ไม่ Sync อัตโนมัติ:
   - [ ] `lib/types.ts` — เพิ่ม `MASTER_SCENARIO_PARTITION = "__MASTER__"` (Reuse Scenarios Table เดิม ไม่สร้าง Table ใหม่ ใช้ Partition Key สงวนที่ชนกับ Site จริงไม่ได้)
