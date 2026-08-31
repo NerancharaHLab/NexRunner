@@ -7,6 +7,7 @@ import { listTags } from "@/lib/azure/tags-table";
 import { ENVIRONMENTS } from "@/lib/config";
 import { createRun, CreateRunError, suggestNextRunId } from "@/lib/runs";
 import { requireUser } from "@/lib/auth/guard";
+import FilterPicker from "./FilterPicker";
 
 interface PageProps {
   params: Promise<{ site: string }>;
@@ -98,191 +99,114 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
       {error && <div className="error-banner">{error}</div>}
 
       <form action={startRun} className="card">
-        <div className="section-label">Test Run Info</div>
-        <div className="field-row">
-          <div>
-            <label htmlFor="runId">Run ID</label>
-            <input
-              id="runId"
-              name="runId"
-              defaultValue={suggestedRunId}
-              required
-              data-testid="smoke-runner:new-run:input__run-id"
-            />
-          </div>
-          <div>
-            <label htmlFor="environment">Environment</label>
-            <select
-              id="environment"
-              name="environment"
-              defaultValue="STAGING"
-              data-testid="smoke-runner:new-run:select__environment"
-            >
-              {ENVIRONMENTS.map((env) => (
-                <option key={env} value={env}>
-                  {env}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="testCycle">Test Cycle</label>
-            <input
-              id="testCycle"
-              name="testCycle"
-              defaultValue="Cycle 1"
-              data-testid="smoke-runner:new-run:input__test-cycle"
-            />
-          </div>
-          <div>
-            <label htmlFor="executedDate">Date Executed</label>
-            <input
-              id="executedDate"
-              name="executedDate"
-              type="date"
-              defaultValue={today}
-              data-testid="smoke-runner:new-run:input__executed-date"
-            />
-          </div>
-          <div>
-            <label htmlFor="tester">Tester Name</label>
-            {/* Locked to the logged-in user — not an <input>, so it can't be
-                changed client-side either (see startRun above for the
-                server-side enforcement). */}
-            <div
-              id="tester"
-              className="field-static-value"
-              data-testid="smoke-runner:new-run:input__tester"
-            >
-              {user.displayName}
-            </div>
-          </div>
-          <div>
-            <label htmlFor="version">System Version</label>
-            <input
-              id="version"
-              name="version"
-              placeholder="v1.0.0"
-              data-testid="smoke-runner:new-run:input__version"
-            />
-          </div>
-          <div>
-            <label htmlFor="deliveryBatch">Delivery Batch</label>
-            <input
-              id="deliveryBatch"
-              name="deliveryBatch"
-              placeholder="D 1"
-              data-testid="smoke-runner:new-run:input__delivery-batch"
-            />
-          </div>
-        </div>
-
-        <div className="section-label">Suites (select multiple — none selected = test every Scenario for this site)</div>
-        {suites.length === 0 ? (
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: 4 }}>
-            No Suites yet — <Link href="/admin/suites">create one on the Manage Suites page</Link>
-          </p>
-        ) : (
-          suites.map((suite) => (
-            <label
-              key={suite.id}
-              className="checkbox-row"
-              htmlFor={`suite_${suite.id}`}
-              style={{ display: "flex", width: "100%" }}
-            >
-              <input
-                type="checkbox"
-                id={`suite_${suite.id}`}
-                name={`suite_${suite.id}`}
-                data-testid={`smoke-runner:new-run:chk-suite__${suite.id.replace(/[^a-zA-Z0-9]/g, "")}`}
-              />
-              <strong>{suite.name}</strong>
-              {suite.description && <span style={{ color: "var(--text-secondary)" }}>&nbsp;— {suite.description}</span>}
-            </label>
-          ))
-        )}
-
-        <div className="section-label">Tag Filter (applies on top of the Suites above, if selected — none selected = no Tag filter)</div>
-        {tags.length === 0 ? (
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: 4 }}>
-            No Tags yet — <Link href="/admin/tags">create one on the Manage Tags page</Link>
-          </p>
-        ) : (
-          <>
-            <div style={{ marginBottom: 4 }}>
-              <label htmlFor="tagIncludeMode" style={{ fontSize: "0.85rem" }}>
-                Include Tag condition:{" "}
-              </label>
-              <select
-                id="tagIncludeMode"
-                name="tagIncludeMode"
-                defaultValue="OR"
-                data-testid="smoke-runner:new-run:select__tag-include-mode"
-              >
-                <option value="OR">Has at least 1 selected Tag (OR)</option>
-                <option value="AND">Must have every selected Tag (AND)</option>
-              </select>
-            </div>
-            <div className="field-row" style={{ gridTemplateColumns: "1fr 1fr" }}>
+        <div className="new-run-columns">
+          <div className="new-run-col-left">
+            <div className="section-label">Test Run Info</div>
+            <div className="field-row">
               <div>
-                <div style={{ fontSize: "0.85rem", marginBottom: 4 }}>Must have (Include)</div>
-                {tags.map((tag) => (
-                  <label
-                    key={tag.id}
-                    className="checkbox-row"
-                    htmlFor={`tag_include_${tag.id}`}
-                    style={{ display: "flex", width: "100%" }}
-                  >
-                    <input
-                      type="checkbox"
-                      id={`tag_include_${tag.id}`}
-                      name={`tag_include_${tag.id}`}
-                      data-testid={`smoke-runner:new-run:chk-tag-include__${tag.id}`}
-                    />
-                    {tag.name}
-                  </label>
-                ))}
+                <label htmlFor="runId">Run ID</label>
+                <input
+                  id="runId"
+                  name="runId"
+                  defaultValue={suggestedRunId}
+                  required
+                  data-testid="smoke-runner:new-run:input__run-id"
+                />
               </div>
               <div>
-                <div style={{ fontSize: "0.85rem", marginBottom: 4 }}>Must not have (Exclude)</div>
-                {tags.map((tag) => (
-                  <label
-                    key={tag.id}
-                    className="checkbox-row"
-                    htmlFor={`tag_exclude_${tag.id}`}
-                    style={{ display: "flex", width: "100%" }}
-                  >
-                    <input
-                      type="checkbox"
-                      id={`tag_exclude_${tag.id}`}
-                      name={`tag_exclude_${tag.id}`}
-                      data-testid={`smoke-runner:new-run:chk-tag-exclude__${tag.id}`}
-                    />
-                    {tag.name}
-                  </label>
-                ))}
+                <label htmlFor="environment">Environment</label>
+                <select
+                  id="environment"
+                  name="environment"
+                  defaultValue="STAGING"
+                  data-testid="smoke-runner:new-run:select__environment"
+                >
+                  {ENVIRONMENTS.map((env) => (
+                    <option key={env} value={env}>
+                      {env}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="testCycle">Test Cycle</label>
+                <input
+                  id="testCycle"
+                  name="testCycle"
+                  defaultValue="Cycle 1"
+                  data-testid="smoke-runner:new-run:input__test-cycle"
+                />
+              </div>
+              <div>
+                <label htmlFor="executedDate">Date Executed</label>
+                <input
+                  id="executedDate"
+                  name="executedDate"
+                  type="date"
+                  defaultValue={today}
+                  data-testid="smoke-runner:new-run:input__executed-date"
+                />
+              </div>
+              <div>
+                <label htmlFor="tester">Tester Name</label>
+                {/* Locked to the logged-in user — not an <input>, so it can't be
+                    changed client-side either (see startRun above for the
+                    server-side enforcement). */}
+                <div
+                  id="tester"
+                  className="field-static-value"
+                  data-testid="smoke-runner:new-run:input__tester"
+                >
+                  {user.displayName}
+                </div>
+              </div>
+              <div>
+                <label htmlFor="version">System Version</label>
+                <input
+                  id="version"
+                  name="version"
+                  placeholder="v1.0.0"
+                  data-testid="smoke-runner:new-run:input__version"
+                />
+              </div>
+              <div>
+                <label htmlFor="deliveryBatch">Delivery Batch</label>
+                <input
+                  id="deliveryBatch"
+                  name="deliveryBatch"
+                  placeholder="D 1"
+                  data-testid="smoke-runner:new-run:input__delivery-batch"
+                />
               </div>
             </div>
-          </>
-        )}
 
-        <div className="section-label">Data Chain Tracker</div>
-        <div className="field-row">
-          <div>
-            <label htmlFor="hn">Primary HN</label>
-            <input id="hn" name="hn" data-testid="smoke-runner:new-run:input__hn" />
+            <div className="section-label">Data Chain Tracker</div>
+            <div className="field-row">
+              <div>
+                <label htmlFor="hn">Primary HN</label>
+                <input id="hn" name="hn" data-testid="smoke-runner:new-run:input__hn" />
+              </div>
+              <div>
+                <label htmlFor="vn">Primary VN</label>
+                <input id="vn" name="vn" data-testid="smoke-runner:new-run:input__vn" />
+              </div>
+              <div>
+                <label htmlFor="an">Primary AN</label>
+                <input id="an" name="an" data-testid="smoke-runner:new-run:input__an" />
+              </div>
+              <div>
+                <label htmlFor="bill">Bill No. / INV</label>
+                <input id="bill" name="bill" data-testid="smoke-runner:new-run:input__bill" />
+              </div>
+            </div>
           </div>
-          <div>
-            <label htmlFor="vn">Primary VN</label>
-            <input id="vn" name="vn" data-testid="smoke-runner:new-run:input__vn" />
-          </div>
-          <div>
-            <label htmlFor="an">Primary AN</label>
-            <input id="an" name="an" data-testid="smoke-runner:new-run:input__an" />
-          </div>
-          <div>
-            <label htmlFor="bill">Bill No. / INV</label>
-            <input id="bill" name="bill" data-testid="smoke-runner:new-run:input__bill" />
+
+          <div className="new-run-col-right">
+            <div className="section-label">Scope (optional — leave empty to test every Scenario for this site)</div>
+            <FilterPicker
+              suites={suites.map((s) => ({ id: s.id, name: s.name, description: s.description }))}
+              tags={tags}
+            />
           </div>
         </div>
 
