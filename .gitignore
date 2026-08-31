@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js & Build outputs
+.next/
+out/
+build/
+dist/
+coverage/
+
+# Local Storage Emulators (Azurite data & logs)
+.azurite/
+*.azurite/
+debug.log
+
+# Environment variables & secrets
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env*.example
+
+# Testing & E2E Artifacts
+playwright-report/
+**/playwright-report/
+test-results/
+**/test-results/
+blob-report/
+
+# OS & IDE
+.DS_Store
+*.pem
+*.tsbuildinfo
+next-env.d.ts
+.vercel/
+~$*
+.~lock.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*

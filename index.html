@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏥 Smoke Test Runner & Report Generator</title>
+
+    <!-- Google Fonts & Font Awesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Modular CSS Stylesheet -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <!-- Application Header -->
+        <header>
+            <div class="header-title">
+                <h1><i class="fa-solid fa-hospital-user" style="color: #0052CC;"></i> Smoke Test Runner & Report Generator</h1>
+                <p>ระบบบันทึกผลการทดสอบความพร้อม (Smoke Test) E2E OPD to IPD พร้อมออกรายงาน</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" data-testid="smoke-runner:header:btn__reset-all" onclick="resetAllData()"><i class="fa-solid fa-rotate-left"></i> เริ่มรอบทดสอบใหม่</button>
+                <button class="btn btn-secondary" data-testid="smoke-runner:header:btn__load-result" onclick="triggerImportResult()"><i class="fa-solid fa-folder-open"></i> โหลดผล</button>
+                <button class="btn btn-secondary" data-testid="smoke-runner:header:btn__save-result" onclick="saveTestResultJSON()"><i class="fa-solid fa-floppy-disk"></i> บันทึกผล</button>
+                <button class="btn btn-secondary" data-testid="smoke-runner:header:btn__run-history" onclick="openRunHistoryModal()"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติการ Run</button>
+                <button class="btn btn-executive" data-testid="smoke-runner:header:btn__export-executive" onclick="exportExecutiveReport()"><i class="fa-solid fa-chart-line"></i> ออกรายงานผู้บริหาร</button>
+                <button class="btn btn-primary" data-testid="smoke-runner:header:btn__export-linear" onclick="exportLinearReport()"><i class="fa-solid fa-paper-plane"></i> ออกรายงาน Linear</button>
+                <input type="file" id="import-result-file" accept=".json" onchange="loadTestResultJSON(event)" style="display:none;">
+                <input type="file" id="import-history-file" data-testid="smoke-runner:run-history:input__import-file" accept=".json" onchange="loadRunHistoryJSON(event)" style="display:none;">
+            </div>
+        </header>
+
+        <!-- Top Dashboard & Data Chain Tracker -->
+        <div class="dashboard-grid">
+            <!-- Data Chain Tracker Container (Rendered Dynamically from sites.json) -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa-solid fa-link" style="color: #0052CC;"></i> Data Chain Tracker (ข้อมูลสายสะสม)
+                </div>
+                <div class="datachain-grid" id="datachain-fields-container">
+                    <!-- Rendered dynamically by app.js from dataChainFields schema -->
+                </div>
+            </div>
+
+            <!-- Execution Status & Decision Gate Stats -->
+            <div class="card stats-container">
+                <div class="card-header">
+                    <i class="fa-solid fa-chart-pie" style="color: #00875A;"></i> Status Summary & Gate
+                </div>
+                <div class="stat-boxes">
+                    <div class="stat-box">
+                        <div class="num" style="color: var(--pass-color);" id="cnt-passed">0</div>
+                        <div class="label">Passed</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="num" style="color: var(--fail-color);" id="cnt-failed">0</div>
+                        <div class="label">Failed</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="num" style="color: var(--block-color);" id="cnt-blocked">0</div>
+                        <div class="label">Blocked</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="num" style="color: var(--notrun-color);" id="cnt-notrun">17</div>
+                        <div class="label">Not Run</div>
+                    </div>
+                </div>
+
+                <div class="progress-bar-container">
+                    <div class="progress-info">
+                        <span>Pass Rate Completion</span>
+                        <strong id="pass-rate-text">0% (0/17)</strong>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div id="gate-status-badge" class="gate-status gate-notready">
+                    <i class="fa-solid fa-circle-xmark"></i> NOT READY FOR UAT
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="controls-bar">
+            <div class="filter-buttons" id="filter-buttons-container">
+                <!-- Rendered dynamically by app.js from activeScenarios -->
+            </div>
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="search-input" data-testid="smoke-runner:controls:input__search" placeholder="ค้นหา Scenario ID, ชื่อบททดสอบ..." onkeyup="filterSearch()">
+            </div>
+        </div>
+
+        <!-- Dynamic Scenarios List -->
+        <div class="scenarios-list" id="scenarios-container">
+            <!-- Rendered dynamically by app.js -->
+        </div>
+    </div>
+
+    <!-- Linear Report Output Modal -->
+    <div class="modal-overlay" id="report-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-file-contract" style="color: #0052CC;"></i> Linear Report Summary (Sign-off Matrix)</h3>
+                <button class="close-modal" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
+                คัดกรองข้อความ Markdown สรุปผลนี้ แล้วนำไปวางส่งใน Linear เพื่อใช้เป็นหลักฐานยืนยันก่อนเริ่มรอบ UAT:
+            </p>
+            <textarea id="report-output" class="report-textarea" readonly></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn btn-secondary" onclick="closeModal()">ปิดหน้าต่าง</button>
+                <button class="btn btn-success" onclick="copyReportToClipboard()"><i class="fa-regular fa-copy"></i> คัดกรองข้อความ (Copy Report)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast-msg">
+        <i class="fa-solid fa-circle-check"></i> <span id="toast-text">สำเร็จ</span>
+    </div>
+
+    <!-- Evidence Image Lightbox -->
+    <div class="lightbox-overlay" id="evidence-lightbox">
+        <button class="lightbox-close" onclick="closeEvidenceLightbox()"><i class="fa-solid fa-xmark"></i></button>
+        <img id="evidence-lightbox-img" src="" alt="Evidence preview">
+    </div>
+
+    <!-- Modular Application Logic Script -->
+    <script src="js/app.js"></script>
+
+
+    <!-- Executive Sign-off Report Modal -->
+    <div class="modal-overlay" id="exec-report-modal">
+        <div class="executive-modal-box">
+            <div class="exec-header">
+                <div>
+                    <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--accent-color);"><i class="fa-solid fa-square-poll-vertical"></i> EXECUTIVE VERIFICATION & SIGN-OFF REPORT</h2>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">รายงานสรุปผลการทดสอบระดับผู้บริหารและอนุมัติลงนามก่อนเปิดรอบ UAT</p>
+                </div>
+                <button class="close-modal" onclick="closeExecutiveModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Decision Gate Status Banner -->
+            <div id="exec-gate-banner" class="decision-gate-banner gate-rejected">
+                <div>
+                    <div class="gate-title"><i class="fa-solid fa-circle-xmark"></i> REJECTED FOR UAT SIGN-OFF</div>
+                    <div class="gate-subtitle">ระบบยังมีข้อบกพร่องใน Critical Flow หรือยังมีรายการทดสอบไม่ผ่าน</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.8rem; opacity: 0.8;">PASS RATE</div>
+                    <div style="font-size: 1.8rem; font-weight: 800;" id="exec-rate-big">0%</div>
+                </div>
+            </div>
+
+            <!-- Traceability Info -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; font-size: 0.88rem; background: rgba(255,255,255,0.02); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div><strong>🏥 Hospital Site:</strong> <span id="exec-site-name">-</span></div>
+                <div><strong>🗓 Issued Date:</strong> <span id="exec-doc-date">-</span></div>
+                <div><strong>📌 Version:</strong> <span id="exec-ver">-</span> | <strong>Batch:</strong> <span id="exec-batch">-</span></div>
+                <div><strong>🌐 Environment:</strong> <span id="exec-env-name">-</span> | <strong>Cycle/Run:</strong> <span id="exec-run-cycle">-</span></div>
+                <div><strong>🔗 HN:</strong> <span id="exec-hn">-</span> | <strong>VN:</strong> <span id="exec-vn">-</span></div>
+                <div><strong>🔗 AN:</strong> <span id="exec-an">-</span> | <strong>Bill:</strong> <span id="exec-bill">-</span></div>
+            </div>
+
+            <!-- Executive KPI Grid -->
+            <div class="exec-kpi-grid">
+                <div class="exec-kpi-card">
+                    <div class="num" style="color: var(--pass-color);" id="exec-kpi-pass">0</div>
+                    <div class="label">Passed</div>
+                </div>
+                <div class="exec-kpi-card">
+                    <div class="num" style="color: var(--fail-color);" id="exec-kpi-fail">0</div>
+                    <div class="label">Failed</div>
+                </div>
+                <div class="exec-kpi-card">
+                    <div class="num" style="color: var(--block-color);" id="exec-kpi-block">0</div>
+                    <div class="label">Blocked</div>
+                </div>
+                <div class="exec-kpi-card">
+                    <div class="num" style="color: var(--notrun-color);" id="exec-kpi-notrun">0</div>
+                    <div class="label">Not Run</div>
+                </div>
+            </div>
+
+            <!-- Critical Matrix -->
+            <h4 style="margin-bottom: 10px; color: var(--accent-color); font-size: 0.95rem;"><i class="fa-solid fa-triangle-exclamation"></i> Critical Flow Verification Matrix</h4>
+            <table class="exec-table">
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Scenario ID</th>
+                        <th style="width: 45%;">Scenario Name</th>
+                        <th style="width: 25%;">Role</th>
+                        <th style="width: 15%; text-align: center;">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="exec-crit-body"></tbody>
+            </table>
+
+            <!-- Defect Matrix -->
+            <h4 style="margin-bottom: 10px; color: #DE350B; font-size: 0.95rem;"><i class="fa-solid fa-bug"></i> Defect Log & Risk Audit</h4>
+            <table class="exec-table">
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Scenario ID</th>
+                        <th style="width: 45%;">Scenario Name</th>
+                        <th style="width: 25%;">Defect / Remarks</th>
+                        <th style="width: 15%; text-align: center;">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="exec-defect-body"></tbody>
+            </table>
+
+            <!-- Signatures -->
+            <div class="exec-sig-grid">
+                <div class="exec-sig-box">
+                    <div style="font-size: 0.85rem; font-weight: 700;">PREPARED BY (QA LEAD)</div>
+                    <div class="exec-sig-line"></div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);" id="exec-tester-sig">( .................................................... )</div>
+                </div>
+                <div class="exec-sig-box">
+                    <div style="font-size: 0.85rem; font-weight: 700;">APPROVED FOR UAT (EXECUTIVE / CLIENT)</div>
+                    <div class="exec-sig-line"></div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">( .................................................... )</div>
+                </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                <button class="btn btn-secondary" onclick="closeExecutiveModal()">ปิดหน้าต่าง</button>
+                <button class="btn btn-primary" onclick="openExecutiveReportPage()"><i class="fa-solid fa-up-right-from-square"></i> เปิดในหน้าใหม่ A4 Printable</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Run History Modal -->
+    <div class="modal-overlay" id="run-history-modal">
+        <div class="executive-modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-clock-rotate-left" style="color: #0052CC;"></i> ประวัติการ Run (Run History)</h3>
+                <button class="close-modal" data-testid="smoke-runner:run-history:btn__close" onclick="closeRunHistoryModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
+                รวมรายการรอบทดสอบทุก Site ที่บันทึกไว้ในเครื่องนี้ — กด "โหลดประวัติ" เพื่อนำเข้าไฟล์ run_history.json จากทีม หรือ "Export ประวัติ" เพื่อบันทึกทับไฟล์กลาง
+            </p>
+            <div style="overflow-x:auto;">
+                <table class="exec-table" data-testid="smoke-runner:run-history:table__runs">
+                    <thead>
+                        <tr>
+                            <th>Site</th><th>Run #</th><th>Run ID</th><th>Environment</th>
+                            <th>วันที่</th><th>ผู้ทดสอบ</th>
+                            <th>Passed</th><th>Failed</th><th>Blocked</th><th>Not Run</th>
+                            <th>Pass Rate</th><th style="text-align:center;">Gate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="run-history-tbody">
+                        <!-- Rendered dynamically by renderRunHistoryTable() -->
+                    </tbody>
+                </table>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                <button class="btn btn-secondary" onclick="closeRunHistoryModal()">ปิดหน้าต่าง</button>
+                <button class="btn btn-secondary" data-testid="smoke-runner:run-history:btn__import" onclick="triggerImportRunHistory()"><i class="fa-solid fa-folder-open"></i> โหลดประวัติ</button>
+                <button class="btn btn-primary" data-testid="smoke-runner:run-history:btn__export" onclick="exportRunHistoryJSON()"><i class="fa-solid fa-file-export"></i> Export ประวัติ</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

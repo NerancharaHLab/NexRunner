@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafana k6 Performance Testing Complete Resource & Guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --bg-table-header: #1e293b;
+            --bg-table-stripe: #182234;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.15);
+            --accent: #34d399;
+            --warning: #fbbf24;
+            --purple: #a78bfa;
+            --rose: #fb7185;
+            --shadow-glow: 0 0 25px rgba(56, 189, 248, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Kanit', 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1250px;
+            width: 100%;
+        }
+
+        /* Header Styling */
+        .header-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--accent) 100%);
+        }
+
+        .header-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .meta-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .pill {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-header {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        /* Code Blocks */
+        pre {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.25rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #e2e8f0;
+        }
+
+        .inline-code {
+            background: #090d16;
+            color: var(--primary);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.88rem;
+        }
+
+        /* Tables */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--bg-table-header);
+            color: var(--primary);
+            font-weight: 600;
+            padding: 14px 16px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:nth-child(even) { background-color: var(--bg-table-stripe); }
+
+        .callout {
+            background: rgba(56, 189, 248, 0.08);
+            border-left: 4px solid var(--primary);
+            padding: 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header-card">
+            <h1 class="header-title">🚀 Grafana k6 Performance Testing Guide</h1>
+            <p class="header-subtitle">คู่มือและแหล่งทรัพยากรฉบับสมบูรณ์สำหรับการเขียนสคริปต์ และบริหารจัดการ Performance Test ด้วย Grafana k6 (รองรับสเกล 400 Concurrent VUs)</p>
+            <div class="meta-pills">
+                <div class="pill">⚡ Tool: <strong>Grafana k6</strong></div>
+                <div class="pill">🔷 Language: <strong>TypeScript / JavaScript</strong></div>
+                <div class="pill">🎯 Protocol: <strong>GraphQL / REST HTTP/2</strong></div>
+            </div>
+        </div>
+
+        <!-- Section 1: Architecture -->
+        <div class="section-card">
+            <h2 class="section-header">1. สถาปัตยกรรมและมโนทัศน์หลักของ Grafana k6</h2>
+            <p><strong>Virtual Users (VUs) vs Iterations:</strong> VUs คือ Thread/Goroutine ที่จำลองผู้ใช้งานจริง 1 คนทำงานพร้อมกัน ส่วน Iteration คือรอบการทำงานของฟังก์ชันหลัก <code>default function()</code></p>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Executor Name</th>
+                            <th>วัตถุประสงค์การใช้งาน</th>
+                            <th>เหมาะสำหรับ Test Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline-code">ramping-vus</code></td>
+                            <td>ปรับเพิ่ม/ลดจำนวน VUs ตามช่วงเวลา (Stage)</td>
+                            <td><strong>Load Test</strong>, <strong>Stress Test</strong>, <strong>Shift Profile</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">per-vu-iterations</code></td>
+                            <td>กำหนดจำนวนรอบการทำงานคงที่ต่อ VU</td>
+                            <td><strong>Smoke Test</strong>, <strong>Validation</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">constant-vus</code></td>
+                            <td>คงระดับจำนวน VUs นานตามเวลาที่กำหนด</td>
+                            <td><strong>Soak Test / Endurance Test</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 2: Code Snippets -->
+        <div class="section-card">
+            <h2 class="section-header">2. คู่มือการเขียนสคริปต์ GraphQL & Scenario</h2>
+            
+            <h3 style="color: var(--primary); margin-top: 1rem;">2.1 การสร้าง GraphQL Client (<code class="inline-code">src/clients/patient.client.ts</code>)</h3>
+            <pre><code>import http from 'k6/http';
+import { environment } from '../config/environment.ts';
+
+export function searchPatientByHn(hn: string) {
+  const url = `${environment.baseUrl}/cortex-api/graphql`;
+  const payload = JSON.stringify({
+    query: `
+      query GetPatientByHn($hn: String!) {
+        patient(hn: $hn) { id hn title firstName lastName }
+      }
+    `,
+    variables: { hn },
+  });
+
+  const params = {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${environment.authToken}`,
+    },
+    tags: { name: 'GraphQL_GetPatientByHn' },
+  };
+
+  return http.post(url, payload, params);
+}</code></pre>
+
+            <h3 style="color: var(--primary); margin-top: 1.5rem;">2.2 การสร้าง Scenario พร้อม Think Time (<code class="inline-code">src/scenarios/reception.scenario.ts</code>)</h3>
+            <pre><code>import { check, sleep } from 'k6';
+import { searchPatientByHn } from '../clients/patient.client.ts';
+
+export function receptionScenario() {
+  const res = searchPatientByHn('HN12345');
+  
+  check(res, {
+    'status is 200': (r) => r.status === 200,
+    'patient data exists': (r) => r.json('data.patient') !== null,
+  });
+
+  // Think Time จำลองการอ่านหน้าจอของเจ้าหน้าที่ (3-5 วินาที)
+  sleep(Math.random() * 2 + 3);
+}</code></pre>
+        </div>
+
+        <!-- Section 3: 5-Stage Workload -->
+        <div class="section-card">
+            <h2 class="section-header">3. การตั้งค่า 5-Stage Ramping Profile (08:00 AM Hospital Model)</h2>
+            <pre><code>import type { Options } from 'k6/options';
+
+export const options: Options = {
+  scenarios: {
+    hospital_diurnal_load: {
+      executor: 'ramping-vus',
+      startVUs: 60,
+      stages: [
+        { duration: '10m', target: 400 }, // Stage 1: 08:00 Opening Peak (400 VUs)
+        { duration: '15m', target: 360 }, // Stage 2: 10:30 Late Morning (360 VUs)
+        { duration: '20m', target: 304 }, // Stage 3: 13:00 Afternoon Peak (304 VUs)
+        { duration: '10m', target: 130 }, // Stage 4: 16:30 Evening Clinic (130 VUs)
+        { duration: '5m', target: 60 },   // Stage 5: 20:00 Night Shift (60 VUs)
+      ],
+      gracefulRampDown: '30s',
+    },
+  },
+  thresholds: {
+    http_req_failed: ['rate<0.01'],                  // Error rate < 1%
+    http_req_duration: ['p(95)<2000', 'p(99)<5000'], // p(95) < 2s
+    checks: ['rate>0.99'],                            // Check pass > 99%
+  },
+};</code></pre>
+        </div>
+
+        <!-- Section 4: OS Tuning & Commands -->
+        <div class="section-card">
+            <h2 class="section-header">4. คำสั่งการรันและการปรับแต่ง OS Limits (System Tuning)</h2>
+            <div class="callout">
+                <strong>💡 ก่อนยิง 400 Concurrent VUs บน macOS / Linux:</strong><br>
+                ต้องปรับเพิ่ม File Descriptors Limit เพื่อป้องกัน <code>socket: too many open files</code>:
+                <pre style="margin-top: 8px; margin-bottom: 0;"><code>ulimit -n 65536</code></pre>
+            </div>
+            
+            <h3 style="color: var(--primary); margin-top: 1rem;">CLI Execution Commands</h3>
+            <pre><code># 1. Smoke Test (1 VU)
+k6 run --env BASE_URL=https://his-test.hospital.org src/tests/smoke.test.ts
+
+# 2. Load Test (400 Concurrent VUs)
+k6 run --env BASE_URL=https://his-test.hospital.org --env TOTAL_VUS=400 src/tests/load.test.ts
+
+# 3. Export JSON Summary & HTML Report
+k6 run --out json=reports/result.json src/tests/load.test.ts</code></pre>
+        </div>
+
+        <div class="footer">
+            Grafana k6 Resource & Guide | Created for Cortex Hospital Performance Testing Framework
+        </div>
+    
+        <!-- Section 6: 4-Step Performance Engineering Lifecycle -->
+        <div class="section-card" id="sec-lifecycle">
+            <h2 class="section-header">6. วงรอบการทดสอบและปรับแต่งระบบ (Test -> Tuning -> Retest -> เก็บผล)</h2>
+            <div class="callout">
+                <strong>🔄 กระบวนการวงรอบทดสอบประสิทธิภาพระบบ (Performance Engineering Loop):</strong><br>
+                1. <strong>Test:</strong> ยิงทดสอบค่าน้ำหนัก VUs ตามประเภทการทดสอบ และสังเกตพฤติกรรมคอขวด<br>
+                2. <strong>Tuning:</strong> วิเคราะห์หาสาเหตุ (Root Cause Analysis) และปรับแต่งระบบ (DB Pool, Indexing, Pod Autoscaling, Caching, Memory Limit)<br>
+                3. <strong>Retest:</strong> ยิงทดสอบซ้ำด้วยสคริปต์เดิมเพื่อยืนยันประสิทธิผลการแก้ไข (Before vs After Comparison)<br>
+                4. <strong>เก็บผล:</strong> บันทึกสรุปสถิติ p95, p99, Throughput (RPS), HTTP Error Rate และทรัพยากรฮาร์ดแวร์
+            </div>
+
+            <h3 style="color: var(--primary); margin: 1.5rem 0 1rem 0;">📊 ตารางเปรียบเทียบการทดสอบแต่ละประเภทและการปรับแต่ง (Test Types & Tuning Lifecycle Matrix)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ประเภทการทดสอบ (Test Type)</th>
+                            <th>เป้าหมาย VUs & Duration</th>
+                            <th>วัตถุประสงค์ (Core Objective)</th>
+                            <th>สิ่งที่ต้องปรับแต่งในขั้นตอน Tuning</th>
+                            <th>การสรุปและเก็บผล (Reporting)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-bold text-primary">1. Load Test</td>
+                            <td><span class="badge badge-stage1">400 VUs (30-60m)</span></td>
+                            <td>ทดสอบการรองรับภาระงานปกติของโรงพยาบาลช่วงพีคเช้า 8 โมง</td>
+                            <td>ปรับเพิ่ม DB Connection Pool (max_connections), เพิ่ม Redis Caching สำหรับ GraphQL, ปรับแต่ง Pod RAM/CPU Limits</td>
+                            <td>บันทึก p(95) &lt; 2,000ms, Error Rate &lt; 1%, RPS เปรียบเทียบ Before vs After</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-rose">2. Spike Test</td>
+                            <td><span class="badge badge-stage2">800-1,000 VUs (พุ่งใน 30s)</span></td>
+                            <td>ทดสอบคิวนัดหมายเปิด 8 โมงเช้ากะทันหัน และดูการ Recovery ของระบบ</td>
+                            <td>ปรับ Ingress Nginx worker_connections, ตั้งค่า Queue Buffer/Rate Limiting หน้า Kiosk, ปรับ Pod HPA ให้ขยายตัวเร็วขึ้น</td>
+                            <td>บันทึกระยะเวลา Recovery (RTO), สถิติ HTTP 502/504 Timeouts, สถิติกราฟ CPU Throttling</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-accent">3. Stress Test</td>
+                            <td><span class="badge badge-stage3">600-800 VUs (30-45m)</span></td>
+                            <td>อัดภาระงานเกินปกติเพื่อหาจุดคอขวดแรก (First Failure Point) และจุดแตกหัก</td>
+                            <td>ย่อย GraphQL N+1 Queries, ปรับ SQL Query Indexing, แก้ไข DB Deadlocks & Lock Timeouts, เพิ่ม Node.js Memory Heap</td>
+                            <td>บันทึกขีดจำกัดสูงสุดที่รับได้ (Max Operating Capacity) และชนิดของ Failure เมื่อเกิด Overload</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-purple">4. Endurance Test (Soak)</td>
+                            <td><span class="badge badge-all">250-300 VUs (2-12h)</span></td>
+                            <td>ยิงระดับคงที่ระยะยาวเพื่อตรวจหา Memory Leak และ Resource Exhaustion</td>
+                            <td>แก้ไข Memory Leak (Unbound Listeners/Caches), แก้ไข Unclosed DB Connections/Sessions, ตั้งค่า Log Rotation</td>
+                            <td>บันทึกกราฟ RAM Trend Line 12 ชั่วโมง ยืนยันว่าไม่มี Memory Leak หรือ OOM Kills</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">5. Breakpoint Test</td>
+                            <td><span class="badge badge-all">ไต่ระดับขึ้นเรื่อยๆ จนพัง</span></td>
+                            <td>หาจุดแตกหักสัมบูรณ์ของโครงสร้างพื้นฐานระบบ (Maximum Capacity Limit)</td>
+                            <td>ประเมินขีดจำกัดสูงสุดของฮาร์ดแวร์/คลาวด์ เพื่อวางแผนจัดซื้อสเปกเซิร์ฟเวอร์ในอนาคต</td>
+                            <td>บันทึกจุดแตกหัก VUs และขีดจำกัดโครงสร้างพื้นฐานระบบ</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="color: var(--primary); margin: 2rem 0 1rem 0;">📈 ตารางสรุปการบันทึกเก็บผลการทดสอบ (Performance Results Template)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Test Type</th>
+                            <th>Phase</th>
+                            <th>Target VUs</th>
+                            <th>Duration</th>
+                            <th>p(95) Response Time</th>
+                            <th>p(99) Response Time</th>
+                            <th>HTTP Error Rate</th>
+                            <th>Max RPS</th>
+                            <th>ผลการประเมิน</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Load Test</strong></td>
+                            <td>Before Tuning</td>
+                            <td>400 VUs</td>
+                            <td>30m</td>
+                            <td>3,450 ms</td>
+                            <td>7,200 ms</td>
+                            <td>2.45%</td>
+                            <td>145 req/s</td>
+                            <td>❌ ไม่ผ่าน SLA</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Load Test</strong></td>
+                            <td class="font-bold text-accent">After Tuning</td>
+                            <td>400 VUs</td>
+                            <td>30m</td>
+                            <td class="font-bold text-accent">1,250 ms</td>
+                            <td class="font-bold text-accent">2,800 ms</td>
+                            <td class="font-bold text-accent">0.05%</td>
+                            <td class="font-bold text-accent">450 req/s</td>
+                            <td class="font-bold text-accent">✅ ผ่าน SLA</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Spike Test</strong></td>
+                            <td>Before Tuning</td>
+                            <td>1,000 VUs</td>
+                            <td>10m</td>
+                            <td>8,900 ms</td>
+                            <td>15,400 ms</td>
+                            <td>12.30%</td>
+                            <td>210 req/s</td>
+                            <td>❌ 502 Bad Gateway</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Spike Test</strong></td>
+                            <td class="font-bold text-accent">After Tuning</td>
+                            <td>1,000 VUs</td>
+                            <td>10m</td>
+                            <td class="font-bold text-accent">1,850 ms</td>
+                            <td class="font-bold text-accent">3,900 ms</td>
+                            <td class="font-bold text-accent">0.20%</td>
+                            <td class="font-bold text-accent">680 req/s</td>
+                            <td class="font-bold text-accent">✅ Recover ใน 45s</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Stress Test</strong></td>
+                            <td>Before Tuning</td>
+                            <td>800 VUs</td>
+                            <td>45m</td>
+                            <td>5,600 ms</td>
+                            <td>11,200 ms</td>
+                            <td>5.80%</td>
+                            <td>290 req/s</td>
+                            <td>❌ DB Deadlock</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Stress Test</strong></td>
+                            <td class="font-bold text-accent">After Tuning</td>
+                            <td>800 VUs</td>
+                            <td>45m</td>
+                            <td class="font-bold text-accent">1,600 ms</td>
+                            <td class="font-bold text-accent">3,400 ms</td>
+                            <td class="font-bold text-accent">0.15%</td>
+                            <td class="font-bold text-accent">590 req/s</td>
+                            <td class="font-bold text-accent">✅ รองรับ 800 VUs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Endurance Test</strong></td>
+                            <td>Before Tuning</td>
+                            <td>300 VUs</td>
+                            <td>4h</td>
+                            <td>2,100 ms</td>
+                            <td>4,500 ms</td>
+                            <td>1.10%</td>
+                            <td>210 req/s</td>
+                            <td>❌ OOM Killed</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Endurance Test</strong></td>
+                            <td class="font-bold text-accent">After Tuning</td>
+                            <td>300 VUs</td>
+                            <td>4h</td>
+                            <td class="font-bold text-accent">1,150 ms</td>
+                            <td class="font-bold text-accent">2,300 ms</td>
+                            <td class="font-bold text-accent">0.02%</td>
+                            <td class="font-bold text-accent">220 req/s</td>
+                            <td class="font-bold text-accent">✅ ไม่มี Memory Leak</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- Section 7: Scenario Weighting Examples in k6 -->
+        <div class="section-card" id="sec-weighting">
+            <h2 class="section-header">7. ตัวอย่างการกำหนด Weight และการกระจายสัดส่วน Traffic Mix ใน Grafana k6</h2>
+            <div class="callout">
+                <strong>⚖️ การถ่วงน้ำหนัก (Scenario Weighting) ใน Grafana k6:</strong><br>
+                เป็นการกำหนดสัดส่วนภาระงานหรือเปอร์เซ็นต์ผู้ใช้งานจริงตามข้อมูล Excel (เช่น OPD = 38, IPD = 15, Reception = 10, Pharmacy = 7, Lab = 7 ฯลฯ) เพื่อกระจายจากเป้าหมาย <strong>400 Concurrent VUs</strong> เข้าสู่แต่ละจุดงานได้อย่างถูกต้อง
+            </div>
+
+            <h3 style="color: var(--primary); margin: 1.5rem 0 1rem 0;">รูปแบบที่ 1: การคำนวณ Weight แบ่ง VUs ให้แต่ละ Scenario (Dynamic Allocation)</h3>
+            <pre><code>import type { Options } from 'k6/options';
+
+// 1. รายการ Scenarios พร้อม defaultWeight จากไฟล์ Excel Data.xlsx
+export const TRAFFIC_MIX = [
+  { key: 'opdRegistration', defaultWeight: 38 }, // 33.63% -> 135 VUs
+  { key: 'ipdBedList',       defaultWeight: 15 }, // 13.27% -> 53 VUs
+  { key: 'reception',        defaultWeight: 10 }, // 8.85%  -> 35 VUs
+  { key: 'report',           defaultWeight: 8  }, // 7.08%  -> 28 VUs
+  { key: 'opdPharmacy',      defaultWeight: 7  }, // 6.19%  -> 25 VUs
+  { key: 'labWorklist',      defaultWeight: 7  }, // 6.19%  -> 25 VUs
+  { key: 'labSpecimen',      defaultWeight: 6  }, // 5.31%  -> 21 VUs
+  { key: 'cashierOpd',       defaultWeight: 6  }, // 5.31%  -> 21 VUs
+  { key: 'radiologyTask',    defaultWeight: 4  }, // 3.54%  -> 14 VUs
+  { key: 'ipdPharmacy',      defaultWeight: 3  }, // 2.65%  -> 11 VUs
+  { key: 'cashierIpd',       defaultWeight: 3  }, // 2.65%  -> 11 VUs
+] as const;
+
+// 2. ฟังก์ชันคำนวณโควตา VUs สัดส่วนเปอร์เซ็นต์เป็นจำนวนเต็ม (Integer VUs)
+export function allocateVus(totalVus: number, scenarios: typeof TRAFFIC_MIX) {
+  const totalWeight = scenarios.reduce((sum, s) => sum + s.defaultWeight, 0);
+  const result: Record<string, number> = {};
+
+  scenarios.forEach((s) => {
+    // สูตรคำนวณโควตา VUs ตามสัดส่วน Weight: (Weight / TotalWeight) * TotalVUs
+    result[s.key] = Math.round((s.defaultWeight / totalWeight) * totalVus);
+  });
+
+  return result; // คืนค่า { opdRegistration: 135, ipdBedList: 53, reception: 35, ... } รวม 400 VUs เป๊ะ
+}</code></pre>
+
+            <h3 style="color: var(--primary); margin: 2rem 0 1rem 0;">รูปแบบที่ 2: การใช้ Weighted Random สุ่มสลับแผนกภายใน VU เดียวกัน</h3>
+            <pre><code>import { sleep } from 'k6';
+import { opdClinicFlow } from './scenarios/opd-clinic.ts';
+import { receptionFlow } from './scenarios/reception.ts';
+import { opdPharmacyFlow } from './scenarios/opd-pharmacy.ts';
+import { cashierFlow } from './scenarios/cashier.ts';
+
+export default function () {
+  // สุ่มตัวเลขเปอร์เซ็นต์ระหว่าง 0 ถึง 100
+  const rand = Math.random() * 100;
+
+  if (rand < 33.63) {
+    // 33.63% Weight -> ไหลเข้าแผนก OPD Registration (38/113)
+    opdClinicFlow();
+  } else if (rand < 33.63 + 13.27) {
+    // 13.27% Weight -> ไหลเข้าแผนก IPD Bed List (15/113)
+    ipdBedListFlow();
+  } else if (rand < 33.63 + 13.27 + 8.85) {
+    // 8.85% Weight -> ไหลเข้าแผนก Reception (10/113)
+    receptionFlow();
+  } else if (rand < 33.63 + 13.27 + 8.85 + 6.19) {
+    // 6.19% Weight -> ไหลเข้าห้องยา OPD Pharmacy (7/113)
+    opdPharmacyFlow();
+  } else {
+    // 38.06% Weight -> ไหลเข้าแผนกอื่นๆ (Cashier, Lab, Radiology)
+    cashierFlow();
+  }
+
+  // Think time จำลองการสลับรอบการทำงาน
+  sleep(2);
+}</code></pre>
+
+            <h3 style="color: var(--primary); margin: 2rem 0 1rem 0;">📊 ตารางสรุปเปรียบเทียบรูปแบบการทำ Weight ใน k6</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>รูปแบบการทำ Weight</th>
+                            <th>วิธีการทำงาน</th>
+                            <th>ข้อดี</th>
+                            <th>เหมาะสำหรับ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-bold text-primary">1. Multi-Scenario VU Allocation</td>
+                            <td>คำนวณ VUs ล่วงหน้าให้แต่ละ Scenario ด้วยสูตรสัดส่วน Weight</td>
+                            <td>ควบคุมจำนวน VUs/เจ้าหน้าที่ประจำจุดได้เป๊ะ (เช่น OPD 135 VUs, Reception 35 VUs)</td>
+                            <td><strong>Load Test โรงพยาบาล</strong>, <strong>จำลองจำนวนเครื่องจริง</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-accent">2. In-Scenario Weighted Random</td>
+                            <td>ใช้ <code>Math.random()</code> สุ่มเลือกยิง API ตาม % Weight ใน VU เดียวกัน</td>
+                            <td>เขียนสคริปต์ง่าย ใช้เพียง 1 Scenario หลัก</td>
+                            <td><strong>API Microservice Test</strong>, <strong>Web Traffic Random Journey</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-purple">3. Arrival Rate Weighted</td>
+                            <td>กำหนด Target Requests/sec (RPS) แยกตาม Scenario Weight</td>
+                            <td>ควบคุมจำนวน Request Throughput ไม่ขึ้นกับ Response Time</td>
+                            <td><strong>Open Model Throughput Test</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getRunDetail } from "@/lib/runs";
+import { requireUser } from "@/lib/auth/guard";
+import { CAN_EDIT_CONTENT, hasAnyRole } from "@/lib/types";
+import ScenarioBoard from "./ScenarioBoard";
+
+interface PageProps {
+  params: Promise<{ site: string; runId: string }>;
+}
+
+export default async function RunDetailPage({ params }: PageProps) {
+  const user = await requireUser();
+  const { site, runId } = await params;
+  const detail = await getRunDetail(site, runId);
+  if (!detail) notFound();
+
+  const canEdit = hasAnyRole(user.roles, CAN_EDIT_CONTENT);
+
+  return (
+    <main className="container">
+      <Link href={`/${site}`} className="breadcrumb">
+        ← กลับไปรายการ Run
+      </Link>
+
+      <div className="page-header">
+        <div>
+          <h1>
+            {detail.run.siteName} — {detail.run.rowKey}
+          </h1>
+          <p className="subtitle">
+            {detail.run.environment} · {detail.run.testCycle} · {detail.run.executedDate} · Tester:{" "}
+            {detail.run.tester || "-"}
+          </p>
+        </div>
+        {canEdit && (
+          <Link
+            href={`/${site}/${runId}/edit`}
+            className="btn"
+            data-testid="smoke-runner:run-detail:link__edit-run"
+          >
+            แก้ไขข้อมูล Run
+          </Link>
+        )}
+      </div>
+
+      <ScenarioBoard site={site} runId={runId} initialRun={detail.run} initialScenarios={detail.scenarios} />
+    </main>
+  );
+}

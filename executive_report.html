@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Executive Verification & Sign-Off Report</title>
+
+    <!-- Google Fonts & Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #172B4D;
+            --accent: #0052CC;
+            --success: #00875A;
+            --danger: #DE350B;
+            --warning: #FF991F;
+            --bg-light: #F4F5F7;
+            --border: #DFE1E6;
+            --text-dark: #172B4D;
+            --text-muted: #5E6C84;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', sans-serif; }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            padding: 40px 20px;
+        }
+
+        .report-paper {
+            background: #FFFFFF;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 48px;
+            border-radius: 8px;
+            box-shadow: 0 1px 1px rgba(9,30,66,0.13);
+            border: 1px solid var(--border);
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 24px;
+            margin-bottom: 28px;
+        }
+
+        .org-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .org-brand i { font-size: 2.2rem; color: var(--accent); }
+        .org-brand h1 { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+        .org-brand p { font-size: 0.88rem; color: var(--text-muted); }
+
+        .meta-stamp {
+            text-align: right;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 4px solid var(--accent);
+            padding-left: 10px;
+        }
+
+        /* Executive Summary KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .kpi-card {
+            background: var(--bg-light);
+            padding: 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .kpi-card .num { font-size: 1.8rem; font-weight: 800; margin-bottom: 4px; }
+        .kpi-card .label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+
+        /* Decision Gate Banner */
+        .decision-gate-banner {
+            padding: 18px 24px;
+            border-radius: 6px;
+            margin-bottom: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .gate-approved { background: #E3FCEF; border: 2px solid var(--success); color: #00875A; }
+        .gate-rejected { background: #FFEBE6; border: 2px solid var(--danger); color: #DE350B; }
+
+        .gate-title { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .gate-subtitle { font-size: 0.88rem; margin-top: 4px; opacity: 0.9; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 28px;
+            font-size: 0.88rem;
+        }
+        th, td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: var(--bg-light);
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+        .badge-pass { background: #E3FCEF; color: #00875A; }
+        .badge-fail { background: #FFEBE6; color: #DE350B; }
+        .badge-block { background: #FFF7D6; color: #FF991F; }
+        .badge-notrun { background: #EBECF0; color: #6B778C; }
+
+        /* Signature Section */
+        .signature-section {
+            margin-top: 48px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            page-break-inside: avoid;
+        }
+
+        .sig-box {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .sig-line {
+            border-bottom: 1px dashed var(--text-muted);
+            margin: 40px 20px 12px 20px;
+        }
+
+        .sig-title { font-size: 0.9rem; font-weight: 700; color: var(--primary); }
+        .sig-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* Toolbar Action Buttons (Hidden when printed) */
+        .action-toolbar {
+            max-width: 900px;
+            margin: 0 auto 20px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 9px 16px;
+            border-radius: 6px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            transition: background 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0) scale(0.98); }
+        .btn-print {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 1px 2px rgba(0, 82, 204, 0.16), 0 1px 1px rgba(9, 30, 66, 0.08);
+        }
+        .btn-print:hover {
+            background: #0747A6;
+            box-shadow: 0 8px 16px -4px rgba(0, 82, 204, 0.32), 0 1px 1px rgba(9, 30, 66, 0.08);
+        }
+        .btn-close {
+            background: #6B778C;
+            color: white;
+            box-shadow: 0 1px 2px rgba(9, 30, 66, 0.16);
+        }
+        .btn-close:hover {
+            background: #5E6C84;
+            box-shadow: 0 8px 16px -4px rgba(9, 30, 66, 0.24);
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .action-toolbar { display: none !important; }
+            .report-paper { box-shadow: none; border: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Action Toolbar (Hidden in Print) -->
+    <div class="action-toolbar">
+        <a href="index.html" class="btn btn-close"><i class="fa-solid fa-arrow-left"></i> กลับสู่หน้าหลัก</a>
+        <button class="btn btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> พิมพ์ / บันทึก PDF (Print Report)</button>
+    </div>
+
+    <!-- Report A4 Paper -->
+    <div class="report-paper">
+        
+        <!-- Header Stamp -->
+        <div class="report-header">
+            <div class="org-brand">
+                <i class="fa-solid fa-square-poll-vertical"></i>
+                <div>
+                    <h1>EXECUTIVE VERIFICATION REPORT</h1>
+                    <p>Pre-UAT Smoke Test Sign-off Matrix & Audit Trail</p>
+                </div>
+            </div>
+            <div class="meta-stamp">
+                <div><strong>DOCUMENT ID:</strong> <span id="doc-id">EVR-2026-001</span></div>
+                <div><strong>ISSUED DATE:</strong> <span id="issued-date">-</span></div>
+                <div><strong>ENVIRONMENT:</strong> <span id="env-name">-</span></div>
+            </div>
+        </div>
+
+        <!-- Decision Gate Status Banner -->
+        <div id="gate-banner" class="decision-gate-banner gate-rejected">
+            <div>
+                <div class="gate-title" id="gate-title-text"><i class="fa-solid fa-circle-xmark"></i> REJECTED FOR UAT SIGN-OFF</div>
+                <div class="gate-subtitle" id="gate-sub-text">ระบบยังมีข้อบกพร่องใน Critical Flow หรือมีรายการทดสอบไม่ผ่าน</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 0.8rem; opacity: 0.8;">PASS RATE</div>
+                <div style="font-size: 1.8rem; font-weight: 800;" id="pass-rate-big">0%</div>
+            </div>
+        </div>
+
+        <!-- Project & Data Chain Traceability -->
+        <div class="section-title"><i class="fa-solid fa-circle-info"></i> Project Context & Data Chain Traceability</div>
+        <table>
+            <tr>
+                <th style="width: 20%;">Hospital Site</th>
+                <td style="width: 30%;" id="cell-site">-</td>
+                <th style="width: 20%;">System Version</th>
+                <td style="width: 30%;" id="cell-ver">-</td>
+            </tr>
+            <tr>
+                <th>Delivery Batch</th>
+                <td id="cell-batch">-</td>
+                <th>Test Cycle / Run ID</th>
+                <td id="cell-cycle-run">-</td>
+            </tr>
+            <tr>
+                <th>Primary HN</th>
+                <td id="cell-hn">-</td>
+                <th>Primary VN</th>
+                <td id="cell-vn">-</td>
+            </tr>
+            <tr>
+                <th>Primary AN</th>
+                <td id="cell-an">-</td>
+                <th>Bill No. / INV</th>
+                <td id="cell-bill">-</td>
+            </tr>
+        </table>
+
+        <!-- Executive KPI Grid -->
+        <div class="section-title"><i class="fa-solid fa-chart-line"></i> Execution Summary KPIs</div>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="num" style="color: var(--success);" id="kpi-pass">0</div>
+                <div class="label">Passed</div>
+            </div>
+            <div class="kpi-card">
+                <div class="num" style="color: var(--danger);" id="kpi-fail">0</div>
+                <div class="label">Failed</div>
+            </div>
+            <div class="kpi-card">
+                <div class="num" style="color: var(--warning);" id="kpi-block">0</div>
+                <div class="label">Blocked</div>
+            </div>
+            <div class="kpi-card">
+                <div class="num" style="color: var(--text-muted);" id="kpi-notrun">0</div>
+                <div class="label">Not Run</div>
+            </div>
+        </div>
+
+        <!-- Critical Flow Verification Matrix -->
+        <div class="section-title"><i class="fa-solid fa-triangle-exclamation"></i> Critical Flow Verification Matrix</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Scenario ID</th>
+                    <th style="width: 45%;">Critical Business Scenario</th>
+                    <th style="width: 25%;">Role Responsible</th>
+                    <th style="width: 15%; text-align: center;">Status</th>
+                </tr>
+            </thead>
+            <tbody id="critical-matrix-body">
+                <!-- Populated dynamically -->
+            </tbody>
+        </table>
+
+        <!-- Open Defects & Risks (If any) -->
+        <div class="section-title"><i class="fa-solid fa-bug"></i> Defect Log & Risk Audit</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Scenario ID</th>
+                    <th style="width: 45%;">Scenario Name</th>
+                    <th style="width: 25%;">Defect / Remarks</th>
+                    <th style="width: 15%; text-align: center;">Severity</th>
+                </tr>
+            </thead>
+            <tbody id="defect-matrix-body">
+                <!-- Populated dynamically -->
+            </tbody>
+        </table>
+
+        <!-- Sign-Off Approval Block -->
+        <div class="signature-section">
+            <div class="sig-box">
+                <div class="sig-title">PREPARED & VERIFIED BY (QA LEAD)</div>
+                <div class="sig-line"></div>
+                <div class="sig-sub" id="sig-tester-name">( ................................................................ )</div>
+                <div class="sig-sub">Lead Quality Assurance / Tester</div>
+                <div class="sig-sub" style="margin-top: 8px;">Date: ____ / ____ / ________</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-title">APPROVED FOR UAT (CLIENT / EXECUTIVE)</div>
+                <div class="sig-line"></div>
+                <div class="sig-sub">( ................................................................ )</div>
+                <div class="sig-sub">Project Manager / Client Representative</div>
+                <div class="sig-sub" style="margin-top: 8px;">Date: ____ / ____ / ________</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadReportData();
+        });
+
+        function loadReportData() {
+            const saved = localStorage.getItem('uat_smoke_test_state');
+            if (!saved) return;
+
+            try {
+                const state = JSON.parse(saved);
+                const m = state.metadata || {};
+                const scenariosState = state.scenarios || {};
+                const siteKey = m.siteKey || 'NUH';
+
+                // Basic meta info
+                document.getElementById('issued-date').innerText = m.date || new Date().toISOString().split('T')[0];
+                document.getElementById('env-name').innerText = m.env || 'STAGING';
+                document.getElementById('cell-site').innerText = m.site || 'NUH (โรงพยาบาลมหาวิทยาลัยนเรศวร)';
+                document.getElementById('cell-ver').innerText = m.ver || '-';
+                document.getElementById('cell-batch').innerText = m.delivery || '-';
+                document.getElementById('cell-cycle-run').innerText = `${m.cycle || '-'} (${m.runid || '-'})`;
+                document.getElementById('cell-hn').innerText = m.hn || '-';
+                document.getElementById('cell-vn').innerText = m.vn || '-';
+                document.getElementById('cell-an').innerText = m.an || '-';
+                document.getElementById('cell-bill').innerText = m.bill || '-';
+
+                if (m.tester) {
+                    document.getElementById('sig-tester-name').innerText = `( ${m.tester} )`;
+                }
+
+                // Load active scenarios
+                let currentScenarios = [];
+                if (window.opener && window.opener.activeScenarios) {
+                    currentScenarios = window.opener.activeScenarios;
+                } else {
+                    // Fallback to default
+                    currentScenarios = [
+                        { id: "SC-01", flow: "OPD", name: "ลงทะเบียน คัดกรอง ก่อนเข้าตรวจ OPD", role: "เวชระเบียน / พยาบาล OPD", critical: true },
+                        { id: "SC-02 [A]", flow: "OPD", name: "แพทย์ตรวจ + วินิจฉัย + สั่ง Order", role: "แพทย์ OPD", critical: false },
+                        { id: "SC-03", flow: "OPD", name: "ส่ง Lab/X-ray -> รับผล -> แพทย์อ่านผล", role: "จนท. Lab / แพทย์", critical: false },
+                        { id: "SC-04", flow: "OPD", name: "เภสัชสร้างใบยา -> ชำระเงิน -> จ่ายยา", role: "เภสัชกร / การเงิน", critical: false },
+                        { id: "SC-02 [B]", flow: "IPD", name: "แพทย์สั่ง Admit ผู้ป่วยเข้า IPD", role: "แพทย์ OPD / พยาบาล", critical: false },
+                        { id: "SC-05", flow: "IPD", name: "จองเตียง -> สร้าง AN", role: "ศูนย์จัดการเตียง", critical: true },
+                        { id: "SC-06", flow: "IPD", name: "พยาบาลวอร์ดบันทึกผู้ป่วยมาถึงเตียง", role: "พยาบาล Ward", critical: false },
+                        { id: "SC-07", flow: "IPD", name: "แพทย์ Round ตรวจ + สั่ง Order IPD", role: "แพทย์ IPD", critical: true },
+                        { id: "SC-08", flow: "IPD", name: "พยาบาลรับออเดอร์ยาประจำวัน", role: "พยาบาล Ward", critical: false },
+                        { id: "SC-09", flow: "IPD", name: "เภสัช IPD จ่ายยา One Day", role: "เภสัชกร IPD", critical: false },
+                        { id: "SC-10", flow: "IPD", name: "เภสัช IPD จ่ายยา Continue ประจำวัน", role: "เภสัชกร IPD", critical: false },
+                        { id: "SC-11", flow: "IPD", name: "ห้องแล็บลงผล Lab ผู้ป่วยใน", role: "จนท. Lab / แพทย์", critical: false },
+                        { id: "SC-12", flow: "IPD", name: "งานรังสีถ่ายภาพและรายงานผล X-ray", role: "จนท. รังสี / แพทย์", critical: false },
+                        { id: "SC-13", flow: "IPD", name: "การเงินตั้งบิล Interim Billing", role: "การเงิน IPD", critical: false },
+                        { id: "SC-14", flow: "IPD", name: "Discharge Process ปิดยอดครั้งสุดท้าย", role: "แพทย์ IPD / การเงิน", critical: true },
+                        { id: "SC-15", flow: "General", name: "ออกรายงานสรุปประจำวันทุกแผนก", role: "จนท. ทุกแผนก", critical: false },
+                        { id: "SC-16", flow: "General", name: "Coder สรุปและลงรหัสโรค ICD-10", role: "Coder / เวชสถิติ", critical: false }
+                    ];
+                }
+
+                let p = 0, f = 0, b = 0, nr = 0;
+                let siteScenariosState = scenariosState[siteKey] || {};
+
+                let critBody = document.getElementById('critical-matrix-body');
+                let defectBody = document.getElementById('defect-matrix-body');
+                critBody.innerHTML = '';
+                defectBody.innerHTML = '';
+
+                let hasDefects = false;
+
+                currentScenarios.forEach(sc => {
+                    let st = (siteScenariosState[sc.id] && siteScenariosState[sc.id].status) ? siteScenariosState[sc.id].status : 'notrun';
+                    let notes = (siteScenariosState[sc.id] && siteScenariosState[sc.id].notes) ? siteScenariosState[sc.id].notes : '';
+
+                    if (st === 'passed') p++;
+                    else if (st === 'failed') f++;
+                    else if (st === 'blocked') b++;
+                    else nr++;
+
+                    // Critical Matrix
+                    if (sc.critical) {
+                        let tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>${sc.id}</strong></td>
+                            <td>${sc.name}</td>
+                            <td>${sc.role}</td>
+                            <td style="text-align: center;"><span class="status-badge badge-${st}">${st.toUpperCase()}</span></td>
+                        `;
+                        critBody.appendChild(tr);
+                    }
+
+                    // Defects Log
+                    if (st === 'failed' || st === 'blocked' || notes) {
+                        hasDefects = true;
+                        let tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>${sc.id}</strong></td>
+                            <td>${sc.name}</td>
+                            <td>${notes || 'ยังไม่ได้ระบุรายละเอียด Bug'}</td>
+                            <td style="text-align: center;"><span class="status-badge badge-${st}">${st.toUpperCase()}</span></td>
+                        `;
+                        defectBody.appendChild(tr);
+                    }
+                });
+
+                if (!hasDefects) {
+                    defectBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--success); padding: 16px;">✨ ไม่พบข้อบกพร่อง (No Defect Found) ในการทดสอบชุดนี้</td></tr>`;
+                }
+
+                // KPIs
+                document.getElementById('kpi-pass').innerText = p;
+                document.getElementById('kpi-fail').innerText = f;
+                document.getElementById('kpi-block').innerText = b;
+                document.getElementById('kpi-notrun').innerText = nr;
+
+                let total = currentScenarios.length || 17;
+                let rate = Math.round((p / total) * 100);
+                document.getElementById('pass-rate-big').innerText = rate + '%';
+
+                // Gate status
+                let critPass = currentScenarios.filter(s => s.critical).every(s => siteScenariosState[s.id] && siteScenariosState[s.id].status === 'passed');
+
+                let gateBanner = document.getElementById('gate-banner');
+                let gateTitle = document.getElementById('gate-title-text');
+                let gateSub = document.getElementById('gate-sub-text');
+
+                let envLabel = m.env || 'STAGING';
+
+                if (critPass && f === 0 && b === 0 && currentScenarios.length > 0) {
+                    gateBanner.className = "decision-gate-banner gate-approved";
+                    gateTitle.innerHTML = `<i class="fa-solid fa-circle-check"></i> APPROVED FOR ${envLabel} SIGN-OFF`;
+                    gateSub.innerText = `ระบบผ่านการตรวจความพร้อมหลักครบถ้วน อนุมัติเปิดให้ผู้ใช้งานทดสอบรอบ ${envLabel} ได้ตามกำหนดการ`;
+                } else {
+                    gateBanner.className = "decision-gate-banner gate-rejected";
+                    gateTitle.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> REJECTED FOR ${envLabel} SIGN-OFF`;
+                    gateSub.innerText = `ระบบยังมีข้อบกพร่องใน Critical Flow หรือยังมีรายการทดสอบไม่ผ่าน โปรดแก้ไข Bug ก่อนเริ่ม ${envLabel}`;
+                }
+
+            } catch(e) { console.error('Failed to load report data', e); }
+        }
+    </script>
+</body>
+</html>

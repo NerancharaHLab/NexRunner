@@ -1,0 +1,63 @@
+{
+  "app": "Smoke Test Runner & Report Generator",
+  "formatVersion": "1.0",
+  "savedAt": "2026-08-22T00:00:00.000Z",
+  "siteKey": "NUH",
+  "siteName": "NUH (โรงพยาบาลมหาวิทยาลัยนเรศวร)",
+  "environment": "STAGING",
+  "runId": "SM-RUN-001",
+  "testCycle": "Cycle 1",
+  "executedDate": "2026-08-22",
+  "tester": "QA Lead",
+  "dataChain": {
+    "version": "v1.0.0",
+    "deliveryBatch": "D 1",
+    "hn": "HN6600001",
+    "vn": "VN6600001",
+    "an": "AN6600001",
+    "bill": "INV-660001"
+  },
+  "metrics": {
+    "totalScenarios": 17,
+    "passed": 17,
+    "failed": 0,
+    "blocked": 0,
+    "notrun": 0,
+    "passRatePercent": 100,
+    "criticalPass": true
+  },
+  "metadata": {
+    "siteKey": "NUH",
+    "site": "NUH (โรงพยาบาลมหาวิทยาลัยนเรศวร)",
+    "ver": "v1.0.0",
+    "delivery": "D 1",
+    "runid": "SM-RUN-001",
+    "cycle": "Cycle 1",
+    "date": "2026-08-22",
+    "tester": "QA Lead",
+    "env": "STAGING",
+    "hn": "HN6600001",
+    "vn": "VN6600001",
+    "an": "AN6600001",
+    "bill": "INV-660001"
+  },
+  "scenariosResult": {
+    "SC-01": { "status": "passed", "notes": "ลงทะเบียนคัดกรองสำเร็จ" },
+    "SC-02 [A]": { "status": "passed", "notes": "ส่งคำสั่งตรวจ Lab/X-ray/ยา ครบ" },
+    "SC-03": { "status": "passed", "notes": "ผล Lab ออกเรียบร้อย" },
+    "SC-04": { "status": "passed", "notes": "ออกใบเสร็จจ่ายยาปิด Visit" },
+    "SC-02 [B]": { "status": "passed", "notes": "สร้าง Admit Order" },
+    "SC-05": { "status": "passed", "notes": "จองเตียงสร้าง AN สำเร็จ" },
+    "SC-06": { "status": "passed", "notes": "บันทึกเวลาผู้ป่วยมาถึงวอร์ด" },
+    "SC-07": { "status": "passed", "notes": "สั่ง One Day / Continue Order" },
+    "SC-08": { "status": "passed", "notes": "รับออเดอร์ยาสำเร็จ" },
+    "SC-09": { "status": "passed", "notes": "จ่ายยา One Day เรียบร้อย" },
+    "SC-10": { "status": "passed", "notes": "จ่ายยา Continue เรียบร้อย" },
+    "SC-11": { "status": "passed", "notes": "ลงผล Lab IPD สมบูรณ์" },
+    "SC-12": { "status": "passed", "notes": "อ่านผล X-ray IPD สมบูรณ์" },
+    "SC-13": { "status": "passed", "notes": "ตั้งบิล Interim Billing" },
+    "SC-14": { "status": "passed", "notes": "Discharge ปิด Bill ปลดเตียงสำเร็จ" },
+    "SC-15": { "status": "passed", "notes": "ออกรายงานสรุปสำเร็จ" },
+    "SC-16": { "status": "passed", "notes": "ลงรหัสโรค ICD-10 เรียบร้อย" }
+  }
+}

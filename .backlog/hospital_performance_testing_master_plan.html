@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Performance Testing Master Plan - 400 Concurrent Load Test</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --bg-table-header: #1e293b;
+            --bg-table-stripe: #182234;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.15);
+            --accent: #34d399;
+            --warning: #fbbf24;
+            --purple: #a78bfa;
+            --rose: #fb7185;
+            --shadow-glow: 0 0 25px rgba(56, 189, 248, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Kanit', 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1350px;
+            width: 100%;
+        }
+
+        /* Header Styling */
+        .header-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--accent) 100%);
+        }
+
+        .header-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .meta-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .pill {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Navigation Index */
+        .nav-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px 25px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-header {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Tables */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--bg-table-header);
+            color: var(--primary);
+            font-weight: 600;
+            padding: 14px 16px;
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--bg-table-stripe);
+        }
+
+        tr:hover {
+            background-color: var(--bg-card-hover);
+        }
+
+        /* Badges & Formatting */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .badge-stage1 { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+        .badge-stage2 { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+        .badge-stage3 { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+        .badge-all { background: rgba(167, 139, 250, 0.15); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.3); }
+
+        .tab-code {
+            font-family: 'JetBrains Mono', monospace;
+            background: #090d16;
+            color: #38bdf8;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .font-medium { font-weight: 500; }
+        .text-center { text-align: center; }
+        .text-accent { color: var(--accent); }
+        .text-primary { color: var(--primary); }
+
+        /* Callout Box */
+        .callout {
+            background: rgba(56, 189, 248, 0.08);
+            border-left: 4px solid var(--primary);
+            padding: 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header-card">
+            <h1 class="header-title">🏥 Hospital Performance Testing Master Plan</h1>
+            <p class="header-subtitle">แผนแม่บทการทดสอบประสิทธิภาพระบบโรงพยาบาลสำหรับรองรับ 400 Concurrent Load Test (08:00 AM Operational Start Model)</p>
+            <div class="meta-pills">
+                <div class="pill">🎯 Target Concurrency: <strong>400 VUs</strong></div>
+                <div class="pill">📊 Baseline Excel: <strong>113 Users / 57 Sub-tabs</strong></div>
+                <div class="pill">⏰ Operational Start: <strong>08:00 AM Onwards</strong></div>
+                <div class="pill">🚀 Framework: <strong>Grafana k6</strong></div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-card">
+            <ul class="nav-links">
+                <li><a href="#sec-overview">1. สรุปภาพรวม & วัตถุประสงค์</a></li>
+                <li><a href="#sec-57tabs">2. ตารางภาระงานย่อย 57 แท็บ (Excel)</a></li>
+                <li><a href="#sec-timeline">3. คลื่นภาระงาน 24 ชม. (5 Stages)</a></li>
+                <li><a href="#sec-scenarios-overview">4. ตารางสรุป 8 Scenarios</a></li>
+                <li><a href="#sec-scenarios-detail">5. ข้อกำหนดรายละเอียด 8 Scenarios</a></li>
+            </ul>
+        </div>
+
+        <!-- Section 1: Overview -->
+        <div class="section-card" id="sec-overview">
+            <h2 class="section-header">1. สรุปภาพรวมและวัตถุประสงค์ (Executive Summary)</h2>
+            <div class="callout">
+                <strong>หลักการออกแบบ (Core Design Philosophy):</strong><br>
+                การทำ Load Test ขนาด <strong>400 Concurrent Users (VUs)</strong> ถูกออกแบบโดยคำนวณสัดส่วนจากจำนวนผู้ใช้งานจริงในแต่ละจุดงานตามไฟล์ <code>Data.xlsx</code> (รวม 113 Baseline Users) โดยแปลงเป็น <strong>"จำนวนคน/เครื่องเต็ม (Integer Users)"</strong> และจำลองพฤติกรรม <strong>"การสลับเปิดแท็บข้อมูล (Dynamic Tab Navigation)"</strong> ตามกะช่วงเวลาปฏิบัติงานจริงของโรงพยาบาลซึ่งเริ่มต้นตั้งแต่ <strong>08:00 น. เป็นต้นไป</strong>
+            </div>
+        </div>
+
+        <!-- Section 2: 57 Sub-tabs Table -->
+        <div class="section-card" id="sec-57tabs">
+            <h2 class="section-header">2. ตารางภาระงานย่อยครบทั้ง 57 รายการแท็บตามไฟล์ Excel (Data.xlsx)</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">ตารางแสดงการเชื่อมโยงทั้ง 57 แท็บงานย่อยในไฟล์ <code>Data.xlsx</code> กับกะช่วงเวลาหนาแน่นที่สุด (เริ่ม 08:00 น.), ปริมาณผู้ป่วยรอคิวจริง (Active Patients), และสัดส่วนจำนวนเครื่อง/ผู้ใช้งานระบบ (Staff VUs Target 400 Concurrent):</p>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">#</th>
+                            <th>โมดูลหลัก (Excel Group)</th>
+                            <th>รายการแท็บ/จุดงานย่อย (Excel Sub-tab)</th>
+                            <th>กะช่วงเวลาหนาแน่นที่สุด (Peak Stage)</th>
+                            <th>ผู้ป่วยในคิวรอ (Active Patients)</th>
+                            <th>Staff VUs Target (400 Concurrent)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+        <tr>
+            <td class="text-center font-mono">01</td>
+            <td class="font-medium">Reception</td>
+            <td><code class="tab-code">Reception</code></td>
+            <td><span class="badge badge-stage1">Stage 1: Morning Opening (08:00-10:30)</span></td>
+            <td>350 คน</td>
+            <td class="font-bold text-accent">35 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">02</td>
+            <td class="font-medium">รายการผู้ป่วยนอก - นัดหมาย / ลงทะเบียน</td>
+            <td><code class="tab-code">รายการผู้ป่วยนอก - นัดหมาย / ลงทะเบียน</code></td>
+            <td><span class="badge badge-stage1">Stage 1: Morning Opening (08:00-10:30)</span></td>
+            <td>100 - 120 คน/แท็บ</td>
+            <td class="font-bold text-accent">15 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">03</td>
+            <td class="font-medium">รายการผู้ป่วยนอก - นัดหมาย / ลงทะเบียน</td>
+            <td><code class="tab-code">รายการผู้ป่วยนอก - คำขอ Walk-in</code></td>
+            <td><span class="badge badge-stage1">Stage 1: Morning Opening (08:00-10:30)</span></td>
+            <td>100 - 120 คน/แท็บ</td>
+            <td class="font-bold text-accent">15 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">04</td>
+            <td class="font-medium">รายการผู้ป่วยนอก - นัดหมาย / ลงทะเบียน</td>
+            <td><code class="tab-code">รายการผู้ป่วยนอก - ทั้งหมด</code></td>
+            <td><span class="badge badge-all">Stage 1-3 (08:00-16:30)</span></td>
+            <td>N/A (รายงาน)</td>
+            <td class="font-bold text-accent">28 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">05</td>
+            <td class="font-medium">รายการผู้ป่วยนอก - นัดหมาย / ลงทะเบียน</td>
+            <td><code class="tab-code">รายการผู้ป่วยนอก - เช็คอิน</code></td>
+            <td><span class="badge badge-stage1">Stage 1: Morning Opening (08:00-10:30)</span></td>
+            <td>100 - 120 คน/แท็บ</td>
+            <td class="font-bold text-accent">15 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">06</td>
+            <td class="font-medium">รายการผู้ป่วยนอก - นัดหมาย / ลงทะเบียน</td>
+            <td><code class="tab-code">รายการผู้ป่วยนอก - พร้อมตรวจ | พักการตรวจ</code></td>
+            <td><span class="badge badge-stage1">Stage 1: Morning Opening (08:00-10:30)</span></td>
+            <td>100 - 120 คน/แท็บ</td>
+            <td class="font-bold text-accent">15 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">07</td>
+            <td class="font-medium">รายการผู้ป่วยนอก - นัดหมาย / ลงทะเบียน</td>
+            <td><code class="tab-code">รายการผู้ป่วยนอก - ตรวจเสร็จ</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>120 - 150 คน/แท็บ</td>
+            <td class="font-bold text-accent">15 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">08</td>
+            <td class="font-medium">รายการผู้ป่วยนอก - นัดหมาย / ลงทะเบียน</td>
+            <td><code class="tab-code">รายการผู้ป่วยนอก - จำหน่าย</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>120 - 150 คน/แท็บ</td>
+            <td class="font-bold text-accent">15 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">09</td>
+            <td class="font-medium">รายการผู้ป่วยนอก - นัดหมาย / ลงทะเบียน</td>
+            <td><code class="tab-code">รายการผู้ป่วยนอก - เสร็จสิ้น</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>120 - 150 คน/แท็บ</td>
+            <td class="font-bold text-accent">15 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">10</td>
+            <td class="font-medium">รายการผู้ป่วยนอก - นัดหมาย / ลงทะเบียน</td>
+            <td><code class="tab-code">รายการผู้ป่วยนอก - ยกเลิก</code></td>
+            <td><span class="badge badge-all">Stage 1-3 (ตลอดวัน 08:00-16:30)</span></td>
+            <td>10 - 20 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 - 5 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">11</td>
+            <td class="font-medium">การจัดการรายการสั่งยา OPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา OPD - Order รอยืนยัน</code></td>
+            <td><span class="badge badge-stage2">Stage 2: Late Morning (10:30-13:00)</span></td>
+            <td>70 - 90 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">12</td>
+            <td class="font-medium">การจัดการรายการสั่งยา OPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา OPD - ใบยารอจัด</code></td>
+            <td><span class="badge badge-stage2">Stage 2: Late Morning (10:30-13:00)</span></td>
+            <td>70 - 90 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">13</td>
+            <td class="font-medium">การจัดการรายการสั่งยา OPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา OPD - ใบยาจัดแล้ว</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>110 - 140 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">14</td>
+            <td class="font-medium">การจัดการรายการสั่งยา OPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา OPD - ใบรอจ่าย</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>110 - 140 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">15</td>
+            <td class="font-medium">การจัดการรายการสั่งยา OPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา OPD - จ่ายยาแล้ว</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>110 - 140 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">16</td>
+            <td class="font-medium">การจัดการรายการสั่งยา OPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา OPD - ยกเลิกใบยา</code></td>
+            <td><span class="badge badge-all">Stage 1-3 (ตลอดวัน 08:00-16:30)</span></td>
+            <td>10 - 20 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 - 5 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">17</td>
+            <td class="font-medium">การจัดการรายการสั่งยา OPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา OPD - ยาไปรษณีย์</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>110 - 140 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">18</td>
+            <td class="font-medium">การจัดการรายการสั่งยา OPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา OPD - Order เติมยา</code></td>
+            <td><span class="badge badge-stage2">Stage 2: Late Morning (10:30-13:00)</span></td>
+            <td>70 - 90 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">19</td>
+            <td class="font-medium">การจัดการรายการสั่งยา IPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา IPD - Order รอยืนยัน</code></td>
+            <td><span class="badge badge-stage2">Stage 1-2: Morning (08:00-13:00)</span></td>
+            <td>30 - 40 คน/แท็บ</td>
+            <td class="font-bold text-accent">2 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">20</td>
+            <td class="font-medium">การจัดการรายการสั่งยา IPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา IPD - ใบยารอจัด</code></td>
+            <td><span class="badge badge-stage2">Stage 1-2: Morning (08:00-13:00)</span></td>
+            <td>30 - 40 คน/แท็บ</td>
+            <td class="font-bold text-accent">2 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">21</td>
+            <td class="font-medium">การจัดการรายการสั่งยา IPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา IPD - ใบยาจัดแล้ว</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>40 - 50 คน/แท็บ</td>
+            <td class="font-bold text-accent">2 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">22</td>
+            <td class="font-medium">การจัดการรายการสั่งยา IPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา IPD - ใบรอจ่าย</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>40 - 50 คน/แท็บ</td>
+            <td class="font-bold text-accent">2 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">23</td>
+            <td class="font-medium">การจัดการรายการสั่งยา IPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา IPD - จ่ายยาแล้ว</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>40 - 50 คน/แท็บ</td>
+            <td class="font-bold text-accent">2 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">24</td>
+            <td class="font-medium">การจัดการรายการสั่งยา IPD - Order รอยืนยัน</td>
+            <td><code class="tab-code">การจัดการรายการสั่งยา IPD - ยกเลิกใบยา</code></td>
+            <td><span class="badge badge-all">Stage 1-3 (ตลอดวัน 08:00-16:30)</span></td>
+            <td>10 - 20 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 - 5 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">25</td>
+            <td class="font-medium">ห้องปฏิบัติการ - Specimen Collector - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - Specimen Collector - รอเช็คอิน</code></td>
+            <td><span class="badge badge-stage1">Stage 1: Morning Opening (08:00-10:30)</span></td>
+            <td>100 - 120 คน/แท็บ</td>
+            <td class="font-bold text-accent">15 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">26</td>
+            <td class="font-medium">ห้องปฏิบัติการ - Specimen Collector - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - Specimen Collector - รอเก็บ</code></td>
+            <td><span class="badge badge-stage1">Stage 1: Morning Opening (08:00-10:30)</span></td>
+            <td>70 - 100 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 - 4 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">27</td>
+            <td class="font-medium">ห้องปฏิบัติการ - Specimen Collector - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - Specimen Collector - พักรายการ</code></td>
+            <td><span class="badge badge-all">Stage 1-3 (ตลอดวัน 08:00-16:30)</span></td>
+            <td>10 - 20 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 - 5 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">28</td>
+            <td class="font-medium">ห้องปฏิบัติการ - Specimen Collector - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - Specimen Collector - เก็บแล้ว</code></td>
+            <td><span class="badge badge-stage1">Stage 1: Morning Opening (08:00-10:30)</span></td>
+            <td>70 - 100 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 - 4 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">29</td>
+            <td class="font-medium">ห้องปฏิบัติการ - Specimen Collector - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - Specimen Collector - ปฏิเสธ</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>40 - 60 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">30</td>
+            <td class="font-medium">ห้องปฏิบัติการ - รายการงานแล็บ - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - รายการงานแล็บ - รอเช็คอิน</code></td>
+            <td><span class="badge badge-stage1">Stage 1: Morning Opening (08:00-10:30)</span></td>
+            <td>100 - 120 คน/แท็บ</td>
+            <td class="font-bold text-accent">15 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">31</td>
+            <td class="font-medium">ห้องปฏิบัติการ - รายการงานแล็บ - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - รายการงานแล็บ - เก็บแล้ว</code></td>
+            <td><span class="badge badge-stage1">Stage 1: Morning Opening (08:00-10:30)</span></td>
+            <td>70 - 100 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 - 4 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">32</td>
+            <td class="font-medium">ห้องปฏิบัติการ - รายการงานแล็บ - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - รายการงานแล็บ - ค้างรับผล</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>40 - 60 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">33</td>
+            <td class="font-medium">ห้องปฏิบัติการ - รายการงานแล็บ - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - รายการงานแล็บ - ปฏิเสธ</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>40 - 60 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">34</td>
+            <td class="font-medium">ห้องปฏิบัติการ - รายการงานแล็บ - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - รายการงานแล็บ - พักรายการ</code></td>
+            <td><span class="badge badge-all">Stage 1-3 (ตลอดวัน 08:00-16:30)</span></td>
+            <td>10 - 20 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 - 5 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">35</td>
+            <td class="font-medium">ห้องปฏิบัติการ - รายการงานแล็บ - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - รายการงานแล็บ - ยกเลิก</code></td>
+            <td><span class="badge badge-all">Stage 1-3 (ตลอดวัน 08:00-16:30)</span></td>
+            <td>10 - 20 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 - 5 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">36</td>
+            <td class="font-medium">ห้องปฏิบัติการ - รายการงานแล็บ - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - รายการงานแล็บ - รอเก็บ</code></td>
+            <td><span class="badge badge-stage1">Stage 1: Morning Opening (08:00-10:30)</span></td>
+            <td>70 - 100 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 - 4 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">37</td>
+            <td class="font-medium">ห้องปฏิบัติการ - รายการงานแล็บ - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - รายการงานแล็บ - รับแล้ว</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>40 - 60 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">38</td>
+            <td class="font-medium">ห้องปฏิบัติการ - รายการงานแล็บ - รอเช็คอิน</td>
+            <td><code class="tab-code">ห้องปฏิบัติการ - รายการงานแล็บ - เสร็จสิ้น</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>120 - 150 คน/แท็บ</td>
+            <td class="font-bold text-accent">15 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">39</td>
+            <td class="font-medium">ห้องรังสี - Imaging Task List - รอ Check-in</td>
+            <td><code class="tab-code">ห้องรังสี - Imaging Task List - รอ Check-in</code></td>
+            <td><span class="badge badge-stage1">Stage 1-2: Morning (08:00-13:00)</span></td>
+            <td>25 - 35 คน/แท็บ</td>
+            <td class="font-bold text-accent">2 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">40</td>
+            <td class="font-medium">ห้องรังสี - Imaging Task List - รอ Check-in</td>
+            <td><code class="tab-code">ห้องรังสี - Imaging Task List - กำลังถ่ายภาพ</code></td>
+            <td><span class="badge badge-stage1">Stage 1-2: Morning (08:00-13:00)</span></td>
+            <td>25 - 35 คน/แท็บ</td>
+            <td class="font-bold text-accent">2 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">41</td>
+            <td class="font-medium">ห้องรังสี - Imaging Task List - รอ Check-in</td>
+            <td><code class="tab-code">ห้องรังสี - Imaging Task List - พักไว้</code></td>
+            <td><span class="badge badge-all">Stage 1-3 (ตลอดวัน 08:00-16:30)</span></td>
+            <td>10 - 20 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 - 5 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">42</td>
+            <td class="font-medium">ห้องรังสี - Imaging Task List - รอ Check-in</td>
+            <td><code class="tab-code">ห้องรังสี - Imaging Task List - ยกเลิก</code></td>
+            <td><span class="badge badge-all">Stage 1-3 (ตลอดวัน 08:00-16:30)</span></td>
+            <td>10 - 20 คน/แท็บ</td>
+            <td class="font-bold text-accent">3 - 5 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">43</td>
+            <td class="font-medium">ห้องรังสี - Imaging Task List - รอ Check-in</td>
+            <td><code class="tab-code">ห้องรังสี - Imaging Task List - รอถ่ายภาพ</code></td>
+            <td><span class="badge badge-stage1">Stage 1-2: Morning (08:00-13:00)</span></td>
+            <td>25 - 35 คน/แท็บ</td>
+            <td class="font-bold text-accent">2 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">44</td>
+            <td class="font-medium">ห้องรังสี - Imaging Task List - รอ Check-in</td>
+            <td><code class="tab-code">ห้องรังสี - Imaging Task List - รออ่านผล</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>15 - 20 คน/แท็บ</td>
+            <td class="font-bold text-accent">2 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">45</td>
+            <td class="font-medium">ห้องรังสี - Imaging Task List - รอ Check-in</td>
+            <td><code class="tab-code">ห้องรังสี - Imaging Task List - เสร็จสิ้น</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>120 - 150 คน/แท็บ</td>
+            <td class="font-bold text-accent">15 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">46</td>
+            <td class="font-medium">ผู้ป่วยใน - Bed List - ผู้ป่วยเตรียมเข้า</td>
+            <td><code class="tab-code">ผู้ป่วยใน - Bed List - ผู้ป่วยเตรียมเข้า</code></td>
+            <td><span class="badge badge-stage2">Stage 1-2: Morning (08:00-13:00)</span></td>
+            <td>40 - 50 คน/แท็บ</td>
+            <td class="font-bold text-accent">11 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">47</td>
+            <td class="font-medium">ผู้ป่วยใน - Bed List - ผู้ป่วยเตรียมเข้า</td>
+            <td><code class="tab-code">ผู้ป่วยใน - Bed List - คำขอย้ายเข้าหอผู้ป่วย</code></td>
+            <td><span class="badge badge-stage2">Stage 1-2: Morning (08:00-13:00)</span></td>
+            <td>40 - 50 คน/แท็บ</td>
+            <td class="font-bold text-accent">11 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">48</td>
+            <td class="font-medium">ผู้ป่วยใน - Bed List - ผู้ป่วยเตรียมเข้า</td>
+            <td><code class="tab-code">ผู้ป่วยใน - Bed List - เตียงทั้งหมด</code></td>
+            <td><span class="badge badge-all">Stage 1-5 (24 ชม. เสถียร)</span></td>
+            <td>200 เตียง</td>
+            <td class="font-bold text-accent">10 - 11 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">49</td>
+            <td class="font-medium">ผู้ป่วยใน - Bed List - ผู้ป่วยเตรียมเข้า</td>
+            <td><code class="tab-code">ผู้ป่วยใน - Bed List - ผู้ป่วยจำหน่าย</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>120 - 150 คน/แท็บ</td>
+            <td class="font-bold text-accent">15 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">50</td>
+            <td class="font-medium">ผู้ป่วยใน - Bed List - ผู้ป่วยเตรียมเข้า</td>
+            <td><code class="tab-code">ผู้ป่วยใน - e-MAR</code></td>
+            <td><span class="badge badge-all">Stage 1-5 (24 ชม. เสถียร)</span></td>
+            <td>200 เตียง</td>
+            <td class="font-bold text-accent">10 - 11 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">51</td>
+            <td class="font-medium">ศูนย์จัดการเตียง - ตั้งค่าเตียง</td>
+            <td><code class="tab-code">ศูนย์จัดการเตียง - ตั้งค่าเตียง</code></td>
+            <td><span class="badge badge-all">Stage 1-3 (08:00-16:30)</span></td>
+            <td>N/A (ระบบเตียง)</td>
+            <td class="font-bold text-accent">21 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">52</td>
+            <td class="font-medium">Cashier - รายการผู้ป่วยใน</td>
+            <td><code class="tab-code">Cashier - รายการผู้ป่วยใน</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>120 - 180 คน/แท็บ</td>
+            <td class="font-bold text-accent">5 - 7 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">53</td>
+            <td class="font-medium">Cashier - รายการผู้ป่วยใน</td>
+            <td><code class="tab-code">Cashier - รายการผู้ป่วยใน - รายการตาม Patient</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>120 - 180 คน/แท็บ</td>
+            <td class="font-bold text-accent">5 - 7 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">54</td>
+            <td class="font-medium">Cashier - รายการผู้ป่วยนอก</td>
+            <td><code class="tab-code">Cashier - รายการผู้ป่วยนอก</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>120 - 180 คน/แท็บ</td>
+            <td class="font-bold text-accent">5 - 7 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">55</td>
+            <td class="font-medium">Cashier - รายการผู้ป่วยนอก</td>
+            <td><code class="tab-code">Cashier - รายการคิว</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>120 - 180 คน/แท็บ</td>
+            <td class="font-bold text-accent">5 - 7 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">56</td>
+            <td class="font-medium">Cashier - รายการผู้ป่วยนอก</td>
+            <td><code class="tab-code">Cashier - ประวัติรอบ</code></td>
+            <td><span class="badge badge-stage3">Stage 3: Afternoon (13:00-16:30)</span></td>
+            <td>120 - 180 คน/แท็บ</td>
+            <td class="font-bold text-accent">5 - 7 VUs</td>
+        </tr>
+        
+
+        <tr>
+            <td class="text-center font-mono">57</td>
+            <td class="font-medium">Report</td>
+            <td><code class="tab-code">Report</code></td>
+            <td><span class="badge badge-all">Stage 1-3 (08:00-16:30)</span></td>
+            <td>N/A (รายงาน)</td>
+            <td class="font-bold text-accent">28 VUs</td>
+        </tr>
+        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 3: 24-Hour Timeline Matrix -->
+        <div class="section-card" id="sec-timeline">
+            <h2 class="section-header">3. คลื่นภาระงานและการจำลองผู้ป่วย 24 ชั่วโมง (5-Stage Timeline Matrix)</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ช่วงเวลาปฏิบัติงาน</th>
+                            <th>จุดงานที่หนาแน่นที่สุด (Peak Location)</th>
+                            <th>จำนวนผู้ป่วยจริง ณ จุดนั้น</th>
+                            <th>จำนวนเครื่อง/เจ้าหน้าที่ (Staff VUs)</th>
+                            <th>อัตราภาระงานระบบ (Transactions/Min)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-stage1">Stage 1: 08:00 - 10:30 น.</span></td>
+                            <td class="font-medium">Reception, Kiosk คิวนัดหมาย & เจาะเลือด LIS</td>
+                            <td>350 คน (หน้าระบบ)</td>
+                            <td class="font-bold text-accent">400 VUs (Max Peak)</td>
+                            <td>116 - 150 Trans/min</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-stage2">Stage 2: 10:30 - 13:00 น.</span></td>
+                            <td class="font-medium">OPD แพทย์ออกตรวจ & ผลแล็บ LIS/PACS</td>
+                            <td>520 คน (ห้องตรวจ)</td>
+                            <td class="font-bold text-accent">360 VUs</td>
+                            <td>654 Trans/min</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-stage3">Stage 3: 13:00 - 16:30 น.</span></td>
+                            <td class="font-medium">ห้องจ่ายยา OPD & การเงิน Cashier Settlement</td>
+                            <td>740 คน (ยา+การเงิน)</td>
+                            <td class="font-bold text-accent">304 VUs</td>
+                            <td>413 Trans/min</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-all">Stage 4: 16:30 - 20:00 น.</span></td>
+                            <td class="font-medium">คลินิกนอกเวลา OPD เย็น & ปิดรอบการเงิน</td>
+                            <td>465 คน</td>
+                            <td class="font-bold text-accent">130 VUs</td>
+                            <td>102 Trans/min</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-all">Stage 5: 20:00 - 08:00 น.</span></td>
+                            <td class="font-medium">ผู้ป่วยใน IPD Ward e-MAR & ER ฉุกเฉิน</td>
+                            <td>246 คน (IPD 195 เตียง)</td>
+                            <td class="font-bold text-accent">60 VUs (Baseline)</td>
+                            <td>27 Trans/min</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 4: Scenarios Overview -->
+        <div class="section-card" id="sec-scenarios-overview">
+            <h2 class="section-header">4. ตารางสรุปภาพรวม 8 Scenarios หลัก (Scenario Overview Table)</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Scenario ID</th>
+                            <th>Scenario Name</th>
+                            <th>แผนกหลัก</th>
+                            <th>แท็บใน Excel ที่ครอบคลุม</th>
+                            <th>ช่วงเวลาหนาแน่นหลัก</th>
+                            <th>Target Concurrency</th>
+                            <th>Patient Volume</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-bold text-primary">SCN-01</td>
+                            <td class="font-medium">Reception & Registration</td>
+                            <td>เวชระเบียน</td>
+                            <td><code>Reception</code>, <code>นัดหมาย/ลงทะเบียน</code>, <code>คำขอ Walk-in</code></td>
+                            <td><span class="badge badge-stage1">Stage 1 (08:00-10:30)</span></td>
+                            <td class="font-bold text-accent">120 VUs</td>
+                            <td>~350 คน/ชม.</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-primary">SCN-02</td>
+                            <td class="font-medium">OPD Outpatient Consultation</td>
+                            <td>ตรวจผู้ป่วยนอก</td>
+                            <td><code>เช็คอิน</code>, <code>พร้อมตรวจ</code>, <code>ตรวจเสร็จ</code>, <code>จำหน่าย</code>, <code>เสร็จสิ้น</code></td>
+                            <td><span class="badge badge-stage1">Stage 1-2 (08:00-13:00)</span></td>
+                            <td class="font-bold text-accent">135 VUs</td>
+                            <td>~450 คน/ชม.</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-primary">SCN-03</td>
+                            <td class="font-medium">OPD Pharmacy & Dispensing</td>
+                            <td>ห้องยา OPD</td>
+                            <td><code>Order รอยืนยัน</code>, <code>ใบยารอจัด</code>, <code>ใบรอจ่าย</code>, <code>จ่ายยาแล้ว</code></td>
+                            <td><span class="badge badge-stage3">Stage 3 (13:00-16:30)</span></td>
+                            <td class="font-bold text-accent">50 VUs</td>
+                            <td>~380 คน/ชม.</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-primary">SCN-04</td>
+                            <td class="font-medium">IPD Pharmacy & e-MAR</td>
+                            <td>ห้องยา IPD & วอร์ด</td>
+                            <td><code>IPD Order รอยืนยัน</code>, <code>ใบยารอจัด</code>, <code>ใบรอจ่าย</code>, <code>e-MAR</code></td>
+                            <td><span class="badge badge-all">Stage 1-4 (08:00-20:00)</span></td>
+                            <td class="font-bold text-accent">30 VUs</td>
+                            <td>~200 เตียง</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-primary">SCN-05</td>
+                            <td class="font-medium">LIS Laboratory Worklist</td>
+                            <td>ห้องปฏิบัติการ</td>
+                            <td><code>Specimen รอเช็คอิน</code>, <code>รอเก็บ</code>, <code>ค้างรับผล</code>, <code>เสร็จสิ้น</code></td>
+                            <td><span class="badge badge-stage1">Stage 1-2 (08:00-13:00)</span></td>
+                            <td class="font-bold text-accent">46 VUs</td>
+                            <td>~280 คน/ชม.</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-primary">SCN-06</td>
+                            <td class="font-medium">RIS Radiology Imaging</td>
+                            <td>ห้องรังสี</td>
+                            <td><code>Imaging Task List รอ Check-in</code>, <code>รอถ่ายภาพ</code>, <code>รออ่านผล</code></td>
+                            <td><span class="badge badge-stage1">Stage 1-2 (08:00-13:00)</span></td>
+                            <td class="font-bold text-accent">14 VUs</td>
+                            <td>~90 คน/ชม.</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-primary">SCN-07</td>
+                            <td class="font-medium">IPD Bed Management</td>
+                            <td>บริหารเตียง IPD</td>
+                            <td><code>Bed List ผู้ป่วยเตรียมเข้า</code>, <code>คำขอย้ายเข้า</code>, <code>เตียงทั้งหมด</code></td>
+                            <td><span class="badge badge-all">Stage 1-3 (08:00-16:30)</span></td>
+                            <td class="font-bold text-accent">74 VUs</td>
+                            <td>~210 เตียง</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-primary">SCN-08</td>
+                            <td class="font-medium">Cashier & Billing Settlement</td>
+                            <td>การเงิน & คิว</td>
+                            <td><code>Cashier รายการผู้ป่วยนอก/ใน</code>, <code>รายการคิว</code>, <code>ประวัติรอบ</code></td>
+                            <td><span class="badge badge-stage3">Stage 3 (13:00-16:30)</span></td>
+                            <td class="font-bold text-accent">40 VUs</td>
+                            <td>~360 คน/ชม.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 5: Scenario Specification Tables -->
+        <div class="section-card" id="sec-scenarios-detail">
+            <h2 class="section-header">5. ตารางข้อกำหนดราย Scenario ฉบับรายละเอียด (SCN-01 ถึง SCN-08)</h2>
+
+            <!-- SCN-01 -->
+            <h3 style="color: var(--primary); margin: 1.5rem 0 0.75rem 0;">🔹 SCN-01: Reception & Patient Registration Scenario Table</h3>
+            <div class="table-responsive" style="margin-bottom: 2rem;">
+                <table>
+                    <tbody>
+                        <tr><td style="width: 250px;" class="font-semibold text-primary">Scenario ID / Name</td><td class="font-bold">SCN-01: Reception & Patient Registration Scenario</td></tr>
+                        <tr><td class="font-semibold text-primary">แผนก / โมดูลหลัก</td><td>แผนกเวชระเบียน / คิวต้อนรับหน้าประตู (Reception & Registration)</td></tr>
+                        <tr><td class="font-semibold text-primary">บทบาทผู้ใช้งาน (User Persona)</td><td>เจ้าหน้าที่เวชระเบียน / ผู้ป่วยกดตู้ Kiosk อัตโนมัติ</td></tr>
+                        <tr><td class="font-semibold text-primary">ช่วงเวลาหนาแน่นหลัก</td><td><span class="badge badge-stage1">Stage 1: Morning Opening (08:00 - 10:30 น.)</span></td></tr>
+                        <tr><td class="font-semibold text-primary">เป้าหมาย Concurrency</td><td><strong class="text-accent">120 Concurrent VUs</strong> (Stage 1 Peak) / 35 VUs (Stage 2)</td></tr>
+                        <tr><td class="font-semibold text-primary">ประมาณการผู้ป่วยในคิว</td><td>350 คน/ชั่วโมง</td></tr>
+                        <tr><td class="font-semibold text-primary">แท็บใน Excel ที่ครอบคลุม</td><td>1. <code>Reception</code> (35 VUs)<br>2. <code>รายการผู้ป่วยนอก - นัดหมาย / ลงทะเบียน</code> (15 VUs)<br>3. <code>รายการผู้ป่วยนอก - คำขอ Walk-in</code> (15 VUs)</td></tr>
+                        <tr><td class="font-semibold text-primary">ลำดับขั้นตอน (User Flow)</td><td>1. สแกนบัตรประชาชน/ค้นหา HN หรือ Citizen ID บน Kiosk/ระบบช่วง 8 โมงเช้า<br>2. ดึงข้อมูลนัดหมาย (<code>BOOKED</code>) หรือ สร้างคำขอ Walk-in (<code>CLINIC_WALK_IN_REQUEST</code>)<br>3. พิมพ์บัตรคิวเข้าแผนกและเปลี่ยนสถานะผู้ป่วยเข้าคิว</td></tr>
+                        <tr><td class="font-semibold text-primary">Pacing / Think Time</td><td>3 - 5 วินาที ต่อขั้นตอน</td></tr>
+                        <tr><td class="font-semibold text-primary">เกณฑ์ความสำเร็จ (SLA)</td><td>Response Time p(95) &lt; <strong>1,000 ms</strong> | HTTP Error Rate &lt; <strong>0.5%</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SCN-02 -->
+            <h3 style="color: var(--primary); margin: 1.5rem 0 0.75rem 0;">🔹 SCN-02: OPD Outpatient Consultation Scenario Table</h3>
+            <div class="table-responsive" style="margin-bottom: 2rem;">
+                <table>
+                    <tbody>
+                        <tr><td style="width: 250px;" class="font-semibold text-primary">Scenario ID / Name</td><td class="font-bold">SCN-02: OPD Outpatient Consultation & Triage Scenario</td></tr>
+                        <tr><td class="font-semibold text-primary">แผนก / โมดูลหลัก</td><td>แผนกผู้ป่วยนอก / ห้องตรวจ OPD (Outpatient Department)</td></tr>
+                        <tr><td class="font-semibold text-primary">บทบาทผู้ใช้งาน (User Persona)</td><td>พยาบาลคัดกรอง (Triage Nurse) / แพทย์ผู้ตรวจ OPD</td></tr>
+                        <tr><td class="font-semibold text-primary">ช่วงเวลาหนาแน่นหลัก</td><td><span class="badge badge-stage1">Stage 1 & 2: Morning Full Peak (08:00 - 13:00 น.)</span></td></tr>
+                        <tr><td class="font-semibold text-primary">เป้าหมาย Concurrency</td><td><strong class="text-accent">135 Concurrent VUs</strong> (Stage 1-2 Max Peak) / 80 VUs (Stage 3)</td></tr>
+                        <tr><td class="font-semibold text-primary">ประมาณการผู้ป่วยในคิว</td><td>450 - 520 คน/ชั่วโมง</td></tr>
+                        <tr><td class="font-semibold text-primary">แท็บใน Excel ที่ครอบคลุม</td><td>1. <code>รายการผู้ป่วยนอก - เช็คอิน</code> (15 VUs)<br>2. <code>รายการผู้ป่วยนอก - พร้อมตรวจ | พักการตรวจ</code> (15 VUs)<br>3. <code>รายการผู้ป่วยนอก - ตรวจเสร็จ</code> (15 VUs)<br>4. <code>รายการผู้ป่วยนอก - จำหน่าย / เสร็จสิ้น</code> (30 VUs)</td></tr>
+                        <tr><td class="font-semibold text-primary">ลำดับขั้นตอน (User Flow)</td><td>1. พยาบาลดึงคิว Encounter (<code>เช็คอิน</code>) บันทึกสัญญาณชีพ Triage Vital Signs ตั้งแต่ 8 โมงเช้า<br>2. เปลี่ยนสถานะผู้ป่วยเข้าคิวห้องตรวจ (<code>พร้อมตรวจ</code>)<br>3. แพทย์เรียกผู้ป่วย บันทึกผลตรวจ บันทึกวินิจฉัย และสั่งยา/แล็บ/รังสีช่วง 09:00 - 12:00 น.<br>4. บันทึกสรุปการตรวจและเปลี่ยนสถานะเป็น <code>ตรวจเสร็จ</code> / <code>จำหน่าย</code></td></tr>
+                        <tr><td class="font-semibold text-primary">Pacing / Think Time</td><td>5 - 15 วินาที</td></tr>
+                        <tr><td class="font-semibold text-primary">เกณฑ์ความสำเร็จ (SLA)</td><td>Response Time p(95) &lt; <strong>2,000 ms</strong> | HTTP Error Rate &lt; <strong>1.0%</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SCN-03 -->
+            <h3 style="color: var(--primary); margin: 1.5rem 0 0.75rem 0;">🔹 SCN-03: OPD Pharmacy & Dispensing Scenario Table</h3>
+            <div class="table-responsive" style="margin-bottom: 2rem;">
+                <table>
+                    <tbody>
+                        <tr><td style="width: 250px;" class="font-semibold text-primary">Scenario ID / Name</td><td class="font-bold">SCN-03: OPD Pharmacy & Dispensing Scenario</td></tr>
+                        <tr><td class="font-semibold text-primary">แผนก / โมดูลหลัก</td><td>ห้องจ่ายยาผู้ป่วยนอก (OPD Pharmacy)</td></tr>
+                        <tr><td class="font-semibold text-primary">บทบาทผู้ใช้งาน (User Persona)</td><td>เจ้าหน้าที่จัดยา / เภสัชกรตรวจสอบและจ่ายยา</td></tr>
+                        <tr><td class="font-semibold text-primary">ช่วงเวลาหนาแน่นหลัก</td><td><span class="badge badge-stage3">Stage 3: Afternoon Peak (13:00 - 16:30 น.)</span></td></tr>
+                        <tr><td class="font-semibold text-primary">เป้าหมาย Concurrency</td><td><strong class="text-accent">50 Concurrent VUs</strong> (Stage 3 Peak) / 36 VUs (Stage 2)</td></tr>
+                        <tr><td class="font-semibold text-primary">ประมาณการผู้ป่วยในคิว</td><td>380 คน/ชั่วโมง</td></tr>
+                        <tr><td class="font-semibold text-primary">แท็บใน Excel ที่ครอบคลุม</td><td>1. <code>การจัดการรายการสั่งยา OPD - Order รอยืนยัน</code> (3 VUs)<br>2. <code>การจัดการรายการสั่งยา OPD - ใบยารอจัด / ใบยาจัดแล้ว</code> (6 VUs)<br>3. <code>การจัดการรายการสั่งยา OPD - ใบรอจ่าย / จ่ายยาแล้ว</code> (6 VUs)<br>4. <code>การจัดการรายการสั่งยา OPD - ยาไปรษณีย์ / เติมยา</code> (6 VUs)</td></tr>
+                        <tr><td class="font-semibold text-primary">ลำดับขั้นตอน (User Flow)</td><td>1. เภสัชกรเปิดแท็บ <code>Order รอยืนยัน</code> ตรวจสอบคำสั่งยาจากห้องตรวจ<br>2. เจ้าหน้าที่เปิดแท็บ <code>ใบยารอจัด</code> เพื่อจัดยาตามรายการสั่ง<br>3. เภสัชกรตรวจสอบความถูกต้องเปลี่ยนสถานะเป็น <code>ใบยาจัดแล้ว</code> / <code>ใบรอจ่าย</code><br>4. เรียกคิวจ่ายยา แนะนำวิธีใช้ยา และเปลี่ยนสถานะเป็น <code>จ่ายยาแล้ว</code> หนักสุดช่วงบ่าย</td></tr>
+                        <tr><td class="font-semibold text-primary">Pacing / Think Time</td><td>3 - 8 วินาที</td></tr>
+                        <tr><td class="font-semibold text-primary">เกณฑ์ความสำเร็จ (SLA)</td><td>Response Time p(95) &lt; <strong>1,500 ms</strong> | HTTP Error Rate &lt; <strong>0.5%</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SCN-04 -->
+            <h3 style="color: var(--primary); margin: 1.5rem 0 0.75rem 0;">🔹 SCN-04: IPD Pharmacy & e-MAR Scenario Table</h3>
+            <div class="table-responsive" style="margin-bottom: 2rem;">
+                <table>
+                    <tbody>
+                        <tr><td style="width: 250px;" class="font-semibold text-primary">Scenario ID / Name</td><td class="font-bold">SCN-04: IPD Pharmacy & e-MAR Administration Scenario</td></tr>
+                        <tr><td class="font-semibold text-primary">แผนก / โมดูลหลัก</td><td>ห้องยาผู้ป่วยใน (IPD Pharmacy) & หอผู้ป่วย (IPD Ward)</td></tr>
+                        <tr><td class="font-semibold text-primary">บทบาทผู้ใช้งาน (User Persona)</td><td>เภสัชกร IPD / พยาบาลประจำหอผู้ป่วย (Ward Nurse)</td></tr>
+                        <tr><td class="font-semibold text-primary">ช่วงเวลาหนาแน่นหลัก</td><td><span class="badge badge-all">Stage 1 - 4 (เปิดกะ 08:00 น. ถึง 20:00 น. เสถียรตลอดวัน)</span></td></tr>
+                        <tr><td class="font-semibold text-primary">เป้าหมาย Concurrency</td><td><strong class="text-accent">30 Concurrent VUs</strong> (เสถียรตั้งแต่ 08:00 น. เป็นต้นไป)</td></tr>
+                        <tr><td class="font-semibold text-primary">ประมาณการครองเตียง</td><td>200 เตียงผู้ป่วยใน</td></tr>
+                        <tr><td class="font-semibold text-primary">แท็บใน Excel ที่ครอบคลุม</td><td>1. <code>การจัดการรายการสั่งยา IPD - Order รอยืนยัน / ใบยารอจัด / ใบยาจัดแล้ว</code> (6 VUs)<br>2. <code>การจัดการรายการสั่งยา IPD - ใบรอจ่าย / จ่ายยาแล้ว</code> (4 VUs)<br>3. <code>ผู้ป่วยใน - e-MAR</code> (10 VUs)</td></tr>
+                        <tr><td class="font-semibold text-primary">ลำดับขั้นตอน (User Flow)</td><td>1. เภสัชกรยืนยันคำสั่งยา IPD จากแพทย์รอบเช้าตั้งแต่ 08:30 น.<br>2. จัดยาเข้าซองประจำตัวผู้ป่วย/จัดใส่รถจ่ายยาวอร์ด (<code>ใบยาจัดแล้ว</code>)<br>3. ส่งมอบยาขึ้นหอผู้ป่วย (<code>จ่ายยาแล้ว</code>)<br>4. พยาบาลประจำวอร์ดเปิดแท็บ <code>e-MAR</code> สแกน Barcode บันทึกการบริหารยารอบ 08:00, 12:00, 16:00, 20:00 น.</td></tr>
+                        <tr><td class="font-semibold text-primary">Pacing / Think Time</td><td>4 - 10 วินาที</td></tr>
+                        <tr><td class="font-semibold text-primary">เกณฑ์ความสำเร็จ (SLA)</td><td>Response Time p(95) &lt; <strong>1,500 ms</strong> | HTTP Error Rate &lt; <strong>0.5%</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SCN-05 -->
+            <h3 style="color: var(--primary); margin: 1.5rem 0 0.75rem 0;">🔹 SCN-05: LIS Laboratory Worklist Scenario Table</h3>
+            <div class="table-responsive" style="margin-bottom: 2rem;">
+                <table>
+                    <tbody>
+                        <tr><td style="width: 250px;" class="font-semibold text-primary">Scenario ID / Name</td><td class="font-bold">SCN-05: LIS Laboratory Worklist & Specimen Scenario</td></tr>
+                        <tr><td class="font-semibold text-primary">แผนก / โมดูลหลัก</td><td>ห้องเจาะเลือด & ห้องปฏิบัติการชันสูตร (Laboratory LIS)</td></tr>
+                        <tr><td class="font-semibold text-primary">บทบาทผู้ใช้งาน (User Persona)</td><td>เจ้าหน้าที่เจาะเลือด (Specimen Collector) / นักเทคนิคการแพทย์ (Med Tech)</td></tr>
+                        <tr><td class="font-semibold text-primary">ช่วงเวลาหนาแน่นหลัก</td><td><span class="badge badge-stage1">Stage 1 & 2: Morning Opening & Peak (08:00 - 13:00 น.)</span></td></tr>
+                        <tr><td class="font-semibold text-primary">เป้าหมาย Concurrency</td><td><strong class="text-accent">46 Concurrent VUs</strong> (Stage 1-2 Peak) / 30 VUs (Stage 3 Afternoon)</td></tr>
+                        <tr><td class="font-semibold text-primary">ประมาณการผู้ป่วยในคิว</td><td>280 คน/ชั่วโมง</td></tr>
+                        <tr><td class="font-semibold text-primary">แท็บใน Excel ที่ครอบคลุม</td><td>1. <code>Specimen Collector - รอเช็คอิน | รอเก็บ | เก็บแล้ว</code> (18 VUs)<br>2. <code>รายการงานแล็บ - รอเช็คอิน | เก็บแล้ว | ค้างรับผล | เสร็จสิ้น</code> (28 VUs)</td></tr>
+                        <tr><td class="font-semibold text-primary">ลำดับขั้นตอน (User Flow)</td><td>1. เจ้าหน้าที่เจาะเลือดสแกน Barcode หลอดเลือด (<code>Specimen รอเช็คอิน/เก็บแล้ว</code>) เริ่ม 8 โมงเช้า<br>2. นักเทคนิคการแพทย์ดึงแท็บ <code>รายการงานแล็บ - รอเช็คอิน/รับแล้ว</code> เข้าเครื่องวิเคราะห์<br>3. กรอกผลการวิเคราะห์แล็บ (<code>ค้างรับผล</code>)<br>4. ตรวจสอบและกดอนุมัติผลแล็บเปลี่ยนสถานะเป็น <code>เสร็จสิ้น</code></td></tr>
+                        <tr><td class="font-semibold text-primary">Pacing / Think Time</td><td>2 - 5 วินาที</td></tr>
+                        <tr><td class="font-semibold text-primary">เกณฑ์ความสำเร็จ (SLA)</td><td>Response Time p(95) &lt; <strong>1,200 ms</strong> | HTTP Error Rate &lt; <strong>0.5%</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SCN-06 -->
+            <h3 style="color: var(--primary); margin: 1.5rem 0 0.75rem 0;">🔹 SCN-06: RIS Radiology Imaging Scenario Table</h3>
+            <div class="table-responsive" style="margin-bottom: 2rem;">
+                <table>
+                    <tbody>
+                        <tr><td style="width: 250px;" class="font-semibold text-primary">Scenario ID / Name</td><td class="font-bold">SCN-06: RIS Radiology Imaging Task Scenario</td></tr>
+                        <tr><td class="font-semibold text-primary">แผนก / โมดูลหลัก</td><td>แผนกรังสีวินิจฉัย (Radiology RIS & PACS)</td></tr>
+                        <tr><td class="font-semibold text-primary">บทบาทผู้ใช้งาน (User Persona)</td><td>นักรังสีการแพทย์ (Radiographer) / แพทย์รังสีวินิจฉัย (Radiologist)</td></tr>
+                        <tr><td class="font-semibold text-primary">ช่วงเวลาหนาแน่นหลัก</td><td><span class="badge badge-stage1">Stage 1 & 2: Morning Opening & Peak (08:00 - 13:00 น.)</span></td></tr>
+                        <tr><td class="font-semibold text-primary">เป้าหมาย Concurrency</td><td><strong class="text-accent">14 Concurrent VUs</strong> (Stage 1-2 Peak) / 10 VUs (Stage 3)</td></tr>
+                        <tr><td class="font-semibold text-primary">ประมาณการผู้ป่วยในคิว</td><td>90 คน/ชั่วโมง</td></tr>
+                        <tr><td class="font-semibold text-primary">แท็บใน Excel ที่ครอบคลุม</td><td>1. <code>Imaging Task List - รอ Check-in | รอถ่ายภาพ | กำลังถ่ายภาพ</code> (8 VUs)<br>2. <code>Imaging Task List - รออ่านผล | เสร็จสิ้น</code> (6 VUs)</td></tr>
+                        <tr><td class="font-semibold text-primary">ลำดับขั้นตอน (User Flow)</td><td>1. นักรังสีเช็คอินคิวผู้ป่วย (<code>รอ Check-in</code> &rarr; <code>รอถ่ายภาพ</code>) เริ่ม 8 โมงเช้า<br>2. นำผู้ป่วยเข้าห้องถ่ายภาพ X-Ray/CT เปลี่ยนสถานะเป็น <code>กำลังถ่ายภาพ</code><br>3. ถ่ายภาพเสร็จสิ้น ส่งภาพเข้าระบบ PACS เปลี่ยนสถานะเป็น <code>รออ่านผล</code><br>4. แพทย์รังสีเปิดดูภาพ บันทึกผลอ่าน Impression และเปลี่ยนสถานะเป็น <code>เสร็จสิ้น</code></td></tr>
+                        <tr><td class="font-semibold text-primary">Pacing / Think Time</td><td>5 - 10 วินาที</td></tr>
+                        <tr><td class="font-semibold text-primary">เกณฑ์ความสำเร็จ (SLA)</td><td>Response Time p(95) &lt; <strong>1,500 ms</strong> | HTTP Error Rate &lt; <strong>0.5%</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SCN-07 -->
+            <h3 style="color: var(--primary); margin: 1.5rem 0 0.75rem 0;">🔹 SCN-07: IPD Bed Management Scenario Table</h3>
+            <div class="table-responsive" style="margin-bottom: 2rem;">
+                <table>
+                    <tbody>
+                        <tr><td style="width: 250px;" class="font-semibold text-primary">Scenario ID / Name</td><td class="font-bold">SCN-07: IPD Bed Management & Admission Scenario</td></tr>
+                        <tr><td class="font-semibold text-primary">แผนก / โมดูลหลัก</td><td>ศูนย์จัดการเตียง (Bed Management) & หอผู้ป่วยใน (IPD Ward)</td></tr>
+                        <tr><td class="font-semibold text-primary">บทบาทผู้ใช้งาน (User Persona)</td><td>เจ้าหน้าที่ศูนย์เตียง / พยาบาลประจำวอร์ด</td></tr>
+                        <tr><td class="font-semibold text-primary">ช่วงเวลาหนาแน่นหลัก</td><td><span class="badge badge-all">Stage 1 - 3 (เปิดกะ 08:00 - 16:30 น.)</span></td></tr>
+                        <tr><td class="font-semibold text-primary">เป้าหมาย Concurrency</td><td><strong class="text-accent">74 Concurrent VUs</strong> (Stage 1-2 Peak) / 55 VUs (Stage 3)</td></tr>
+                        <tr><td class="font-semibold text-primary">ประมาณการครองเตียง</td><td>210 เตียงผู้ป่วยใน</td></tr>
+                        <tr><td class="font-semibold text-primary">แท็บใน Excel ที่ครอบคลุม</td><td>1. <code>ผู้ป่วยใน - Bed List - ผู้ป่วยเตรียมเข้า / คำขอย้ายเข้า</code> (22 VUs)<br>2. <code>ผู้ป่วยใน - Bed List - เตียงทั้งหมด / ผู้ป่วยจำหน่าย</code> (21 VUs)<br>3. <code>ศูนย์จัดการเตียง - ตั้งค่าเตียง</code> (21 VUs)</td></tr>
+                        <tr><td class="font-semibold text-primary">ลำดับขั้นตอน (User Flow)</td><td>1. ตรวจสอบเตียงว่างในวอร์ดผ่านแท็บ <code>ตั้งค่าเตียง</code> / <code>เตียงทั้งหมด</code> เริ่ม 8 โมงเช้า<br>2. รับคำขอผู้ป่วยนอนโรงพยาบาลจาก OPD/ER (<code>ผู้ป่วยเตรียมเข้า</code>)<br>3. อนุมัติการย้ายเข้าวอร์ด (<code>คำขอย้ายเข้าหอผู้ป่วย</code>) บันทึกสถานะรับเข้าเตียง<br>4. ดำเนินการจำหน่ายผู้ป่วยออกจากเตียงเมื่อสิ้นสุดการรักษา (<code>ผู้ป่วยจำหน่าย</code>) ช่วงบ่าย</td></tr>
+                        <tr><td class="font-semibold text-primary">Pacing / Think Time</td><td>5 - 12 วินาที</td></tr>
+                        <tr><td class="font-semibold text-primary">เกณฑ์ความสำเร็จ (SLA)</td><td>Response Time p(95) &lt; <strong>2,000 ms</strong> | HTTP Error Rate &lt; <strong>0.5%</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SCN-08 -->
+            <h3 style="color: var(--primary); margin: 1.5rem 0 0.75rem 0;">🔹 SCN-08: Cashier Settlement Scenario Table</h3>
+            <div class="table-responsive" style="margin-bottom: 2rem;">
+                <table>
+                    <tbody>
+                        <tr><td style="width: 250px;" class="font-semibold text-primary">Scenario ID / Name</td><td class="font-bold">SCN-08: Cashier Settlement & Billing Scenario</td></tr>
+                        <tr><td class="font-semibold text-primary">แผนก / โมดูลหลัก</td><td>แผนกการเงินและชำระเงิน (Cashier & Billing)</td></tr>
+                        <tr><td class="font-semibold text-primary">บทบาทผู้ใช้งาน (User Persona)</td><td>เจ้าหน้าที่การเงิน (Cashier)</td></tr>
+                        <tr><td class="font-semibold text-primary">ช่วงเวลาหนาแน่นหลัก</td><td><span class="badge badge-stage3">Stage 3: Afternoon Peak (13:00 - 16:30 น.)</span></td></tr>
+                        <tr><td class="font-semibold text-primary">เป้าหมาย Concurrency</td><td><strong class="text-accent">40 Concurrent VUs</strong> (Stage 3 Peak) / 32 VUs (Stage 2)</td></tr>
+                        <tr><td class="font-semibold text-primary">ประมาณการผู้ป่วยในคิว</td><td>360 คน/ชั่วโมง</td></tr>
+                        <tr><td class="font-semibold text-primary">แท็บใน Excel ที่ครอบคลุม</td><td>1. <code>Cashier - รายการผู้ป่วยนอก / รายการผู้ป่วยใน</code> (17 VUs)<br>2. <code>Cashier - รายการคิว / ประวัติรอบ / Report</code> (23 VUs)</td></tr>
+                        <tr><td class="font-semibold text-primary">ลำดับขั้นตอน (User Flow)</td><td>1. เปิดแท็บ <code>รายการคิว</code> เรียกผู้ป่วยเข้ารับการชำระเงิน<br>2. ดึงรายการค่ารักษาพยาบาลจาก OPD / IPD<br>3. ตรวจสอบสิทธิการรักษา ประมวลผลใบสั่งชำระเงิน และคำนวณส่วนลด<br>4. รับชำระเงิน ออกใบเสร็จรับเงิน และปิดรอบการเงินประจำวัน (<code>ประวัติรอบ</code>) หนักสุดช่วงบ่าย</td></tr>
+                        <tr><td class="font-semibold text-primary">Pacing / Think Time</td><td>4 - 8 วินาที</td></tr>
+                        <tr><td class="font-semibold text-primary">เกณฑ์ความสำเร็จ (SLA)</td><td>Response Time p(95) &lt; <strong>1,500 ms</strong> | HTTP Error Rate &lt; <strong>0.5%</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            Hospital Performance Testing Master Plan | Generated for Cortex System Load Testing (400 Concurrent VUs)
+        </div>
+    
+        <!-- Section 6: 4-Step Performance Engineering Lifecycle -->
+        <div class="section-card" id="sec-lifecycle">
+            <h2 class="section-header">6. วงรอบการทดสอบและปรับแต่งระบบ (Test -> Tuning -> Retest -> เก็บผล)</h2>
+            <div class="callout">
+                <strong>🔄 กระบวนการวงรอบทดสอบประสิทธิภาพระบบ (Performance Engineering Loop):</strong><br>
+                1. <strong>Test:</strong> ยิงทดสอบค่าน้ำหนัก VUs ตามประเภทการทดสอบ และสังเกตพฤติกรรมคอขวด<br>
+                2. <strong>Tuning:</strong> วิเคราะห์หาสาเหตุ (Root Cause Analysis) และปรับแต่งระบบ (DB Pool, Indexing, Pod Autoscaling, Caching, Memory Limit)<br>
+                3. <strong>Retest:</strong> ยิงทดสอบซ้ำด้วยสคริปต์เดิมเพื่อยืนยันประสิทธิผลการแก้ไข (Before vs After Comparison)<br>
+                4. <strong>เก็บผล:</strong> บันทึกสรุปสถิติ p95, p99, Throughput (RPS), HTTP Error Rate และทรัพยากรฮาร์ดแวร์
+            </div>
+
+            <h3 style="color: var(--primary); margin: 1.5rem 0 1rem 0;">📊 ตารางเปรียบเทียบการทดสอบแต่ละประเภทและการปรับแต่ง (Test Types & Tuning Lifecycle Matrix)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ประเภทการทดสอบ (Test Type)</th>
+                            <th>เป้าหมาย VUs & Duration</th>
+                            <th>วัตถุประสงค์ (Core Objective)</th>
+                            <th>สิ่งที่ต้องปรับแต่งในขั้นตอน Tuning</th>
+                            <th>การสรุปและเก็บผล (Reporting)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-bold text-primary">1. Load Test</td>
+                            <td><span class="badge badge-stage1">400 VUs (30-60m)</span></td>
+                            <td>ทดสอบการรองรับภาระงานปกติของโรงพยาบาลช่วงพีคเช้า 8 โมง</td>
+                            <td>ปรับเพิ่ม DB Connection Pool (max_connections), เพิ่ม Redis Caching สำหรับ GraphQL, ปรับแต่ง Pod RAM/CPU Limits</td>
+                            <td>บันทึก p(95) &lt; 2,000ms, Error Rate &lt; 1%, RPS เปรียบเทียบ Before vs After</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-rose">2. Spike Test</td>
+                            <td><span class="badge badge-stage2">800-1,000 VUs (พุ่งใน 30s)</span></td>
+                            <td>ทดสอบคิวนัดหมายเปิด 8 โมงเช้ากะทันหัน และดูการ Recovery ของระบบ</td>
+                            <td>ปรับ Ingress Nginx worker_connections, ตั้งค่า Queue Buffer/Rate Limiting หน้า Kiosk, ปรับ Pod HPA ให้ขยายตัวเร็วขึ้น</td>
+                            <td>บันทึกระยะเวลา Recovery (RTO), สถิติ HTTP 502/504 Timeouts, สถิติกราฟ CPU Throttling</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-accent">3. Stress Test</td>
+                            <td><span class="badge badge-stage3">600-800 VUs (30-45m)</span></td>
+                            <td>อัดภาระงานเกินปกติเพื่อหาจุดคอขวดแรก (First Failure Point) และจุดแตกหัก</td>
+                            <td>ย่อย GraphQL N+1 Queries, ปรับ SQL Query Indexing, แก้ไข DB Deadlocks & Lock Timeouts, เพิ่ม Node.js Memory Heap</td>
+                            <td>บันทึกขีดจำกัดสูงสุดที่รับได้ (Max Operating Capacity) และชนิดของ Failure เมื่อเกิด Overload</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-purple">4. Endurance Test (Soak)</td>
+                            <td><span class="badge badge-all">250-300 VUs (2-12h)</span></td>
+                            <td>ยิงระดับคงที่ระยะยาวเพื่อตรวจหา Memory Leak และ Resource Exhaustion</td>
+                            <td>แก้ไข Memory Leak (Unbound Listeners/Caches), แก้ไข Unclosed DB Connections/Sessions, ตั้งค่า Log Rotation</td>
+                            <td>บันทึกกราฟ RAM Trend Line 12 ชั่วโมง ยืนยันว่าไม่มี Memory Leak หรือ OOM Kills</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">5. Breakpoint Test</td>
+                            <td><span class="badge badge-all">ไต่ระดับขึ้นเรื่อยๆ จนพัง</span></td>
+                            <td>หาจุดแตกหักสัมบูรณ์ของโครงสร้างพื้นฐานระบบ (Maximum Capacity Limit)</td>
+                            <td>ประเมินขีดจำกัดสูงสุดของฮาร์ดแวร์/คลาวด์ เพื่อวางแผนจัดซื้อสเปกเซิร์ฟเวอร์ในอนาคต</td>
+                            <td>บันทึกจุดแตกหัก VUs และขีดจำกัดโครงสร้างพื้นฐานระบบ</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="color: var(--primary); margin: 2rem 0 1rem 0;">📈 ตารางสรุปการบันทึกเก็บผลการทดสอบ (Performance Results Template)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Test Type</th>
+                            <th>Phase</th>
+                            <th>Target VUs</th>
+                            <th>Duration</th>
+                            <th>p(95) Response Time</th>
+                            <th>p(99) Response Time</th>
+                            <th>HTTP Error Rate</th>
+                            <th>Max RPS</th>
+                            <th>ผลการประเมิน</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Load Test</strong></td>
+                            <td>Before Tuning</td>
+                            <td>400 VUs</td>
+                            <td>30m</td>
+                            <td>3,450 ms</td>
+                            <td>7,200 ms</td>
+                            <td>2.45%</td>
+                            <td>145 req/s</td>
+                            <td>❌ ไม่ผ่าน SLA</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Load Test</strong></td>
+                            <td class="font-bold text-accent">After Tuning</td>
+                            <td>400 VUs</td>
+                            <td>30m</td>
+                            <td class="font-bold text-accent">1,250 ms</td>
+                            <td class="font-bold text-accent">2,800 ms</td>
+                            <td class="font-bold text-accent">0.05%</td>
+                            <td class="font-bold text-accent">450 req/s</td>
+                            <td class="font-bold text-accent">✅ ผ่าน SLA</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Spike Test</strong></td>
+                            <td>Before Tuning</td>
+                            <td>1,000 VUs</td>
+                            <td>10m</td>
+                            <td>8,900 ms</td>
+                            <td>15,400 ms</td>
+                            <td>12.30%</td>
+                            <td>210 req/s</td>
+                            <td>❌ 502 Bad Gateway</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Spike Test</strong></td>
+                            <td class="font-bold text-accent">After Tuning</td>
+                            <td>1,000 VUs</td>
+                            <td>10m</td>
+                            <td class="font-bold text-accent">1,850 ms</td>
+                            <td class="font-bold text-accent">3,900 ms</td>
+                            <td class="font-bold text-accent">0.20%</td>
+                            <td class="font-bold text-accent">680 req/s</td>
+                            <td class="font-bold text-accent">✅ Recover ใน 45s</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Stress Test</strong></td>
+                            <td>Before Tuning</td>
+                            <td>800 VUs</td>
+                            <td>45m</td>
+                            <td>5,600 ms</td>
+                            <td>11,200 ms</td>
+                            <td>5.80%</td>
+                            <td>290 req/s</td>
+                            <td>❌ DB Deadlock</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Stress Test</strong></td>
+                            <td class="font-bold text-accent">After Tuning</td>
+                            <td>800 VUs</td>
+                            <td>45m</td>
+                            <td class="font-bold text-accent">1,600 ms</td>
+                            <td class="font-bold text-accent">3,400 ms</td>
+                            <td class="font-bold text-accent">0.15%</td>
+                            <td class="font-bold text-accent">590 req/s</td>
+                            <td class="font-bold text-accent">✅ รองรับ 800 VUs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Endurance Test</strong></td>
+                            <td>Before Tuning</td>
+                            <td>300 VUs</td>
+                            <td>4h</td>
+                            <td>2,100 ms</td>
+                            <td>4,500 ms</td>
+                            <td>1.10%</td>
+                            <td>210 req/s</td>
+                            <td>❌ OOM Killed</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Endurance Test</strong></td>
+                            <td class="font-bold text-accent">After Tuning</td>
+                            <td>300 VUs</td>
+                            <td>4h</td>
+                            <td class="font-bold text-accent">1,150 ms</td>
+                            <td class="font-bold text-accent">2,300 ms</td>
+                            <td class="font-bold text-accent">0.02%</td>
+                            <td class="font-bold text-accent">220 req/s</td>
+                            <td class="font-bold text-accent">✅ ไม่มี Memory Leak</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- Section 7: Scenario Weighting Examples in k6 -->
+        <div class="section-card" id="sec-weighting">
+            <h2 class="section-header">7. ตัวอย่างการกำหนด Weight และการกระจายสัดส่วน Traffic Mix ใน Grafana k6</h2>
+            <div class="callout">
+                <strong>⚖️ การถ่วงน้ำหนัก (Scenario Weighting) ใน Grafana k6:</strong><br>
+                เป็นการกำหนดสัดส่วนภาระงานหรือเปอร์เซ็นต์ผู้ใช้งานจริงตามข้อมูล Excel (เช่น OPD = 38, IPD = 15, Reception = 10, Pharmacy = 7, Lab = 7 ฯลฯ) เพื่อกระจายจากเป้าหมาย <strong>400 Concurrent VUs</strong> เข้าสู่แต่ละจุดงานได้อย่างถูกต้อง
+            </div>
+
+            <h3 style="color: var(--primary); margin: 1.5rem 0 1rem 0;">รูปแบบที่ 1: การคำนวณ Weight แบ่ง VUs ให้แต่ละ Scenario (Dynamic Allocation)</h3>
+            <pre><code>import type { Options } from 'k6/options';
+
+// 1. รายการ Scenarios พร้อม defaultWeight จากไฟล์ Excel Data.xlsx
+export const TRAFFIC_MIX = [
+  { key: 'opdRegistration', defaultWeight: 38 }, // 33.63% -> 135 VUs
+  { key: 'ipdBedList',       defaultWeight: 15 }, // 13.27% -> 53 VUs
+  { key: 'reception',        defaultWeight: 10 }, // 8.85%  -> 35 VUs
+  { key: 'report',           defaultWeight: 8  }, // 7.08%  -> 28 VUs
+  { key: 'opdPharmacy',      defaultWeight: 7  }, // 6.19%  -> 25 VUs
+  { key: 'labWorklist',      defaultWeight: 7  }, // 6.19%  -> 25 VUs
+  { key: 'labSpecimen',      defaultWeight: 6  }, // 5.31%  -> 21 VUs
+  { key: 'cashierOpd',       defaultWeight: 6  }, // 5.31%  -> 21 VUs
+  { key: 'radiologyTask',    defaultWeight: 4  }, // 3.54%  -> 14 VUs
+  { key: 'ipdPharmacy',      defaultWeight: 3  }, // 2.65%  -> 11 VUs
+  { key: 'cashierIpd',       defaultWeight: 3  }, // 2.65%  -> 11 VUs
+] as const;
+
+// 2. ฟังก์ชันคำนวณโควตา VUs สัดส่วนเปอร์เซ็นต์เป็นจำนวนเต็ม (Integer VUs)
+export function allocateVus(totalVus: number, scenarios: typeof TRAFFIC_MIX) {
+  const totalWeight = scenarios.reduce((sum, s) => sum + s.defaultWeight, 0);
+  const result: Record<string, number> = {};
+
+  scenarios.forEach((s) => {
+    // สูตรคำนวณโควตา VUs ตามสัดส่วน Weight: (Weight / TotalWeight) * TotalVUs
+    result[s.key] = Math.round((s.defaultWeight / totalWeight) * totalVus);
+  });
+
+  return result; // คืนค่า { opdRegistration: 135, ipdBedList: 53, reception: 35, ... } รวม 400 VUs เป๊ะ
+}</code></pre>
+
+            <h3 style="color: var(--primary); margin: 2rem 0 1rem 0;">รูปแบบที่ 2: การใช้ Weighted Random สุ่มสลับแผนกภายใน VU เดียวกัน</h3>
+            <pre><code>import { sleep } from 'k6';
+import { opdClinicFlow } from './scenarios/opd-clinic.ts';
+import { receptionFlow } from './scenarios/reception.ts';
+import { opdPharmacyFlow } from './scenarios/opd-pharmacy.ts';
+import { cashierFlow } from './scenarios/cashier.ts';
+
+export default function () {
+  // สุ่มตัวเลขเปอร์เซ็นต์ระหว่าง 0 ถึง 100
+  const rand = Math.random() * 100;
+
+  if (rand < 33.63) {
+    // 33.63% Weight -> ไหลเข้าแผนก OPD Registration (38/113)
+    opdClinicFlow();
+  } else if (rand < 33.63 + 13.27) {
+    // 13.27% Weight -> ไหลเข้าแผนก IPD Bed List (15/113)
+    ipdBedListFlow();
+  } else if (rand < 33.63 + 13.27 + 8.85) {
+    // 8.85% Weight -> ไหลเข้าแผนก Reception (10/113)
+    receptionFlow();
+  } else if (rand < 33.63 + 13.27 + 8.85 + 6.19) {
+    // 6.19% Weight -> ไหลเข้าห้องยา OPD Pharmacy (7/113)
+    opdPharmacyFlow();
+  } else {
+    // 38.06% Weight -> ไหลเข้าแผนกอื่นๆ (Cashier, Lab, Radiology)
+    cashierFlow();
+  }
+
+  // Think time จำลองการสลับรอบการทำงาน
+  sleep(2);
+}</code></pre>
+
+            <h3 style="color: var(--primary); margin: 2rem 0 1rem 0;">📊 ตารางสรุปเปรียบเทียบรูปแบบการทำ Weight ใน k6</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>รูปแบบการทำ Weight</th>
+                            <th>วิธีการทำงาน</th>
+                            <th>ข้อดี</th>
+                            <th>เหมาะสำหรับ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-bold text-primary">1. Multi-Scenario VU Allocation</td>
+                            <td>คำนวณ VUs ล่วงหน้าให้แต่ละ Scenario ด้วยสูตรสัดส่วน Weight</td>
+                            <td>ควบคุมจำนวน VUs/เจ้าหน้าที่ประจำจุดได้เป๊ะ (เช่น OPD 135 VUs, Reception 35 VUs)</td>
+                            <td><strong>Load Test โรงพยาบาล</strong>, <strong>จำลองจำนวนเครื่องจริง</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-accent">2. In-Scenario Weighted Random</td>
+                            <td>ใช้ <code>Math.random()</code> สุ่มเลือกยิง API ตาม % Weight ใน VU เดียวกัน</td>
+                            <td>เขียนสคริปต์ง่าย ใช้เพียง 1 Scenario หลัก</td>
+                            <td><strong>API Microservice Test</strong>, <strong>Web Traffic Random Journey</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold text-purple">3. Arrival Rate Weighted</td>
+                            <td>กำหนด Target Requests/sec (RPS) แยกตาม Scenario Weight</td>
+                            <td>ควบคุมจำนวน Request Throughput ไม่ขึ้นกับ Response Time</td>
+                            <td><strong>Open Model Throughput Test</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+</div>
+</body>
+</html>
