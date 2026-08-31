@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getScenariosForSite } from "@/lib/scenarios";
 import { deleteScenario, updateScenario } from "@/lib/azure/scenarios-table";
+import { listTags } from "@/lib/azure/tags-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT } from "@/lib/types";
 
@@ -21,6 +22,8 @@ export default async function EditScenarioPage({ params, searchParams }: PagePro
   if (!siteFile) notFound();
   const scenario = siteFile.scenarios.find((s) => s.id === scenarioId);
   if (!scenario) notFound();
+  const tags = await listTags();
+  const scenarioTagSet = new Set(scenario.tags ?? []);
 
   async function updateScenarioAction(formData: FormData) {
     "use server";
@@ -31,6 +34,7 @@ export default async function EditScenarioPage({ params, searchParams }: PagePro
         `/admin/scenarios/${site}/${encodeURIComponent(scenarioId)}/edit?error=${encodeURIComponent("ต้องระบุ Scenario ID")}`
       );
     }
+    const allTags = await listTags();
     await updateScenario(site, scenarioId, {
       id: newId,
       flow: String(formData.get("flow") || "OPD") as "OPD" | "IPD" | "General",
@@ -40,6 +44,7 @@ export default async function EditScenarioPage({ params, searchParams }: PagePro
       critical: formData.get("critical") === "on",
       steps: String(formData.get("steps") || ""),
       criteria: String(formData.get("criteria") || ""),
+      tags: allTags.map((t) => t.id).filter((id) => formData.get(`tag_${id}`) === "on"),
     });
     redirect(`/admin/scenarios/${site}`);
   }
@@ -138,6 +143,26 @@ export default async function EditScenarioPage({ params, searchParams }: PagePro
             data-testid="smoke-runner:admin-scenario-form:textarea__criteria"
           />
         </div>
+
+        <div className="section-label">Tag</div>
+        {tags.length === 0 ? (
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: 12 }}>
+            ยังไม่มี Tag — <Link href="/admin/tags/new">ไปสร้างที่หน้าจัดการ Tag</Link>
+          </p>
+        ) : (
+          tags.map((tag) => (
+            <label key={tag.id} className="checkbox-row" htmlFor={`tag_${tag.id}`} style={{ display: "flex", width: "100%" }}>
+              <input
+                type="checkbox"
+                id={`tag_${tag.id}`}
+                name={`tag_${tag.id}`}
+                defaultChecked={scenarioTagSet.has(tag.id)}
+                data-testid={`smoke-runner:admin-scenario-form:chk-tag__${tag.id}`}
+              />
+              {tag.name}
+            </label>
+          ))
+        )}
 
         <div className="form-footer">
           <button type="submit" className="btn btn-primary" data-testid="smoke-runner:admin-scenario-form:btn__save">

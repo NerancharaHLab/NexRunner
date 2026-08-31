@@ -23,6 +23,11 @@ export interface ScenarioDef {
   critical: boolean;
   steps: string;
   criteria: string;
+  // Tag ids (from the Tag Catalog, see TAG_PARTITION below) attached to this
+  // scenario — used by createRun()'s tag Include/Exclude filter. Optional:
+  // scenarios written before this feature has no tags, same "absent means
+  // empty" tolerance as every other optional array field in this file.
+  tags?: string[];
 }
 
 export interface ScenarioSiteFile {
@@ -75,6 +80,51 @@ export function parseSuiteScenarioIds(entity: { scenarioIdsJson?: string }): str
   if (!entity.scenarioIdsJson) return [];
   try {
     const parsed = JSON.parse(entity.scenarioIdsJson);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Reserved Tags-table PartitionKey (own table, "Tags" — see azure/tags-table.ts).
+ * A Tag lives on Master Scenarios (and travels with cloneScenario() like every
+ * other scenario field) and is used by createRun()'s Include/Exclude filter
+ * to scope a Run across Suites — the QA "tag convention" pattern
+ * (@smoke/@p1/@regression) the user described from Playwright/Cypress/
+ * TestRail/Xray-style tooling.
+ */
+export const TAG_PARTITION = "TAG";
+
+/**
+ * RowKey normalizer for Tags — unlike sanitizeScenarioId() below, this also
+ * lowercases. A Tag has no separately-typed id the way a Scenario/Suite
+ * does; its whole identity IS its (case-insensitive) name, so "Smoke" and
+ * "smoke" must resolve to the same row to satisfy the confirmed
+ * case-insensitive-duplicate requirement.
+ */
+export function sanitizeTagId(name: string): string {
+  return name.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
+}
+
+/** Azure Table Storage entity: table "Tags". PartitionKey = "TAG" (fixed), RowKey = sanitizeTagId(name). */
+export interface TagEntity {
+  partitionKey: string;
+  rowKey: string; // sanitizeTagId(name)
+  name: string; // display casing, as first created
+}
+
+/** App-facing Tag shape (Table Storage internals hidden by azure/tags-table.ts). */
+export interface TagDef {
+  id: string;
+  name: string;
+}
+
+/** Reads ScenarioEntity.tagsJson (absent/unparseable = no tags, same tolerance as parseSuiteScenarioIds). */
+export function parseScenarioTags(entity: { tagsJson?: string }): string[] {
+  if (!entity.tagsJson) return [];
+  try {
+    const parsed = JSON.parse(entity.tagsJson);
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
@@ -156,6 +206,9 @@ export interface ScenarioEntity {
   critical: boolean;
   steps: string;
   criteria: string;
+  // Table Storage can't hold an array directly — same JSON-stringified trick
+  // as SuiteEntity.scenarioIdsJson. Parse with parseScenarioTags().
+  tagsJson?: string;
 }
 
 /** Azure Table Storage entity: table "Sites". PartitionKey = "SITE" (fixed), RowKey = site id. */
@@ -201,6 +254,18 @@ export interface RunEntity {
   suiteIdsJson?: string;
   suiteNamesJson?: string;
   scenarioIdsJson?: string;
+  // Tag filter — all optional; absent on every Run created before this
+  // feature existed (or on any Run where the tag filter simply wasn't
+  // used). Combines with Suite scoping above via AND (Suite ∩ Tag) — see
+  // createRun() in lib/runs.ts, which folds both into the single
+  // scenarioIdsJson snapshot above. tagIncludeMode only matters when
+  // tagIncludeIdsJson is present; defaults to "OR" (any selected tag
+  // matches) if omitted.
+  tagIncludeIdsJson?: string;
+  tagIncludeNamesJson?: string;
+  tagIncludeMode?: "AND" | "OR";
+  tagExcludeIdsJson?: string;
+  tagExcludeNamesJson?: string;
 }
 
 /** One uploaded evidence screenshot (metadata only — bytes live in Blob Storage, see azure/blob.ts). */

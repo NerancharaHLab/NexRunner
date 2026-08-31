@@ -8,6 +8,7 @@ import {
 } from "@/lib/azure/tables";
 import { deleteEvidenceBlob, uploadEvidenceBlob } from "@/lib/azure/blob";
 import { getSuite } from "@/lib/azure/test-suites-table";
+import { listTags } from "@/lib/azure/tags-table";
 import { getScenariosForSite } from "@/lib/scenarios";
 import {
   computeGateResult,
@@ -108,6 +109,13 @@ export interface CreateRunInput {
    *  cover 1 to many Suites depending on its objective/time budget), so this is a list, not a
    *  single id. */
   suiteIds?: string[];
+  /** Optional tag filter (@smoke/@p1/@regression-style QA tag convention) — combines with
+   *  suiteIds above via AND (Suite ∩ Tag) when both are given. tagIncludeIds match by "OR" (any
+   *  selected tag) unless tagIncludeMode is "AND" (must have every selected tag). tagExcludeIds
+   *  always drop a scenario that has *any* excluded tag (NOT). */
+  tagIncludeIds?: string[];
+  tagIncludeMode?: "AND" | "OR";
+  tagExcludeIds?: string[];
 }
 
 export class CreateRunError extends Error {
@@ -147,7 +155,6 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
   let scopedScenarios = siteFile.scenarios;
   let suiteIdsJson: string | undefined;
   let suiteNamesJson: string | undefined;
-  let scenarioIdsJson: string | undefined;
   if (input.suiteIds && input.suiteIds.length > 0) {
     const suites = await Promise.all(input.suiteIds.map((id) => getSuite(id)));
     const missingIndex = suites.findIndex((s) => !s);
@@ -164,8 +171,56 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
     }
     suiteIdsJson = JSON.stringify(suites.map((s) => s!.id));
     suiteNamesJson = JSON.stringify(suites.map((s) => s!.name));
-    scenarioIdsJson = JSON.stringify(scopedScenarios.map((s) => s.id));
   }
+
+  // Tag filter — applied on top of (intersected with) whatever the Suite
+  // scoping above already narrowed down to, per the confirmed Suite ∩ Tag
+  // combination rule. Include matches by OR (any selected tag) unless
+  // tagIncludeMode is "AND" (must have every selected tag); Exclude always
+  // drops a scenario that has *any* excluded tag.
+  let tagIncludeIdsJson: string | undefined;
+  let tagIncludeNamesJson: string | undefined;
+  let tagIncludeMode: "AND" | "OR" | undefined;
+  let tagExcludeIdsJson: string | undefined;
+  let tagExcludeNamesJson: string | undefined;
+  if ((input.tagIncludeIds && input.tagIncludeIds.length > 0) || (input.tagExcludeIds && input.tagExcludeIds.length > 0)) {
+    const allTags = await listTags();
+    const nameOf = (id: string) => allTags.find((t) => t.id === id)?.name ?? id;
+    const includeSet = new Set(input.tagIncludeIds ?? []);
+    const excludeSet = new Set(input.tagExcludeIds ?? []);
+    const mode = input.tagIncludeMode ?? "OR";
+    scopedScenarios = scopedScenarios.filter((s) => {
+      const tags = new Set(s.tags ?? []);
+      if ([...excludeSet].some((t) => tags.has(t))) return false;
+      if (includeSet.size === 0) return true;
+      return mode === "AND"
+        ? [...includeSet].every((t) => tags.has(t))
+        : [...includeSet].some((t) => tags.has(t));
+    });
+    if (scopedScenarios.length === 0) {
+      throw new CreateRunError(
+        "ตัวกรอง Tag (รวม Suite ถ้าเลือกไว้) ไม่ตรงกับ Scenario ใดเลยในไซต์นี้",
+        400
+      );
+    }
+    if (input.tagIncludeIds && input.tagIncludeIds.length > 0) {
+      tagIncludeIdsJson = JSON.stringify(input.tagIncludeIds);
+      tagIncludeNamesJson = JSON.stringify(input.tagIncludeIds.map(nameOf));
+      tagIncludeMode = mode;
+    }
+    if (input.tagExcludeIds && input.tagExcludeIds.length > 0) {
+      tagExcludeIdsJson = JSON.stringify(input.tagExcludeIds);
+      tagExcludeNamesJson = JSON.stringify(input.tagExcludeIds.map(nameOf));
+    }
+  }
+
+  // Snapshot the final scope once, from whichever filter(s) narrowed it —
+  // not just inside the Suite branch above, or a tag-only filter (no Suite
+  // selected) would silently fail to persist its scope at all.
+  const scenarioIdsJson =
+    suiteIdsJson || tagIncludeIdsJson || tagExcludeIdsJson
+      ? JSON.stringify(scopedScenarios.map((s) => s.id))
+      : undefined;
 
   const total = scopedScenarios.length;
 
@@ -192,7 +247,10 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
     criticalPass: false,
     gateResult: "NOT READY",
     savedAt: new Date().toISOString(),
-    ...(suiteIdsJson && { suiteIdsJson, suiteNamesJson, scenarioIdsJson }),
+    ...(suiteIdsJson && { suiteIdsJson, suiteNamesJson }),
+    ...(tagIncludeIdsJson && { tagIncludeIdsJson, tagIncludeNamesJson, tagIncludeMode }),
+    ...(tagExcludeIdsJson && { tagExcludeIdsJson, tagExcludeNamesJson }),
+    ...(scenarioIdsJson && { scenarioIdsJson }),
   };
 
   await upsertRun(run);

@@ -34,6 +34,16 @@ export default async function RunDetailPage({ params }: PageProps) {
             {detail.run.suiteNamesJson && (
               <> · Suite: {(JSON.parse(detail.run.suiteNamesJson) as string[]).join(", ")}</>
             )}
+            {detail.run.tagIncludeNamesJson && (
+              <>
+                {" "}
+                · Tag ต้องมี: {(JSON.parse(detail.run.tagIncludeNamesJson) as string[]).join(", ")} (
+                {detail.run.tagIncludeMode === "AND" ? "ครบทุกตัว" : "อย่างน้อย 1 ตัว"})
+              </>
+            )}
+            {detail.run.tagExcludeNamesJson && (
+              <> · Tag ต้องไม่มี: {(JSON.parse(detail.run.tagExcludeNamesJson) as string[]).join(", ")}</>
+            )}
           </p>
         </div>
         {canEdit && (

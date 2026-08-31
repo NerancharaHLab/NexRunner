@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getScenariosForSite } from "@/lib/scenarios";
 import { listSuites } from "@/lib/azure/test-suites-table";
+import { listTags } from "@/lib/azure/tags-table";
 import { ENVIRONMENTS } from "@/lib/config";
 import { createRun, CreateRunError, suggestNextRunId } from "@/lib/runs";
 import { requireUser } from "@/lib/auth/guard";
@@ -21,6 +22,7 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
   const suggestedRunId = await suggestNextRunId(site);
   const today = new Date().toISOString().slice(0, 10);
   const suites = await listSuites();
+  const tags = await listTags();
 
   async function startRun(formData: FormData) {
     "use server";
@@ -43,6 +45,9 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
         an: String(formData.get("an") || ""),
         bill: String(formData.get("bill") || ""),
         suiteIds: suites.map((s) => s.id).filter((id) => formData.get(`suite_${id}`) === "on"),
+        tagIncludeIds: tags.map((t) => t.id).filter((id) => formData.get(`tag_include_${id}`) === "on"),
+        tagIncludeMode: formData.get("tagIncludeMode") === "AND" ? "AND" : "OR",
+        tagExcludeIds: tags.map((t) => t.id).filter((id) => formData.get(`tag_exclude_${id}`) === "on"),
       });
     } catch (err) {
       if (err instanceof CreateRunError) {
@@ -171,6 +176,70 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
               {suite.description && <span style={{ color: "var(--text-secondary)" }}>&nbsp;— {suite.description}</span>}
             </label>
           ))
+        )}
+
+        <div className="section-label">Tag Filter (กรองเพิ่มจาก Suite ด้านบน ถ้าเลือกไว้ — ไม่เลือกเลย = ไม่กรองด้วย Tag)</div>
+        {tags.length === 0 ? (
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: 4 }}>
+            ยังไม่มี Tag — <Link href="/admin/tags">ไปสร้างที่หน้าจัดการ Tag</Link>
+          </p>
+        ) : (
+          <>
+            <div style={{ marginBottom: 4 }}>
+              <label htmlFor="tagIncludeMode" style={{ fontSize: "0.85rem" }}>
+                เงื่อนไข Tag ที่ต้องมี:{" "}
+              </label>
+              <select
+                id="tagIncludeMode"
+                name="tagIncludeMode"
+                defaultValue="OR"
+                data-testid="smoke-runner:new-run:select__tag-include-mode"
+              >
+                <option value="OR">มีอย่างน้อย 1 Tag ที่เลือก (OR)</option>
+                <option value="AND">ต้องมีครบทุก Tag ที่เลือก (AND)</option>
+              </select>
+            </div>
+            <div className="field-row" style={{ gridTemplateColumns: "1fr 1fr" }}>
+              <div>
+                <div style={{ fontSize: "0.85rem", marginBottom: 4 }}>ต้องมี Tag (Include)</div>
+                {tags.map((tag) => (
+                  <label
+                    key={tag.id}
+                    className="checkbox-row"
+                    htmlFor={`tag_include_${tag.id}`}
+                    style={{ display: "flex", width: "100%" }}
+                  >
+                    <input
+                      type="checkbox"
+                      id={`tag_include_${tag.id}`}
+                      name={`tag_include_${tag.id}`}
+                      data-testid={`smoke-runner:new-run:chk-tag-include__${tag.id}`}
+                    />
+                    {tag.name}
+                  </label>
+                ))}
+              </div>
+              <div>
+                <div style={{ fontSize: "0.85rem", marginBottom: 4 }}>ต้องไม่มี Tag (Exclude)</div>
+                {tags.map((tag) => (
+                  <label
+                    key={tag.id}
+                    className="checkbox-row"
+                    htmlFor={`tag_exclude_${tag.id}`}
+                    style={{ display: "flex", width: "100%" }}
+                  >
+                    <input
+                      type="checkbox"
+                      id={`tag_exclude_${tag.id}`}
+                      name={`tag_exclude_${tag.id}`}
+                      data-testid={`smoke-runner:new-run:chk-tag-exclude__${tag.id}`}
+                    />
+                    {tag.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </>
         )}
 
         <div className="section-label">Data Chain Tracker</div>

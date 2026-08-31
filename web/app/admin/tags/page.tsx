@@ -1,0 +1,70 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { deleteTag, listTags } from "@/lib/azure/tags-table";
+import { requireRole } from "@/lib/auth/guard";
+import { CAN_EDIT_CONTENT } from "@/lib/types";
+
+export default async function TagsAdminPage() {
+  await requireRole(CAN_EDIT_CONTENT);
+  const tags = await listTags();
+
+  async function deleteTagAction(formData: FormData) {
+    "use server";
+    await requireRole(CAN_EDIT_CONTENT);
+    const id = String(formData.get("id") || "");
+    if (id) await deleteTag(id);
+    redirect("/admin/tags");
+  }
+
+  return (
+    <main className="container">
+      <Link href="/admin/scenarios" className="breadcrumb">
+        ← กลับไปจัดการ Scenario
+      </Link>
+
+      <div className="page-header">
+        <div>
+          <h1>จัดการ Tag</h1>
+          <p className="subtitle">Tag Catalog กลาง — ใช้แปะ Master Scenario แล้วกรองตอนสร้าง Run</p>
+        </div>
+        <Link href="/admin/tags/new" className="btn btn-primary" data-testid="smoke-runner:admin-tags:link__new">
+          + เพิ่ม Tag
+        </Link>
+      </div>
+
+      {tags.length === 0 ? (
+        <div className="empty-state">ยังไม่มี Tag — เริ่มสร้าง Tag แรกได้เลย</div>
+      ) : (
+        <div className="data-table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>ชื่อ Tag</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {tags.map((tag) => (
+                <tr key={tag.id} data-testid={`smoke-runner:admin-tags:row__${tag.id}`}>
+                  <td>{tag.name}</td>
+                  <td style={{ textAlign: "right" }}>
+                    <form action={deleteTagAction} style={{ display: "inline" }}>
+                      <input type="hidden" name="id" value={tag.id} />
+                      <button
+                        type="submit"
+                        className="btn-danger-text"
+                        data-testid={`smoke-runner:admin-tags:btn-delete__${tag.id}`}
+                      >
+                        ลบ
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </main>
+  );
+}

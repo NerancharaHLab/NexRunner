@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getScenariosForSite } from "@/lib/scenarios";
 import { createScenario } from "@/lib/azure/scenarios-table";
+import { listTags } from "@/lib/azure/tags-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT } from "@/lib/types";
 
@@ -17,6 +18,7 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
   const { error } = await searchParams;
   const siteFile = await getScenariosForSite(site);
   if (!siteFile) notFound();
+  const tags = await listTags();
 
   async function createScenarioAction(formData: FormData) {
     "use server";
@@ -25,6 +27,7 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
     if (!id) {
       redirect(`/admin/scenarios/${site}/new?error=${encodeURIComponent("ต้องระบุ Scenario ID")}`);
     }
+    const allTags = await listTags();
     await createScenario(site, {
       id,
       flow: String(formData.get("flow") || "OPD") as "OPD" | "IPD" | "General",
@@ -34,6 +37,7 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
       critical: formData.get("critical") === "on",
       steps: String(formData.get("steps") || ""),
       criteria: String(formData.get("criteria") || ""),
+      tags: allTags.map((t) => t.id).filter((id) => formData.get(`tag_${id}`) === "on"),
     });
     redirect(`/admin/scenarios/${site}`);
   }
@@ -118,6 +122,25 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
             data-testid="smoke-runner:admin-scenario-form:textarea__criteria"
           />
         </div>
+
+        <div className="section-label">Tag</div>
+        {tags.length === 0 ? (
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: 12 }}>
+            ยังไม่มี Tag — <Link href="/admin/tags/new">ไปสร้างที่หน้าจัดการ Tag</Link>
+          </p>
+        ) : (
+          tags.map((tag) => (
+            <label key={tag.id} className="checkbox-row" htmlFor={`tag_${tag.id}`} style={{ display: "flex", width: "100%" }}>
+              <input
+                type="checkbox"
+                id={`tag_${tag.id}`}
+                name={`tag_${tag.id}`}
+                data-testid={`smoke-runner:admin-scenario-form:chk-tag__${tag.id}`}
+              />
+              {tag.name}
+            </label>
+          ))
+        )}
 
         <div className="form-footer">
           <button type="submit" className="btn btn-primary" data-testid="smoke-runner:admin-scenario-form:btn__save">

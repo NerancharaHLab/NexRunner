@@ -1,5 +1,5 @@
 import { odata } from "@azure/data-tables";
-import { sanitizeScenarioId, type ScenarioDef, type ScenarioEntity } from "@/lib/types";
+import { parseScenarioTags, sanitizeScenarioId, type ScenarioDef, type ScenarioEntity } from "@/lib/types";
 import { getTable } from "./client";
 
 const SCENARIOS_TABLE = "Scenarios";
@@ -18,6 +18,7 @@ function entityToDef(e: ScenarioEntity): ScenarioDef {
     critical: e.critical,
     steps: e.steps,
     criteria: e.criteria,
+    tags: parseScenarioTags(e),
   };
 }
 
@@ -60,6 +61,7 @@ export interface ScenarioInput {
   critical: boolean;
   steps: string;
   criteria: string;
+  tags?: string[];
 }
 
 export async function createScenario(siteKey: string, input: ScenarioInput): Promise<void> {
@@ -75,6 +77,7 @@ export async function createScenario(siteKey: string, input: ScenarioInput): Pro
     critical: input.critical,
     steps: input.steps,
     criteria: input.criteria,
+    tagsJson: JSON.stringify(input.tags ?? []),
   };
   // "Replace" not "Merge" — creating a scenario should fully define every
   // field, never leave stale properties from a previous entity at that key.
@@ -101,6 +104,7 @@ export async function updateScenario(
     critical: input.critical,
     steps: input.steps,
     criteria: input.criteria,
+    tagsJson: JSON.stringify(input.tags ?? []),
   };
   await table.upsertEntity(entity, "Replace");
 
