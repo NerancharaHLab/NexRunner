@@ -73,6 +73,13 @@ model Scenario {
   steps      String
   criteria   String
   tags       String[] @default([])
+  /// REQ-036: which hospital's workflow this scenario was distilled from ("NUH", "BKK", ...) or
+  /// "CORE" for a central/product-standard scenario not tied to one hospital. Free text, always
+  /// normalized (.trim().toUpperCase()) at the lib/db/scenarios-table.ts write boundary — never
+  /// validated against the real Site table (a source site doesn't need to be provisioned yet).
+  /// Deliberately NOT the same axis as Run.version (REQ-033) — this is an immutable origin fact,
+  /// version is temporal/execution context that changes per release.
+  sourceSite String   @default("CORE")
 
   @@id([siteKey, rowKey])
   @@map("scenarios")

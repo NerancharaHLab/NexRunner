@@ -39,6 +39,7 @@ export default async function EditMasterScenarioPage({ params, searchParams }: P
       steps: String(formData.get("steps") || ""),
       criteria: String(formData.get("criteria") || ""),
       tags: allTags.map((t) => t.id).filter((id) => formData.get(`tag_${id}`) === "on"),
+      sourceSite: String(formData.get("sourceSite") || ""),
     });
     redirect("/admin/master-scenarios");
   }
@@ -89,6 +90,16 @@ export default async function EditMasterScenarioPage({ params, searchParams }: P
           <div>
             <label htmlFor="role">Role</label>
             <input id="role" name="role" defaultValue={scenario.role} data-testid="smoke-runner:admin-scenario-form:input__role" />
+          </div>
+          <div>
+            <label htmlFor="sourceSite">Source Site (optional)</label>
+            <input
+              id="sourceSite"
+              name="sourceSite"
+              defaultValue={scenario.sourceSite}
+              placeholder="e.g. NUH, CORE"
+              data-testid="smoke-runner:admin-scenario-form:input__source-site"
+            />
           </div>
         </div>
 

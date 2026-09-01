@@ -24,6 +24,9 @@ export default async function EditScenarioPage({ params, searchParams }: PagePro
   if (!scenario) notFound();
   const tags = await listTags();
   const scenarioTagSet = new Set(scenario.tags ?? []);
+  // Captured outside the Server Action closure below — TS can't carry the `if (!scenario)
+  // notFound()` narrowing across a closure that Next.js may re-invoke in a separate request.
+  const currentSourceSite = scenario.sourceSite;
 
   async function updateScenarioAction(formData: FormData) {
     "use server";
@@ -41,6 +44,9 @@ export default async function EditScenarioPage({ params, searchParams }: PagePro
       steps: String(formData.get("steps") || ""),
       criteria: String(formData.get("criteria") || ""),
       tags: allTags.map((t) => t.id).filter((id) => formData.get(`tag_${id}`) === "on"),
+      // REQ-036: no form field here (see admin/scenarios/[site]/new/page.tsx's comment) — pass the
+      // existing value straight through so editing doesn't silently reset it back to "CORE".
+      sourceSite: currentSourceSite,
     });
     redirect(`/admin/scenarios/${site}`);
   }

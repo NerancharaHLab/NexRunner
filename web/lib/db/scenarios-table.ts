@@ -16,6 +16,7 @@ function rowToDef(row: {
   steps: string;
   criteria: string;
   tags: string[];
+  sourceSite: string;
 }): ScenarioDef {
   return {
     id: row.scenarioId,
@@ -27,6 +28,7 @@ function rowToDef(row: {
     steps: row.steps,
     criteria: row.criteria,
     tags: row.tags,
+    sourceSite: row.sourceSite,
   };
 }
 
@@ -55,6 +57,9 @@ export interface ScenarioInput {
   steps: string;
   criteria: string;
   tags?: string[];
+  // REQ-036 — optional, normalized + defaulted below. See ScenarioDef's doc comment in
+  // lib/types.ts for what this represents.
+  sourceSite?: string;
 }
 
 export async function createScenario(siteKey: string, input: ScenarioInput): Promise<void> {
@@ -71,6 +76,10 @@ export async function createScenario(siteKey: string, input: ScenarioInput): Pro
     steps: input.steps,
     criteria: input.criteria,
     tags: input.tags ?? [],
+    // REQ-036: normalize here, the single write boundary every caller (Create/Edit forms, Site
+    // Custom auto-set, cloneScenario()) funnels through — never trust a caller to have normalized
+    // it already.
+    sourceSite: input.sourceSite?.trim().toUpperCase() || "CORE",
   };
   await prisma.scenario.upsert({
     where: { siteKey_rowKey: { siteKey, rowKey } },

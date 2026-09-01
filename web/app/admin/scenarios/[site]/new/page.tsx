@@ -37,6 +37,9 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
       steps: String(formData.get("steps") || ""),
       criteria: String(formData.get("criteria") || ""),
       tags: allTags.map((t) => t.id).filter((id) => formData.get(`tag_${id}`) === "on"),
+      // REQ-036: a Custom Scenario authored directly at a site trivially "originates" from that
+      // site — no form field, always the site itself (normalized like every other sourceSite write).
+      sourceSite: site,
     });
     redirect(`/admin/scenarios/${site}`);
   }

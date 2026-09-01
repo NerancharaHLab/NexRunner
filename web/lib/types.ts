@@ -28,6 +28,11 @@ export interface ScenarioDef {
   // scenarios written before this feature has no tags, same "absent means
   // empty" tolerance as every other optional array field in this file.
   tags?: string[];
+  // REQ-036: which hospital's workflow this scenario was distilled from ("NUH", "BKK", ...) or
+  // "CORE" for a central/product-standard scenario. Free text, always normalized
+  // (.trim().toUpperCase()) at the lib/db/scenarios-table.ts write boundary. An immutable origin
+  // fact — deliberately not the same axis as Run.version, which is temporal/execution context.
+  sourceSite: string;
 }
 
 export interface ScenarioSiteFile {
