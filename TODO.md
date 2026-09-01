@@ -74,6 +74,7 @@ durable record. Once a plan is approved and the work is done, its lasting record
   (via `// FIXME` comments, not fixed) that `seed_admin_user.ts` predates multi-role support and is
   actually broken — superseded by `npm run db:seed`, kept only for history.
 - [x] **[P1]** [REQ-032: System-generated Running Number ID Scheme](specs/REQ-032_running_number_id_scheme.md) — MST-/SUT-/CUST-/RUN- prefixes, atomic `IdSequence` counter table (Prisma upsert = Postgres `ON CONFLICT DO UPDATE`), id inputs removed entirely from 4 Create + locked read-only on 3 Edit pages, new `Run.name` field, E2E rework (found+fixed a `waitForURL` race bug along the way). build+e2e 24/24+manual Puppeteer verify (incl. independent per-site counters) all pass
+- [x] **[P1]** [REQ-033: Seed NUH Cortex v2.7.0 Master Scenario Library](specs/REQ-033_nuh_cortex_master_scenario_import.md) — 17 Master Scenarios (`MST-0001`–`MST-0017`) + 34 Tags, imported via `temp_scripts/seed_nuh_cortex_master_scenarios.ts` through the real `createScenario()`/`nextMasterScenarioId()` flow (not a Bypass) after clearing 2 REQ-032-verification test rows + resetting the `MST` counter — verified against Postgres + UI, counter correctly at 17
 
 ## This reorganization itself
 
