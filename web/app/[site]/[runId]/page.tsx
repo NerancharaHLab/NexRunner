@@ -28,6 +28,14 @@ export default async function RunDetailPage({ params }: PageProps) {
           <h1>
             {detail.run.siteName} — {detail.run.rowKey}
           </h1>
+          {detail.run.name && (
+            <p
+              style={{ color: "var(--text-secondary)", marginTop: 2, fontStyle: "italic" }}
+              data-testid="smoke-runner:run-detail:text__name"
+            >
+              {detail.run.name}
+            </p>
+          )}
           <p className="subtitle">
             {detail.run.environment} · {detail.run.testCycle} · {detail.run.executedDate} · Tester:{" "}
             {detail.run.tester || "-"}

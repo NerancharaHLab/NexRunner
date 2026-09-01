@@ -233,8 +233,12 @@ export function isActiveSite(entity: { active?: boolean }): boolean {
 /** Azure Table Storage entity: table "Runs". PartitionKey = siteKey, RowKey = runId. */
 export interface RunEntity {
   partitionKey: string; // siteKey
-  rowKey: string; // runId
+  rowKey: string; // runId — system-generated "RUN-{siteKey}-0001" since REQ-032, never client-supplied
   siteName: string;
+  // Free-text label for what this run is for (e.g. "Pre-UAT Smoke — Release 2.4.0") — added by
+  // REQ-032 alongside making rowKey a strictly system-generated running number, replacing the old
+  // habit of overriding rowKey itself just to leave a human-readable label.
+  name: string;
   environment: string;
   testCycle: string;
   executedDate: string; // YYYY-MM-DD

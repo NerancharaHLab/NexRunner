@@ -1,6 +1,6 @@
 # REQ-032: System-generated Running Number ID Scheme
 
-**Status:** 🔲 Not started (spec finalized, ready to implement)
+**Status:** ✅ Done
 **Priority:** P1 (Data Integrity — ties directly into [REQ-030](REQ-030_scenario_result_full_snapshot.md)/[REQ-031](REQ-031_run_lock_finalize_mechanism.md)'s audit-trail/non-repudiation concerns)
 
 ## Context
@@ -76,22 +76,43 @@ text box). Iterated through several rounds to a final ID scheme, fully confirmed
    either no longer applies (system can't collide with itself) or needs a different test angle;
    anywhere a custom label was being set via the id field moves to the new `name` field instead.
 
-## Open implementation questions (for the plan, not yet decided)
+## Implementation notes (how the open questions were resolved)
 
-- Exact sequence-storage mechanism (see point 2) — needs picking one concrete approach.
-- `Run.name` — required at creation or optional/defaultable?
-- Whether the "next id" preview shown pre-save is guaranteed to match what's actually assigned
-  (only if generation happens at render time under the same lock) or is explicitly labeled as
-  indicative-only (simpler, avoids holding a lock across a full page render).
+- **Sequence storage**: a single `IdSequence { scope String @id, value Int }` counter table.
+  `lib/db/id-sequence.ts`'s `nextRunningNumber(scope)` does `prisma.idSequence.upsert({ update:
+  { value: { increment: 1 } }, create: { value: 1 } })` — Prisma compiles `upsert()` to Postgres's
+  `INSERT ... ON CONFLICT DO UPDATE`, a single atomic statement, so no explicit row locking was
+  needed. Scopes: `"MST"`, `"SUT"` (global), `` `CUST:${siteKey}` ``, `` `RUN:${siteKey}` `` (per-site).
+- **No id preview before save** — the 4 creation forms simply don't show an id field at all (not
+  even read-only), avoiding any risk of a shown preview not matching what actually gets assigned.
+  The id only becomes visible after creation (on the resulting list row / Run Detail page).
+- **`Run.name`**: optional, `String @default("")`, matching every other free-text Run field
+  (`version`, `deliveryBatch`, etc.) — no client-side "required" validation.
+- **Extra finding beyond the original spec, also fixed**: the 3 Edit pages (Scenario/Master
+  Scenario/Suite) let an admin retype the id via an editable `<input defaultValue={x.id}>`, which
+  would have made "immutable" false. Locked to a read-only `field-static-value` display; the Edit
+  Server Actions now always pass the route param's id back (never read a client-supplied one),
+  mirroring how `tester` is already locked in the New Run form.
 
-## Verification (once implemented)
+## Verification
 
-- [ ] Concurrent Run creation (2 simultaneous submits, same site) never produces a duplicate or
-  skipped sequence number.
-- [ ] Directly POSTing a custom `id`/`runNo` to the creation server actions has no effect — server
-  always assigns its own.
-- [ ] Legacy rows (pre-existing ids) are untouched and still resolve correctly; new "next number"
-  queries don't get confused by them.
-- [ ] `npm run build` clean, `npm run test:e2e` 24/24 (after E2E updates described above), manual
-  Puppeteer pass creating several Runs/Scenarios/Suites in a row confirming strictly sequential,
-  gap-free numbering per scope.
+- [x] `npm run build` clean.
+- [x] `npm run test:e2e` 24/24 — hit one real bug while rewriting the E2E helpers/specs: a
+  `waitForURL(/\/{site}\/[^/]+$/)` pattern also matches the *current* `/{site}/new` URL before the
+  click-triggered navigation even happens (Playwright resolves `waitForURL` immediately if the page
+  already satisfies the pattern), so `page.url()` was read too early and captured the literal
+  string `"new"` as if it were the generated Run ID — cascaded into 6 failures across 3 spec files.
+  Fixed by anchoring every such regex to the actual `RUN-{site}-\d{4}` shape instead of a loose
+  `[^/]+$`. 24/24 after the fix, run twice for confidence.
+- [x] Manual Puppeteer pass (`verify_req032.js` + `verify_second_site_cust.js` in this session's
+  scratchpad): confirmed all 4 creation forms have no id input at all; `MST-0001, MST-0002` and
+  `SUT-0001, SUT-0002` (fresh global counters); `E2E-CUST-0003, E2E-CUST-0004` (continuing correctly
+  from counts the E2E test suite itself had already consumed — proves "never reset" and proves
+  legacy/unrelated rows don't affect the counter, since it started at 1 regardless of how many
+  free-text-id Scenarios already existed); a brand-new second site's Custom Scenario counter started
+  independently at `REQ032B-CUST-0001` while E2E's was already at 4 (confirms per-site scoping);
+  `RUN-E2E-0018, RUN-E2E-0019` strictly sequential; Edit pages' id field confirmed to be a `<div>`
+  (read-only), not an `<input>`; `Run.name` confirmed to display on the Run Detail page.
+- [x] Concurrent-safety relies on Postgres's atomic `INSERT ... ON CONFLICT DO UPDATE` (via Prisma's
+  `upsert()`) rather than an app-level lock — not separately load-tested with true concurrent
+  requests in this session, but this is a well-established atomic-counter pattern.

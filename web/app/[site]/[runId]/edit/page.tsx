@@ -24,6 +24,7 @@ export default async function EditRunPage({ params, searchParams }: PageProps) {
     await requireRole(CAN_EDIT_CONTENT);
     try {
       await updateRunMetadata(site, runId, {
+        name: String(formData.get("name") || ""),
         environment: String(formData.get("environment") || ""),
         testCycle: String(formData.get("testCycle") || ""),
         executedDate: String(formData.get("executedDate") || ""),
@@ -62,6 +63,18 @@ export default async function EditRunPage({ params, searchParams }: PageProps) {
 
       <form action={updateRunAction} className="card">
         <div className="section-label">Test Run Info</div>
+        <div className="field-row" style={{ gridTemplateColumns: "1fr" }}>
+          <div>
+            <label htmlFor="name">Run Name (optional)</label>
+            <input
+              id="name"
+              name="name"
+              defaultValue={run.name}
+              placeholder="e.g. Pre-UAT Smoke — Release 2.4.0"
+              data-testid="smoke-runner:run-edit:input__name"
+            />
+          </div>
+        </div>
         <div className="field-row">
           <div>
             <label htmlFor="environment">Environment</label>

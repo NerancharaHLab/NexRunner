@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getScenariosForSite } from "@/lib/scenarios";
 import { createScenario } from "@/lib/db/scenarios-table";
+import { nextCustomScenarioId } from "@/lib/db/id-sequence";
 import { listTags } from "@/lib/db/tags-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT } from "@/lib/types";
@@ -23,10 +24,8 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
   async function createScenarioAction(formData: FormData) {
     "use server";
     await requireRole(CAN_EDIT_CONTENT);
-    const id = String(formData.get("id") || "").trim();
-    if (!id) {
-      redirect(`/admin/scenarios/${site}/new?error=${encodeURIComponent("Scenario ID is required")}`);
-    }
+    // System-generated (REQ-032) — never accepted from the client.
+    const id = await nextCustomScenarioId(site);
     const allTags = await listTags();
     await createScenario(site, {
       id,
@@ -59,10 +58,6 @@ export default async function NewScenarioPage({ params, searchParams }: PageProp
 
       <form action={createScenarioAction} className="card">
         <div className="field-row">
-          <div>
-            <label htmlFor="id">Scenario ID</label>
-            <input id="id" name="id" placeholder="e.g. SC-18" required data-testid="smoke-runner:admin-scenario-form:input__id" />
-          </div>
           <div>
             <label htmlFor="flow">Flow</label>
             <select id="flow" name="flow" defaultValue="OPD" data-testid="smoke-runner:admin-scenario-form:select__flow">

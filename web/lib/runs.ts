@@ -1,7 +1,6 @@
 import { randomUUID } from "crypto";
 import {
   getRun,
-  listRunsForSite,
   listScenarioResults,
   upsertRun,
   upsertScenarioResult,
@@ -10,6 +9,7 @@ import { deleteEvidenceBlob, uploadEvidenceBlob } from "@/lib/azure/blob";
 import { getSuite } from "@/lib/db/test-suites-table";
 import { getSite } from "@/lib/db/sites-table";
 import { listTags } from "@/lib/db/tags-table";
+import { nextRunId } from "@/lib/db/id-sequence";
 import { getScenariosForSite } from "@/lib/scenarios";
 import {
   computeGateResult,
@@ -94,11 +94,15 @@ export async function getRunDetail(
 
 export interface CreateRunInput {
   siteKey: string;
-  runId: string;
+  // No runId here — the Run id is system-generated (REQ-032, see lib/db/id-sequence.ts's
+  // nextRunId()), never accepted from a caller, so a bypassed/tampered request can't set it.
   environment: string;
   testCycle: string;
   executedDate: string;
   tester: string;
+  /** Free-text label for what this run is for (e.g. "Pre-UAT Smoke — Release 2.4.0") — see
+   *  RunEntity.name's doc comment. Optional, defaults to "". */
+  name?: string;
   version: string;
   deliveryBatch: string;
   hn?: string;
@@ -129,8 +133,8 @@ export class CreateRunError extends Error {
 
 /** Shared by the POST /api/runs route handler and the "new run" Server Action. */
 export async function createRun(input: CreateRunInput): Promise<RunEntity> {
-  if (!input.siteKey || !input.runId) {
-    throw new CreateRunError("siteKey and runId are required", 400);
+  if (!input.siteKey) {
+    throw new CreateRunError("siteKey is required", 400);
   }
 
   const siteFile = await getScenariosForSite(input.siteKey);
@@ -145,13 +149,9 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
     throw new CreateRunError("This site is inactive — new Runs cannot be started here", 400);
   }
 
-  const existing = await listRunsForSite(input.siteKey);
-  if (existing.some((r) => r.rowKey === input.runId)) {
-    throw new CreateRunError(
-      `Run ID "${input.runId}" already exists for site ${input.siteKey}`,
-      409
-    );
-  }
+  // System-generated, never client-supplied (REQ-032) — a fresh, atomically-incremented number
+  // per site, so it can never collide with an existing Run the way a free-text id could.
+  const runId = await nextRunId(input.siteKey);
 
   // Suite scoping: union every selected Suite's scenario ids together (a
   // scenario can legitimately be in more than one selected Suite — dedupe
@@ -234,8 +234,9 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
 
   const run: RunEntity = {
     partitionKey: input.siteKey,
-    rowKey: input.runId,
+    rowKey: runId,
     siteName: siteFile.siteName,
+    name: input.name || "",
     environment: input.environment || "STAGING",
     testCycle: input.testCycle || "Cycle 1",
     executedDate: input.executedDate || new Date().toISOString().slice(0, 10),
@@ -266,6 +267,7 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
 }
 
 export interface UpdateRunMetadataInput {
+  name?: string;
   environment?: string;
   testCycle?: string;
   executedDate?: string;
@@ -298,6 +300,7 @@ export async function updateRunMetadata(
 
   const updated: RunEntity = {
     ...run,
+    name: input.name ?? run.name,
     environment: input.environment ?? run.environment,
     testCycle: input.testCycle ?? run.testCycle,
     executedDate: input.executedDate ?? run.executedDate,
@@ -310,17 +313,6 @@ export async function updateRunMetadata(
   };
   await upsertRun(updated);
   return updated;
-}
-
-/** Suggests the next run number for a site, e.g. "NUH-RUN-004". */
-export async function suggestNextRunId(siteKey: string): Promise<string> {
-  const existing = await listRunsForSite(siteKey);
-  const nums = existing
-    .map((r) => /-RUN-(\d+)$/.exec(r.rowKey)?.[1])
-    .filter((n): n is string => !!n)
-    .map(Number);
-  const next = nums.length ? Math.max(...nums) + 1 : 1;
-  return `${siteKey}-RUN-${String(next).padStart(3, "0")}`;
 }
 
 export interface UpdateScenarioInput {

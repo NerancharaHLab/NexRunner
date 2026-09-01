@@ -23,16 +23,17 @@ export default async function EditSuitePage({ params, searchParams }: PageProps)
   async function updateSuiteAction(formData: FormData) {
     "use server";
     await requireRole(CAN_EDIT_CONTENT);
-    const newId = String(formData.get("id") || "").trim();
     const name = String(formData.get("name") || "").trim();
-    if (!newId || !name) {
+    if (!name) {
       redirect(
-        `/admin/suites/${encodeURIComponent(suiteId)}/edit?error=${encodeURIComponent("Suite ID and Suite name are required")}`
+        `/admin/suites/${encodeURIComponent(suiteId)}/edit?error=${encodeURIComponent("Suite name is required")}`
       );
     }
     const scenarioIds = masterScenarios.map((sc) => sc.id).filter((scId) => formData.get(`sc_${scId}`) === "on");
+    // id is system-generated and immutable (REQ-032) — never read from the form, always the
+    // existing id from the route param, so even a bypassed/tampered request can't rename it.
     await updateSuite(suiteId, {
-      id: newId,
+      id: suiteId,
       name,
       description: String(formData.get("description") || ""),
       scenarioIds,
@@ -65,7 +66,12 @@ export default async function EditSuitePage({ params, searchParams }: PageProps)
         <div className="field-row">
           <div>
             <label htmlFor="id">Suite ID</label>
-            <input id="id" name="id" defaultValue={suite.id} required data-testid="smoke-runner:admin-suite-form:input__id" />
+            {/* System-generated, immutable (REQ-032) — read-only display, not an editable <input>,
+                so it can't be changed client-side either (see updateSuiteAction above for the
+                server-side enforcement). */}
+            <div id="id" className="field-static-value" data-testid="smoke-runner:admin-suite-form:input__id">
+              {suite.id}
+            </div>
           </div>
           <div>
             <label htmlFor="name">Suite Name</label>

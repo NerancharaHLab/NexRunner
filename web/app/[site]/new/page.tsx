@@ -5,7 +5,7 @@ import { getSite } from "@/lib/db/sites-table";
 import { listSuites } from "@/lib/db/test-suites-table";
 import { listTags } from "@/lib/db/tags-table";
 import { ENVIRONMENTS } from "@/lib/config";
-import { createRun, CreateRunError, suggestNextRunId } from "@/lib/runs";
+import { createRun, CreateRunError } from "@/lib/runs";
 import { requireUser } from "@/lib/auth/guard";
 import FilterPicker from "./FilterPicker";
 
@@ -44,7 +44,6 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
     );
   }
 
-  const suggestedRunId = await suggestNextRunId(site);
   const today = new Date().toISOString().slice(0, 10);
   const suites = await listSuites();
   const tags = await listTags();
@@ -55,7 +54,7 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
     try {
       run = await createRun({
         siteKey: site,
-        runId: String(formData.get("runId") || ""),
+        name: String(formData.get("name") || ""),
         environment: String(formData.get("environment") || "STAGING"),
         testCycle: String(formData.get("testCycle") || "Cycle 1"),
         executedDate: String(formData.get("executedDate") || ""),
@@ -104,13 +103,12 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
             <div className="section-label">Test Run Info</div>
             <div className="field-row">
               <div>
-                <label htmlFor="runId">Run ID</label>
+                <label htmlFor="name">Run Name (optional)</label>
                 <input
-                  id="runId"
-                  name="runId"
-                  defaultValue={suggestedRunId}
-                  required
-                  data-testid="smoke-runner:new-run:input__run-id"
+                  id="name"
+                  name="name"
+                  placeholder="e.g. Pre-UAT Smoke — Release 2.4.0"
+                  data-testid="smoke-runner:new-run:input__name"
                 />
               </div>
               <div>

@@ -28,15 +28,11 @@ export default async function EditScenarioPage({ params, searchParams }: PagePro
   async function updateScenarioAction(formData: FormData) {
     "use server";
     await requireRole(CAN_EDIT_CONTENT);
-    const newId = String(formData.get("id") || "").trim();
-    if (!newId) {
-      redirect(
-        `/admin/scenarios/${site}/${encodeURIComponent(scenarioId)}/edit?error=${encodeURIComponent("Scenario ID is required")}`
-      );
-    }
     const allTags = await listTags();
+    // id is system-generated and immutable (REQ-032) — never read from the form, always the
+    // existing id from the route param, so even a bypassed/tampered request can't rename it.
     await updateScenario(site, scenarioId, {
-      id: newId,
+      id: scenarioId,
       flow: String(formData.get("flow") || "OPD") as "OPD" | "IPD" | "General",
       name: String(formData.get("name") || ""),
       desc: String(formData.get("desc") || ""),
@@ -75,7 +71,12 @@ export default async function EditScenarioPage({ params, searchParams }: PagePro
         <div className="field-row">
           <div>
             <label htmlFor="id">Scenario ID</label>
-            <input id="id" name="id" defaultValue={scenario.id} required data-testid="smoke-runner:admin-scenario-form:input__id" />
+            {/* System-generated, immutable (REQ-032) — read-only display, not an editable <input>,
+                so it can't be changed client-side either (see updateScenarioAction above for the
+                server-side enforcement). */}
+            <div id="id" className="field-static-value" data-testid="smoke-runner:admin-scenario-form:input__id">
+              {scenario.id}
+            </div>
           </div>
           <div>
             <label htmlFor="flow">Flow</label>

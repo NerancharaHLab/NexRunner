@@ -25,7 +25,6 @@ durable record. Once a plan is approved and the work is done, its lasting record
 
 ## Active / Backlog
 
-- [ ] **[P1]** [REQ-032: System-generated Running Number ID Scheme](specs/REQ-032_running_number_id_scheme.md) — MST-/SUT-/CUST-/RUN- prefixes, server-generated + readonly (not just auto-suggested), new `Run.name` field to replace the old id-as-label habit. Spec finalized, ready to implement
 - [ ] **[P1]** [REQ-030: Refactor ScenarioResult to store a full content snapshot](specs/REQ-030_scenario_result_full_snapshot.md) — Data Integrity/Compliance: Run currently live-joins the Site's *current* Scenario row instead of snapshotting what was actually tested against (CSV/GAMP5 concern — found during BA data-model review)
 - [ ] **[P2]** [REQ-031: Add Run Lock/Finalize mechanism](specs/REQ-031_run_lock_finalize_mechanism.md) — Non-Repudiation: a Run's metadata and ScenarioResults stay editable forever, even after Gate READY/sign-off (found during the same review)
 - [ ] **[P1]** [REQ-023: `data-testid` audit against the skill](specs/REQ-023_datatestid_audit.md) — partially covered ad-hoc, formal audit not done
@@ -74,6 +73,7 @@ durable record. Once a plan is approved and the work is done, its lasting record
   Table Storage/Cosmos DB. Updated all three to describe the current Postgres setup; also flagged
   (via `// FIXME` comments, not fixed) that `seed_admin_user.ts` predates multi-role support and is
   actually broken — superseded by `npm run db:seed`, kept only for history.
+- [x] **[P1]** [REQ-032: System-generated Running Number ID Scheme](specs/REQ-032_running_number_id_scheme.md) — MST-/SUT-/CUST-/RUN- prefixes, atomic `IdSequence` counter table (Prisma upsert = Postgres `ON CONFLICT DO UPDATE`), id inputs removed entirely from 4 Create + locked read-only on 3 Edit pages, new `Run.name` field, E2E rework (found+fixed a `waitForURL` race bug along the way). build+e2e 24/24+manual Puppeteer verify (incl. independent per-site counters) all pass
 
 ## This reorganization itself
 

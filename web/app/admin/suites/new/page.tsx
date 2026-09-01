@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { listScenariosForSite } from "@/lib/db/scenarios-table";
 import { createSuite } from "@/lib/db/test-suites-table";
+import { nextSuiteId } from "@/lib/db/id-sequence";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT, MASTER_SCENARIO_PARTITION } from "@/lib/types";
 
@@ -17,11 +18,12 @@ export default async function NewSuitePage({ searchParams }: PageProps) {
   async function createSuiteAction(formData: FormData) {
     "use server";
     await requireRole(CAN_EDIT_CONTENT);
-    const id = String(formData.get("id") || "").trim();
     const name = String(formData.get("name") || "").trim();
-    if (!id || !name) {
-      redirect(`/admin/suites/new?error=${encodeURIComponent("Suite ID and Suite name are required")}`);
+    if (!name) {
+      redirect(`/admin/suites/new?error=${encodeURIComponent("Suite name is required")}`);
     }
+    // System-generated (REQ-032) — never accepted from the client.
+    const id = await nextSuiteId();
     const scenarioIds = masterScenarios.map((sc) => sc.id).filter((scId) => formData.get(`sc_${scId}`) === "on");
     await createSuite({
       id,
@@ -55,10 +57,6 @@ export default async function NewSuitePage({ searchParams }: PageProps) {
 
       <form action={createSuiteAction} className="card">
         <div className="field-row">
-          <div>
-            <label htmlFor="id">Suite ID</label>
-            <input id="id" name="id" placeholder="e.g. SMOKE-OPD" required data-testid="smoke-runner:admin-suite-form:input__id" />
-          </div>
           <div>
             <label htmlFor="name">Suite Name</label>
             <input id="name" name="name" placeholder="e.g. Smoke — OPD Critical Path" required data-testid="smoke-runner:admin-suite-form:input__name" />

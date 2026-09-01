@@ -21,6 +21,7 @@ type RunRow = {
   siteKey: string;
   runId: string;
   siteName: string;
+  name: string;
   environment: string;
   testCycle: string;
   executedDate: string;
@@ -55,6 +56,7 @@ function runRowToEntity(row: RunRow): RunEntity {
     partitionKey: row.siteKey,
     rowKey: row.runId,
     siteName: row.siteName,
+    name: row.name,
     environment: row.environment,
     testCycle: row.testCycle,
     executedDate: row.executedDate,
@@ -100,6 +102,7 @@ function runRowToEntity(row: RunRow): RunEntity {
 function runEntityToData(run: RunEntity) {
   return {
     siteName: run.siteName,
+    name: run.name,
     environment: run.environment,
     testCycle: run.testCycle,
     executedDate: run.executedDate,

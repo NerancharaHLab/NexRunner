@@ -21,6 +21,19 @@ enum Role {
   qa_engineer
 }
 
+/// Atomic counter backing REQ-032's system-generated running-number ids (Master Scenario/Suite/
+/// Site Custom Scenario/Run). One row per scope: "MST", "SUT" (global), "CUST:{siteKey}",
+/// "RUN:{siteKey}" (per-site). See lib/db/id-sequence.ts — nextRunningNumber() does an atomic
+/// upsert (INSERT ... ON CONFLICT DO UPDATE on Postgres), race-safe under concurrent creates with
+/// no explicit locking needed. Starts fresh at 1 regardless of any legacy-format ids already in
+/// the corresponding table — legacy rows are never reformatted, so they don't factor in here.
+model IdSequence {
+  scope String @id
+  value Int    @default(0)
+
+  @@map("id_sequences")
+}
+
 /// Table "Users" replacement. email is already lowercased by every caller (same normalizeEmail()
 /// convention as before), so it's used directly as the primary key instead of a separate id.
 model User {
@@ -96,6 +109,10 @@ model Run {
   runId           String
   site            Site   @relation(fields: [siteKey], references: [id])
   siteName        String
+  /// Free-text label for what this run is for (e.g. "Pre-UAT Smoke — Release 2.4.0") — added
+  /// alongside REQ-032's move to system-generated Run ids, replacing the old habit of overriding
+  /// the (now-immutable) id itself just to leave a human-readable label.
+  name            String @default("")
   environment     String
   testCycle       String
   executedDate    String
