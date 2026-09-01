@@ -1,0 +1,157 @@
+// See specs/REQ-029_postgres_migration.md at the repo root for the full rationale. Replaces Azure
+// Table Storage — Evidence images are NOT here, they stay on Azure Blob Storage (lib/azure/blob.ts,
+// untouched). Every model here is consumed through lib/db/*.ts, which translates rows back into the
+// exact same *Entity shapes lib/types.ts already defines (so app code / lib/runs.ts / lib/scenarios.ts
+// needed zero logic changes, only an import-path swap).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Connection URL lives in prisma.config.ts now (Prisma 7 moved it out of schema.prisma — see
+// https://pris.ly/d/config-datasource), and PrismaClient gets it via the @prisma/adapter-pg driver
+// adapter in lib/db/client.ts, not from this datasource block.
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  admin
+  qa_lead
+  qa_engineer
+}
+
+/// Table "Users" replacement. email is already lowercased by every caller (same normalizeEmail()
+/// convention as before), so it's used directly as the primary key instead of a separate id.
+model User {
+  email        String   @id
+  passwordHash String
+  displayName  String
+  roles        Role[]
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@map("users")
+}
+
+/// Table "Sites" replacement (Hospital Sites — not to be confused with Suite below).
+model Site {
+  id     String @id
+  name   String
+  active Boolean @default(true)
+  runs   Run[]
+
+  @@map("sites")
+}
+
+/// Table "Scenarios" replacement. siteKey is either a real Site id or the reserved
+/// MASTER_SCENARIO_PARTITION ("__MASTER__") sentinel from lib/types.ts — deliberately NOT an FK to
+/// Site, since the Master partition is never a real Site row (same as the old Table Storage
+/// behavior, which had no referential enforcement at all).
+model Scenario {
+  siteKey    String
+  rowKey     String // sanitizeScenarioId(scenarioId)
+  scenarioId String // original, unsanitized (e.g. "SC-02 [A]")
+  flow       String
+  name       String
+  desc       String
+  role       String
+  critical   Boolean
+  steps      String
+  criteria   String
+  tags       String[] @default([])
+
+  @@id([siteKey, rowKey])
+  @@map("scenarios")
+}
+
+/// Table "Suites" replacement (a named group of Master Scenario ids — see lib/types.ts's
+/// SUITE_PARTITION comment for why this is spelled out, not abbreviated near Site above).
+model Suite {
+  id          String @id // sanitizeScenarioId(suiteId)
+  suiteId     String // original, unsanitized
+  name        String
+  description String
+  scenarioIds String[] @default([])
+
+  @@map("suites")
+}
+
+/// Table "Tags" replacement — a Tag's whole identity is its case-insensitive name (see
+/// sanitizeTagId() in lib/types.ts), so id IS the normalized name, same as before.
+model Tag {
+  id   String @id
+  name String
+
+  @@map("tags")
+}
+
+/// Table "Runs" replacement. Real FK to Site (Postgres now enforces what deleteSite()'s app-level
+/// "no existing Runs" check already guarded — a genuine improvement, no behavior change for
+/// correctly-behaving callers). executedDate stays a plain "YYYY-MM-DD" String (every existing call
+/// site treats it as one, never parses it as a Date). gateResult stays a plain String, not an enum,
+/// because "NOT READY" contains a space.
+model Run {
+  siteKey         String
+  runId           String
+  site            Site   @relation(fields: [siteKey], references: [id])
+  siteName        String
+  environment     String
+  testCycle       String
+  executedDate    String
+  tester          String
+  version         String
+  deliveryBatch   String
+  hn              String
+  vn              String
+  an              String
+  bill            String
+  totalScenarios  Int
+  passed          Int
+  failed          Int
+  blocked         Int
+  notrun          Int
+  passRatePercent Int
+  criticalPass    Boolean
+  gateResult      String
+  savedAt         DateTime
+  suiteIds        String[] @default([])
+  suiteNames      String[] @default([])
+  scenarioIds     String[] @default([])
+  tagIncludeIds   String[] @default([])
+  tagIncludeNames String[] @default([])
+  tagIncludeMode  String?
+  tagExcludeIds   String[] @default([])
+  tagExcludeNames String[] @default([])
+  // No relation to ScenarioResult — see ScenarioResult's doc comment for why (its
+  // runPartitionKey can't be split back into a reliable siteKey/runId FK).
+
+  @@id([siteKey, runId])
+  @@map("runs")
+}
+
+/// Table "ScenarioResults" replacement. evidence is Json (not a normalized child table) — it's a
+/// small nested list ([{id, blobName, uploadedAt}]) that nothing ever queries/filters into, same
+/// "JSON-stringified blob" treatment the old evidenceJson field had, just natively typed as jsonb
+/// instead of a String column here.
+///
+/// NOT keyed by a real (siteKey, runId) FK to Run — lib/runs.ts (kept untouched, see
+/// specs/REQ-029_postgres_migration.md's "translate at the edges" decision) only ever hands this
+/// layer the combined string from makeRunPartitionKey(siteKey, runId) = `${siteKey}_${runId}`, and
+/// both siteKey and runId are free-text (Site id has no format restriction; the New Run form's Run
+/// ID field is free text too) — so an underscore inside either one makes splitting that combined
+/// string back into siteKey/runId ambiguous. runPartitionKey is therefore stored verbatim, exactly
+/// like Table Storage's own PartitionKey was — no split, no ambiguity, no FK (Table Storage had no
+/// referential integrity here either, so this isn't a regression).
+model ScenarioResult {
+  runPartitionKey String // makeRunPartitionKey(siteKey, runId), verbatim
+  scenarioRowKey  String // sanitizeScenarioId(scenarioId)
+  scenarioId      String // original, unsanitized
+  status          String
+  notes           String
+  critical        Boolean
+  evidence        Json   @default("[]")
+
+  @@id([runPartitionKey, scenarioRowKey])
+  @@map("scenario_results")
+}

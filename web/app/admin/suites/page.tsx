@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { deleteSuite, listSuites } from "@/lib/azure/test-suites-table";
+import { deleteSuite, listSuites } from "@/lib/db/test-suites-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT } from "@/lib/types";
 

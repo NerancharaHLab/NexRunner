@@ -1,6 +1,6 @@
 import type { ScenarioSiteFile } from "@/lib/types";
-import { listScenariosForSite } from "@/lib/azure/scenarios-table";
-import { getSite } from "@/lib/azure/sites-table";
+import { listScenariosForSite } from "@/lib/db/scenarios-table";
+import { getSite } from "@/lib/db/sites-table";
 
 // Scenario/Site data used to be static JSON bundled at build time
 // (data/scenarios/*.json). It's now DB-backed (Scenarios/Sites tables) so it
@@ -10,7 +10,7 @@ import { getSite } from "@/lib/azure/sites-table";
 // (app/page.tsx, app/[site]/page.tsx, app/[site]/new/page.tsx, lib/runs.ts)
 // only needed `await` added, not a redesign.
 
-export { listSites } from "@/lib/azure/sites-table";
+export { listSites } from "@/lib/db/sites-table";
 
 export async function getScenariosForSite(siteKey: string): Promise<ScenarioSiteFile | undefined> {
   const site = await getSite(siteKey);

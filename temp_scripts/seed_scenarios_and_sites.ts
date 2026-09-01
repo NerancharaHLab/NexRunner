@@ -9,8 +9,8 @@
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { createScenario } from "../web/lib/azure/scenarios-table";
-import { upsertSite } from "../web/lib/azure/sites-table";
+import { createScenario } from "../web/lib/db/scenarios-table";
+import { upsertSite } from "../web/lib/db/sites-table";
 import type { ScenarioSiteFile } from "../web/lib/types";
 
 const DATA_DIR = join(__dirname, "..", "web", "data", "scenarios");

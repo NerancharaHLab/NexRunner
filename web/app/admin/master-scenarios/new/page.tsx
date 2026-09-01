@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createScenario } from "@/lib/azure/scenarios-table";
-import { listTags } from "@/lib/azure/tags-table";
+import { createScenario } from "@/lib/db/scenarios-table";
+import { listTags } from "@/lib/db/tags-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT, MASTER_SCENARIO_PARTITION } from "@/lib/types";
 

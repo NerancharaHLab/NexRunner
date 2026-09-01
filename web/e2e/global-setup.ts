@@ -7,10 +7,10 @@ import path from "path";
 // through the same lib/azure/* modules the app uses).
 process.loadEnvFile(path.resolve(__dirname, "../.env.local"));
 
-import { createUser, getUserByEmail } from "../lib/azure/users-table";
+import { createUser, getUserByEmail } from "../lib/db/users-table";
 import { hashPassword } from "../lib/auth/password";
-import { upsertSite } from "../lib/azure/sites-table";
-import { createScenario, deleteScenario, listScenariosForSite } from "../lib/azure/scenarios-table";
+import { upsertSite } from "../lib/db/sites-table";
+import { createScenario, deleteScenario, listScenariosForSite } from "../lib/db/scenarios-table";
 import { isActiveUser, parseRoles } from "../lib/types";
 
 export const E2E_SITE_KEY = "E2E";

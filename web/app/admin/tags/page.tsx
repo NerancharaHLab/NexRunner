@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { deleteTag, listTags } from "@/lib/azure/tags-table";
+import { deleteTag, listTags } from "@/lib/db/tags-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT } from "@/lib/types";
 

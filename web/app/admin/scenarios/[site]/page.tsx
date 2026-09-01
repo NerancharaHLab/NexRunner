@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getScenariosForSite } from "@/lib/scenarios";
-import { deleteScenario } from "@/lib/azure/scenarios-table";
+import { deleteScenario } from "@/lib/db/scenarios-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT } from "@/lib/types";
 

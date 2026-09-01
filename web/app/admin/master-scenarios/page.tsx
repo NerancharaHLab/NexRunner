@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { deleteScenario, listScenariosForSite } from "@/lib/azure/scenarios-table";
+import { deleteScenario, listScenariosForSite } from "@/lib/db/scenarios-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT, MASTER_SCENARIO_PARTITION } from "@/lib/types";
 

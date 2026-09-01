@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { listRunsForSite } from "@/lib/azure/tables";
+import { listRunsForSite } from "@/lib/db/tables";
 import { getScenariosForSite } from "@/lib/scenarios";
 import { requireUser } from "@/lib/auth/guard";
 

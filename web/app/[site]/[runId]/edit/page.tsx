@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getRun } from "@/lib/azure/tables";
+import { getRun } from "@/lib/db/tables";
 import { ENVIRONMENTS } from "@/lib/config";
 import { CreateRunError, updateRunMetadata } from "@/lib/runs";
 import { requireRole } from "@/lib/auth/guard";

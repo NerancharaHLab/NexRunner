@@ -1,6 +1,6 @@
 import { test, expect } from "../fixtures/auth";
 import { hashPassword } from "../../lib/auth/password";
-import { createUser, deleteUser } from "../../lib/azure/users-table";
+import { createUser, deleteUser } from "../../lib/db/users-table";
 
 test.describe("Phase 9 - Self-service change password", () => {
   test("change password via the UI, then old password fails and new one works", async ({ browser }) => {

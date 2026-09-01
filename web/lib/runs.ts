@@ -5,11 +5,11 @@ import {
   listScenarioResults,
   upsertRun,
   upsertScenarioResult,
-} from "@/lib/azure/tables";
+} from "@/lib/db/tables";
 import { deleteEvidenceBlob, uploadEvidenceBlob } from "@/lib/azure/blob";
-import { getSuite } from "@/lib/azure/test-suites-table";
-import { getSite } from "@/lib/azure/sites-table";
-import { listTags } from "@/lib/azure/tags-table";
+import { getSuite } from "@/lib/db/test-suites-table";
+import { getSite } from "@/lib/db/sites-table";
+import { listTags } from "@/lib/db/tags-table";
 import { getScenariosForSite } from "@/lib/scenarios";
 import {
   computeGateResult,

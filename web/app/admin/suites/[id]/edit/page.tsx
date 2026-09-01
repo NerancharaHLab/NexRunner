@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { listScenariosForSite } from "@/lib/azure/scenarios-table";
-import { deleteSuite, getSuite, updateSuite } from "@/lib/azure/test-suites-table";
+import { listScenariosForSite } from "@/lib/db/scenarios-table";
+import { deleteSuite, getSuite, updateSuite } from "@/lib/db/test-suites-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT, MASTER_SCENARIO_PARTITION } from "@/lib/types";
 

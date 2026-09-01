@@ -1,0 +1,25 @@
+# Local PostgreSQL for dev — see specs/REQ-029_postgres_migration.md at the repo root for why this
+# replaced Azure Table Storage. Evidence images stay on Azure Blob Storage (still Azurite-emulated
+# locally, see .env.local's AZURE_STORAGE_CONNECTION_STRING) — this compose file only covers the DB.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: smoke_test_runner
+      POSTGRES_PASSWORD: smoke_test_runner_dev
+      POSTGRES_DB: smoke_test_runner
+    ports:
+      # Host port 5432/5433/5434 are already taken by other local projects on this machine
+      # (cortex_dev/nexcentraq-postgres/cortex_forge_admin) — 5435 is free.
+      - "5435:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smoke_test_runner"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

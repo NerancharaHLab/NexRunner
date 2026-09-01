@@ -8,7 +8,7 @@ import {
   listUsers,
   updateUserActive,
   updateUserRoles,
-} from "@/lib/azure/users-table";
+} from "@/lib/db/users-table";
 import { ALL_ROLES, isActiveUser, parseRoles } from "@/lib/types";
 
 export default async function UsersAdminPage({

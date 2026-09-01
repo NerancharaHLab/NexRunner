@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getUserByEmail } from "@/lib/azure/users-table";
+import { getUserByEmail } from "@/lib/db/users-table";
 import { verifyPassword } from "@/lib/auth/password";
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS } from "@/lib/auth/session";
 import { isActiveUser } from "@/lib/types";

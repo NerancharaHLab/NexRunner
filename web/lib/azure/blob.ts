@@ -1,15 +1,10 @@
 import { BlobServiceClient, type ContainerClient } from "@azure/storage-blob";
 
-// Blob Storage client factory for Evidence screenshots — sibling to
-// client.ts's Table Storage factory, same AZURE_STORAGE_CONNECTION_STRING
-// (already carries a BlobEndpoint in .env.local/.env.local.example, and
-// @azure/storage-blob is already an installed dependency — no new config).
-//
-// ⚠️ Unlike Table Storage, Cosmos DB's Table API has NO Blob Storage
-// equivalent. If production ends up on Cosmos DB Free Tier for
-// Runs/Scenarios/Users/Sites (see client.ts), Evidence blobs still need a
-// separate real Azure Storage Account — see the "Cosmos DB Free Tier"
-// section of web/README.md for the full note.
+// Blob Storage client factory for Evidence screenshots — the one piece of storage that stayed on
+// Azure when the rest of the app's data moved to PostgreSQL (see
+// specs/REQ-029_postgres_migration.md at the repo root; this is the only file left in lib/azure/,
+// everything else was Table Storage and has been deleted). Still uses
+// AZURE_STORAGE_CONNECTION_STRING (Blob-only now — see .env.local's comment).
 
 const EVIDENCE_CONTAINER = "evidence";
 

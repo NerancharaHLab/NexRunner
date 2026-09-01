@@ -1,9 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getScenariosForSite } from "@/lib/scenarios";
-import { getSite } from "@/lib/azure/sites-table";
-import { listSuites } from "@/lib/azure/test-suites-table";
-import { listTags } from "@/lib/azure/tags-table";
+import { getSite } from "@/lib/db/sites-table";
+import { listSuites } from "@/lib/db/test-suites-table";
+import { listTags } from "@/lib/db/tags-table";
 import { ENVIRONMENTS } from "@/lib/config";
 import { createRun, CreateRunError, suggestNextRunId } from "@/lib/runs";
 import { requireUser } from "@/lib/auth/guard";

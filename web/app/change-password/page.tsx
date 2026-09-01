@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/guard";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
-import { getUserByEmail, updateUserPassword } from "@/lib/azure/users-table";
+import { getUserByEmail, updateUserPassword } from "@/lib/db/users-table";
 
 interface PageProps {
   searchParams: Promise<{ error?: string; ok?: string }>;

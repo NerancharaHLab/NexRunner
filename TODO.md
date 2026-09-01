@@ -26,10 +26,10 @@ durable record. Once a plan is approved and the work is done, its lasting record
 ## Active / Backlog
 
 - [ ] **[P1]** [REQ-023: `data-testid` audit against the skill](specs/REQ-023_datatestid_audit.md) — partially covered ad-hoc, formal audit not done
-- [ ] **[P2]** [REQ-024: Environment / Data Chain Field Schema CRUD](specs/REQ-024_environment_data_chain_schema_crud.md) — still static config, not urgent
+- [ ] **[P2]** [REQ-024: Environment / Data Chain Field Schema CRUD](specs/REQ-024_environment_data_chain_schema_crud.md) — still static config, not urgent — ⚠️ DB assumption จะเปลี่ยนเป็น Postgres ตาม REQ-029
 - [ ] **[P2]** [REQ-025: Run History view](specs/REQ-025_run_history_view.md) — remaining half of a superseded Entra ID entry, needs scoping
 - [ ] **[P3]** [REQ-026: Migrate old `test_results/*.json`](specs/REQ-026_migrate_old_test_results.md) — best-effort, not started
-- [ ] **[P3]** [REQ-027: Provision real Azure resources + Deploy](specs/REQ-027_provision_azure_deploy.md) — manual step, waiting on SA/team
+- [ ] **[P3]** [REQ-027: Provision real Azure resources + Deploy](specs/REQ-027_provision_azure_deploy.md) — ⚠️ DB provisioning step เปลี่ยนเป็น Postgres hosting ตาม REQ-029 (ยังไม่ตัดสินใจรายละเอียด), ส่วน Evidence/Blob ยังเป็น Azure เหมือนเดิม
 - [ ] **[P4]** [REQ-022: CSV/Excel Scenario Import](specs/REQ-022_csv_excel_scenario_import.md) — confirmed last-priority, not yet planned
 
 ## Completed
@@ -60,6 +60,7 @@ durable record. Once a plan is approved and the work is done, its lasting record
   as clickable — user feedback. Added `.top-nav-brand:hover` background pill + mark lift/shadow +
   `title="Go to home"` tooltip so it's clear it links to `/`. `web/app/TopNav.tsx` +
   `web/app/globals.css`. Verified: build clean, e2e 24/24, Puppeteer hover screenshot.
+- [x] **[P1]** [REQ-029: Migrate DB จาก Azure Table Storage ไป PostgreSQL (Docker)](specs/REQ-029_postgres_migration.md) — Prisma 7 (driver adapter), docker-compose (port 5435), 6 lib/db/*.ts แทน lib/azure/*-table.ts (ลบไฟล์เก่าแล้ว), Evidence ยังอยู่ Azure Blob เหมือนเดิม, build+e2e 24/24+manual CRUD verify ผ่านหมด
 
 ## This reorganization itself
 

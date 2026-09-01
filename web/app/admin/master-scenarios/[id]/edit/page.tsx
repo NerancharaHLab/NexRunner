@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { deleteScenario, getScenario, updateScenario } from "@/lib/azure/scenarios-table";
-import { listTags } from "@/lib/azure/tags-table";
+import { deleteScenario, getScenario, updateScenario } from "@/lib/db/scenarios-table";
+import { listTags } from "@/lib/db/tags-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT, MASTER_SCENARIO_PARTITION } from "@/lib/types";
 

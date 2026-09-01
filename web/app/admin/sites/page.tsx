@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { deleteSite, listSites, SiteHasRunsError, updateSiteActive } from "@/lib/azure/sites-table";
+import { deleteSite, listSites, SiteHasRunsError, updateSiteActive } from "@/lib/db/sites-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT } from "@/lib/types";
 

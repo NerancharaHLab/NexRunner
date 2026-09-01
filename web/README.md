@@ -20,8 +20,9 @@
 ## Tech Stack
 
 - **Frontend & Backend**: Next.js 16 (App Router, Turbopack, Server Actions)
-- **Database & Storage**: Azure Table Storage (Metadata/Runs/Scenarios) & Azure Blob Storage (Evidence Images)
-- **Local Emulator**: Azurite (Table & Blob Emulator)
+- **Database**: PostgreSQL via Prisma ORM (Users/Sites/Scenarios/Suites/Tags/Runs/ScenarioResults) — runs in Docker locally
+- **Evidence Storage**: Azure Blob Storage (screenshots only — the DB itself is not on Azure)
+- **Local Emulator**: Docker Postgres (DB) + Azurite (Blob only)
 - **Authentication**: Email + Password (Session JWT with httpOnly Cookie)
 - **Testing**: Playwright (End-to-End Test Suite)
 
@@ -40,22 +41,29 @@ npm install
 cp .env.local.example .env.local
 ```
 
-### 3. รัน Dev Server พร้อม Azurite Emulator
-รันทั้ง Azurite และ Next.js ในคำสั่งเดียว:
+### 3. สร้าง Database Schema (รันครั้งแรกครั้งเดียว หรือหลัง Schema เปลี่ยน)
+ต้องมี [Docker](https://www.docker.com/) รันอยู่ก่อน:
+```bash
+npm run db:up       # docker compose up -d db — สร้าง Postgres container
+npm run db:migrate  # prisma migrate dev — สร้าง Schema
+```
+
+### 4. รัน Dev Server พร้อม Azurite Emulator
+รันทั้ง Docker Postgres, Azurite และ Next.js ในคำสั่งเดียว (`predev:all` จะเรียก `db:up` ให้อัตโนมัติ):
 ```bash
 npm run dev:all
 ```
 > สามารถเข้าใช้งานได้ที่ `http://localhost:3000`
 
-### 4. Seed ข้อมูลเริ่มต้น (รันครั้งแรกครั้งเดียว)
+### 5. Seed ข้อมูลเริ่มต้น (รันครั้งแรกครั้งเดียว)
 เปิด Terminal ใหม่แล้วรันคำสั่ง Seed:
 
 ```bash
 # 1. สร้าง Admin User คนแรก
-npx tsx --env-file=.env.local ../temp_scripts/seed_admin_user.ts admin@example.com <password> "Admin User"
+npm run db:seed -- admin@example.com <password> "Admin User"
 
 # 2. นำเข้าข้อมูล Scenario และ Site เริ่มต้น
-npx tsx --env-file=.env.local ../temp_scripts/seed_scenarios_and_sites.ts
+npx tsx ../temp_scripts/seed_scenarios_and_sites.ts
 ```
 
 ---
@@ -78,7 +86,8 @@ npm run test:e2e:ui
 
 | Variable | Description | ตัวอย่าง (Local) |
 |---|---|---|
-| `AZURE_STORAGE_CONNECTION_STRING` | Connection String สำหรับ Azure Table & Blob Storage | Default Azurite connection string |
+| `DATABASE_URL` | Postgres Connection String (Prisma) | `postgresql://smoke_test_runner:smoke_test_runner_dev@localhost:5435/smoke_test_runner?schema=public` |
+| `AZURE_STORAGE_CONNECTION_STRING` | Connection String สำหรับ Azure Blob Storage (Evidence เท่านั้น) | Default Azurite connection string |
 | `AUTH_SECRET` | Secret Key สำหรับ Sign JWT Token | สตริงสุ่ม 32-byte (`openssl rand -base64 32`) |
 
 ---
@@ -94,8 +103,10 @@ web/
 │   └── login/            # Authentication Page
 ├── lib/
 │   ├── auth/             # Session, Password Hashing & Role Guards
-│   ├── azure/            # Azure Tables & Blob Storage Clients
+│   ├── db/               # Prisma-backed data access (Users/Sites/Scenarios/Suites/Tags/Runs)
+│   ├── azure/            # Azure Blob Storage Client (Evidence images only)
 │   └── types.ts          # Type Definitions & Schemas
+├── prisma/               # schema.prisma, migrations/, seed.ts
 ├── e2e/                  # Playwright Test Specs & Fixtures
 └── data/                 # Seed Data (Scenarios / Sites JSON)
 ```
@@ -105,14 +116,16 @@ web/
 ## แผนการพัฒนาในอนาคต (Roadmap)
 
 ### 1. Docker & Data Persistence Plan (Docker Volume)
-- **Containerization**:
-  - จัดทำ Multi-stage `Dockerfile` สำหรับ Build และ Run Next.js ในระดับ Production
-  - จัดทำ `docker-compose.yml` รวม Service ของ Next.js App และ Azurite Storage เข้าด้วยกัน
-- **Docker Volume Data Persistence**:
-  - กำหนด Named Volume (เช่น `azurite_data`) สำหรับ Mount ข้อมูล Storage ของ Azurite (`.azurite/`) เพื่อป้องกันข้อมูลการทดสอบและรูปภาพ Evidence หายเมื่อ Container ถูก Restart หรือ Recreate
-  - รองรับการ Backup/Restore ข้อมูลใน Volume สำหรับ Local และ Staging Environment
+- **Database (Done)**: `docker-compose.yml` รัน PostgreSQL ใน Named Volume (`pgdata`) แล้ว — ดู
+  `specs/REQ-029_postgres_migration.md` ที่ root repo สำหรับรายละเอียดการย้ายจาก Azure Table Storage
+- **ยังไม่ทำ**:
+  - Multi-stage `Dockerfile` สำหรับ Build และ Run Next.js เองในระดับ Production
+  - เพิ่ม Azurite (Blob) เข้า `docker-compose.yml` เดียวกัน (ตอนนี้ยังรันแยกผ่าน `npm run azurite`)
+  - Backup/Restore ข้อมูลใน Volume สำหรับ Local และ Staging Environment
 
 ### 2. Features & System Enhancements
 - **Site Management UI**: หน้า UI สำหรับเพิ่ม แก้ไข และลบรายชื่อโรงพยาบาล/ไซต์ (Full CRUD)
 - **Dynamic Config**: ระบบจัดการ Environment List และ Data Chain Field Schema ผ่าน Admin Portal
-- **Production Cloud Deployment**: รองรับการ Deploy บน Azure Static Web Apps / Azure Container Apps เชื่อมต่อ Azure Storage Account หรือ Azure Cosmos DB (Table API)
+- **Production Cloud Deployment**: ยังไม่ตัดสินใจว่าจะ Host Postgres (สำหรับ DB) ที่ไหน — เป็น Open
+  Question ที่ยังไม่ resolve (ดู REQ-027 ใน TODO.md) ส่วน Evidence ยังคง Deploy คู่กับ Azure Blob
+  Storage Account เหมือนเดิม

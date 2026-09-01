@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createTag, TagAlreadyExistsError } from "@/lib/azure/tags-table";
+import { createTag, TagAlreadyExistsError } from "@/lib/db/tags-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT } from "@/lib/types";
 

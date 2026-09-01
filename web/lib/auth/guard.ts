@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
-import { getUserByEmail } from "@/lib/azure/users-table";
+import { getUserByEmail } from "@/lib/db/users-table";
 import { hasAnyRole, isActiveUser, parseRoles, type Role, type SessionUser } from "@/lib/types";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "./session";
 

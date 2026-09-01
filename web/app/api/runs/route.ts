@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listRunsForSite } from "@/lib/azure/tables";
+import { listRunsForSite } from "@/lib/db/tables";
 import { createRun, CreateRunError, type CreateRunInput } from "@/lib/runs";
 import { requireApiUser } from "@/lib/auth/guard";
 

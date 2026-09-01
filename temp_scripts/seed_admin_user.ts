@@ -5,7 +5,7 @@
 // Usage (run from web/ so its node_modules/.env.local are picked up):
 //   cd web && npx tsx --env-file=.env.local ../temp_scripts/seed_admin_user.ts <email> <password> <displayName>
 
-import { createUser, getUserByEmail } from "../web/lib/azure/users-table";
+import { createUser, getUserByEmail } from "../web/lib/db/users-table";
 import { hashPassword } from "../web/lib/auth/password";
 
 async function main() {
