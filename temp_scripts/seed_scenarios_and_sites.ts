@@ -1,11 +1,12 @@
-// One-off: reads the (soon to be deleted) static web/data/scenarios/*.json
-// files and writes their content into the new `Scenarios` + `Sites` Azure
-// Table Storage tables. Run once against Azurite as part of verifying this
-// migration; run once more against the real Azure/Cosmos DB table once
-// that's provisioned (see web/README.md "Cosmos DB Free Tier").
+// One-off: reads the static web/data/scenarios/*.json files and writes their
+// content into the `Scenario` + `Site` tables (PostgreSQL via Prisma — see
+// specs/REQ-029_postgres_migration.md at the repo root). Run against a fresh,
+// empty DB (npm run db:up + npm run db:migrate first, see web/README.md) to
+// seed it with the starter Scenario/Site set.
 //
-// Usage (run from web/ so its node_modules/.env.local are picked up):
-//   cd web && npx tsx --env-file=.env.local ../temp_scripts/seed_scenarios_and_sites.ts
+// Usage (run from web/ so its .env.local is picked up — lib/db/client.ts
+// loads it automatically):
+//   cd web && npx tsx ../temp_scripts/seed_scenarios_and_sites.ts
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";

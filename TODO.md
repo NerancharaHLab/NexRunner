@@ -65,6 +65,12 @@ durable record. Once a plan is approved and the work is done, its lasting record
   README/badge (`ST`→`TR`) across `app/TopNav.tsx`, `app/login/page.tsx`, `app/page.tsx`,
   `app/layout.tsx`, `README.md`, `lib/types.ts` comment, + updated 4 E2E spec assertions that check
   the old text. Verified: build clean, e2e 24/24, Puppeteer screenshot + login check.
+- [x] **[P4]** (bookkeeping-only, no spec file) Static-data audit (user asked "เช็คข้อมูลที่เป็น static") —
+  found `web/lib/config.ts` (already tracked as REQ-024) + stale post-REQ-029 comments in
+  `web/data/scenarios/README.md` and both `temp_scripts/seed_*.ts` files still describing Azure
+  Table Storage/Cosmos DB. Updated all three to describe the current Postgres setup; also flagged
+  (via `// FIXME` comments, not fixed) that `seed_admin_user.ts` predates multi-role support and is
+  actually broken — superseded by `npm run db:seed`, kept only for history.
 
 ## This reorganization itself
 
