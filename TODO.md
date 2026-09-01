@@ -61,6 +61,10 @@ durable record. Once a plan is approved and the work is done, its lasting record
   `title="Go to home"` tooltip so it's clear it links to `/`. `web/app/TopNav.tsx` +
   `web/app/globals.css`. Verified: build clean, e2e 24/24, Puppeteer hover screenshot.
 - [x] **[P1]** [REQ-029: Migrate DB จาก Azure Table Storage ไป PostgreSQL (Docker)](specs/REQ-029_postgres_migration.md) — Prisma 7 (driver adapter), docker-compose (port 5435), 6 lib/db/*.ts แทน lib/azure/*-table.ts (ลบไฟล์เก่าแล้ว), Evidence ยังอยู่ Azure Blob เหมือนเดิม, build+e2e 24/24+manual CRUD verify ผ่านหมด
+- [x] **[P4]** (bookkeeping-only, no spec file) Rebrand "Smoke Test Runner" → "Test Runner" — h1/title/
+  README/badge (`ST`→`TR`) across `app/TopNav.tsx`, `app/login/page.tsx`, `app/page.tsx`,
+  `app/layout.tsx`, `README.md`, `lib/types.ts` comment, + updated 4 E2E spec assertions that check
+  the old text. Verified: build clean, e2e 24/24, Puppeteer screenshot + login check.
 
 ## This reorganization itself
 

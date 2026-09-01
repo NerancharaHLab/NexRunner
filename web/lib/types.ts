@@ -1,4 +1,4 @@
-// Core data types for the Smoke Test Runner (Next.js + Azure edition).
+// Core data types for the Test Runner (Next.js + Azure edition).
 // See ~/.claude/plans/streamed-wibbling-lamport.md for the schema rationale
 // (why this does NOT replicate the legacy localStorage JSON's field duplication).
 

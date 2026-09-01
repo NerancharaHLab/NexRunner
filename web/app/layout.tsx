@@ -23,8 +23,8 @@ const ibmPlexSansThai = IBM_Plex_Sans_Thai({
 });
 
 export const metadata: Metadata = {
-  title: "Smoke Test Runner",
-  description: "QA Smoke Test Runner — Cortex HIS",
+  title: "Test Runner",
+  description: "QA Test Runner — Cortex HIS",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

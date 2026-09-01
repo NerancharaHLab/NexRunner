@@ -10,7 +10,7 @@ export default async function HomePage() {
     <main className="container">
       <div className="page-header">
         <div>
-          <h1>Smoke Test Runner</h1>
+          <h1>Test Runner</h1>
           <p className="subtitle">Let&apos;s Run Some Smoke Tests</p>
           <p style={{ color: "var(--text-secondary)", marginTop: 4 }}>Select a hospital to start or view a test run</p>
         </div>

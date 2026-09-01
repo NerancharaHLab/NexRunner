@@ -76,7 +76,7 @@ test.describe("Phase 8 - Admin User CRUD, multi-role, deactivate, admin-only bou
     await expect(page.getByTestId(`smoke-runner:admin-users:badge-inactive__${email}`)).toHaveCount(0);
 
     const third = await loginAsNewContext(browser, email, password);
-    await expect(third.page.locator("h1")).toContainText("Smoke Test Runner");
+    await expect(third.page.locator("h1")).toContainText("Test Runner");
     await third.context.close();
 
     // ---- delete ----

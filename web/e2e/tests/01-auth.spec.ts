@@ -10,7 +10,7 @@ test.describe("Phase 1 - Login, logout, role-conditional nav", () => {
       page.waitForURL("/"),
       page.getByTestId("smoke-runner:login:btn__submit").click(),
     ]);
-    await expect(page.locator("h1")).toContainText("Smoke Test Runner");
+    await expect(page.locator("h1")).toContainText("Test Runner");
     await expect(page.locator(".user-chip")).toContainText(E2E_USERS.admin.displayName);
   });
 

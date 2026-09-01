@@ -39,9 +39,9 @@ export default async function LoginPage({ searchParams }: PageProps) {
           className="top-nav-mark"
           style={{ width: 44, height: 44, borderRadius: 12, fontSize: "1.1rem", margin: "0 auto 14px" }}
         >
-          ST
+          TR
         </span>
-        <h1>Smoke Test Runner</h1>
+        <h1>Test Runner</h1>
         <p className="subtitle" style={{ marginTop: 6 }}>
           Log in to run your tests
         </p>

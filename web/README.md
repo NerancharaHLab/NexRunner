@@ -1,4 +1,4 @@
-# Smoke Test Runner
+# Test Runner
 
 เว็บแอปพลิเคชันสำหรับจัดการและบันทึกผลการทำ Smoke Test รองรับการติดตามสถานะแบบเรียลไทม์ แนบหลักฐาน (Evidence) สรุปรายงานสำหรับ Linear และออก Executive Report
 

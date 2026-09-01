@@ -38,8 +38,8 @@ export default async function TopNav() {
   return (
     <nav className="top-nav no-print">
       <Link href="/" className="top-nav-brand" title="Go to home">
-        <span className="top-nav-mark">ST</span>
-        Smoke Test Runner
+        <span className="top-nav-mark">TR</span>
+        Test Runner
       </Link>
       <div className="top-nav-right">
         <ManageMenu links={manageLinks} />

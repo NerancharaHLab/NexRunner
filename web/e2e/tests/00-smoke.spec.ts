@@ -11,7 +11,7 @@ test.describe("Phase 0 - foundation smoke check", () => {
 
   test("login page renders the brand mark and heading", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.locator(".top-nav-mark")).toHaveText("ST");
-    await expect(page.locator("h1")).toContainText("Smoke Test Runner");
+    await expect(page.locator(".top-nav-mark")).toHaveText("TR");
+    await expect(page.locator("h1")).toContainText("Test Runner");
   });
 });
