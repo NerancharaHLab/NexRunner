@@ -293,6 +293,16 @@ a.card:hover,
   color: var(--fail-color);
 }
 
+/* REQ-035: looks blocked (grey, not-allowed cursor) but stays a real clickable button — clicking
+   opens a modal explaining why, which a native `disabled` attribute would make impossible. */
+.btn-danger-text--blocked {
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+.btn-danger-text--blocked:hover {
+  color: var(--text-secondary);
+}
+
 .btn-sm {
   padding: 6px 12px;
   font-size: 0.78rem;
@@ -604,6 +614,32 @@ a.card:hover,
 
 /* ---------- Data table (admin lists) ---------- */
 
+/* REQ-035: Manage Tags search + quick-count bar, above the data table. */
+.stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.stats-bar-search {
+  flex: 1 1 240px;
+  max-width: 320px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+}
+
+.stats-bar-count {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .data-table-wrap {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
@@ -878,6 +914,19 @@ a.card:hover,
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* REQ-035: Manage Tags — same subtle-grey pill treatment as .stat-pill's base state, own class
+   since a Tag pill and a stat pill serve different roles even though they look alike. */
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
 }
 
 /* ---------- Summary stat cards (run detail header) ---------- */
