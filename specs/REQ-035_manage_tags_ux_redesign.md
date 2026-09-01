@@ -1,4 +1,4 @@
-# REQ-035: Manage Tags UX Redesign — Usage Count + Safe Delete + Search
+# REQ-035: Manage Tags UX Redesign — Usage Count + Safe Delete + Search + Pagination + Sort
 
 **Status:** ✅ Done
 **Priority:** P2 (UX + Data Safety)
@@ -33,6 +33,17 @@ guard, Search box, Quick stats bar เช็คกับโค้ดจริง
 
 ไม่มี Schema change / Migration
 
+## Follow-up ระหว่าง Session เดียวกัน (เพิ่ม Pagination + Sort)
+
+หลังปิดจบรอบแรก ผู้ใช้ขอเพิ่มอีก 2 อย่างในหน้าเดิม — เป็นงานเล็กต่อยอด Component ที่เพิ่งสร้าง ทำต่อทันที
+ไม่ต้องผ่าน Planning cycle ใหม่ (ชัดเจน ไม่มี Ambiguity):
+
+- **Pagination**: Default 10 รายการ/หน้า ปรับได้ (10/25/50/100) ผ่าน Dropdown "Show [N] per page" +
+  ปุ่ม Prev/Next + "Page X of Y" — เปลี่ยน Search/Page Size/Sort กลับไปหน้า 1 เสมอ (กัน "หน้าว่าง" หลัง
+  กรอง/เรียงใหม่)
+- **Column Sort**: คลิก Header "Tag Name" หรือ "Usage" เพื่อเรียง คลิกซ้ำสลับ Ascending/Descending มี
+  ลูกศร ↑/↓ บอกสถานะ
+
 ## บั๊กที่เจอระหว่าง Implement (แก้แล้ว)
 
 **Native `disabled` button ทำให้เปิด Blocked Modal ไม่ได้เลย** — Implement รอบแรกใช้ HTML attribute
@@ -55,3 +66,8 @@ Button ที่คลิกได้จริงเพื่อเปิด Mod
   - Tag ใหม่ที่ Usage=0 → ปุ่ม Delete เป็นสีแดงปกติ (Active) กดแล้วขึ้น Confirm Modal → กด "Yes, Delete"
     → ลบสำเร็จจริง (ยืนยันแถวหายจากตาราง)
   - Screenshot ยืนยันความต่างสี Delete Button ระหว่าง Row ปกติ (แดง) กับ Row ที่ถูก Block (เทา) ชัดเจน
+  - Pagination: Default 10 แถว/หน้า, "Page 1 of 4" (34 Tags) ถูกต้อง, กด Next ไปหน้า 2 ได้, Prev
+    Enable ถูกต้อง, เปลี่ยน Page Size เป็น 50 → เห็นครบ 34 แถวในหน้าเดียว "Page 1 of 1", ปุ่ม Next
+    Disable ถูกต้องเมื่อไม่มีหน้าถัดไป
+  - Sort: คลิก Header "Usage" ครั้งแรก → เรียงจากน้อยไปมากถูกต้อง (1,1,1,...), คลิกซ้ำ → มากไปน้อยถูกต้อง
+    (11,10,10,7,5,...), ลูกศร ↓ แสดงถูกต้องที่ Header (Screenshot ยืนยัน)

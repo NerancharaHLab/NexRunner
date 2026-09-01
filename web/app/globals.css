@@ -675,6 +675,53 @@ a.card:hover,
   border-bottom: none;
 }
 
+/* REQ-035: clickable sort headers on the Manage Tags table — same <th> look, just interactive. */
+.data-table th.sortable-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.data-table th.sortable-header:hover {
+  color: var(--accent-color);
+}
+
+/* REQ-035: pagination bar under the Manage Tags table. */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.pagination-page-size {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.pagination-page-size select {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination-status {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
 .data-table tr.inactive-row {
   opacity: 0.55;
 }

@@ -13,22 +13,73 @@ interface Props {
   deleteAction: (formData: FormData) => void;
 }
 
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+type SortKey = "name" | "usageCount";
+type SortDir = "asc" | "desc";
+
 /**
- * REQ-035: search + stats bar + pill styling + safe-delete guard for the Manage Tags page.
- * app/admin/tags/page.tsx stays the Server Component (data fetch + the delete Server Action
- * itself); this only owns client-side interaction — same split as FilterPicker.tsx on the New Run
- * form.
+ * REQ-035: search + stats bar + pill styling + safe-delete guard + pagination + column sort for
+ * the Manage Tags page. app/admin/tags/page.tsx stays the Server Component (data fetch + the
+ * delete Server Action itself); this only owns client-side interaction — same split as
+ * FilterPicker.tsx on the New Run form.
  */
 export default function TagsTable({ tags, deleteAction }: Props) {
   const [search, setSearch] = useState("");
   const [confirmTarget, setConfirmTarget] = useState<TagRow | null>(null);
   const [blockedTarget, setBlockedTarget] = useState<TagRow | null>(null);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [page, setPage] = useState(1); // 1-indexed
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return tags;
     return tags.filter((t) => t.name.toLowerCase().includes(q));
   }, [search, tags]);
+
+  const sorted = useMemo(() => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      if (sortKey === "usageCount") return (a.usageCount - b.usageCount) * dir;
+      return a.name.localeCompare(b.name) * dir;
+    });
+  }, [filtered, sortKey, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  // Clamp instead of a useEffect — filtering/page-size changes can leave `page` past the new last
+  // page (e.g. search narrows results while on page 3); render the closest valid page immediately
+  // rather than flashing a blank page for one render first.
+  const currentPage = Math.min(page, totalPages);
+  const paged = useMemo(
+    () => sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [sorted, currentPage, pageSize]
+  );
+
+  function handleSearch(value: string) {
+    setSearch(value);
+    setPage(1); // a new search result set starts back at page 1
+  }
+
+  function handlePageSize(size: number) {
+    setPageSize(size);
+    setPage(1);
+  }
+
+  function handleSort(key: SortKey) {
+    if (key === sortKey) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+    setPage(1);
+  }
+
+  function sortIndicator(key: SortKey) {
+    if (key !== sortKey) return "";
+    return sortDir === "asc" ? " ↑" : " ↓";
+  }
 
   const inUseCount = tags.filter((t) => t.usageCount > 0).length;
 
@@ -39,7 +90,7 @@ export default function TagsTable({ tags, deleteAction }: Props) {
           type="text"
           placeholder="Search tags..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => handleSearch(e.target.value)}
           className="stats-bar-search"
           data-testid="smoke-runner:admin-tags:input__search"
         />
@@ -55,13 +106,25 @@ export default function TagsTable({ tags, deleteAction }: Props) {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Tag Name</th>
-                <th>Usage (Master Scenarios)</th>
+                <th
+                  className="sortable-header"
+                  onClick={() => handleSort("name")}
+                  data-testid="smoke-runner:admin-tags:header__name"
+                >
+                  Tag Name{sortIndicator("name")}
+                </th>
+                <th
+                  className="sortable-header"
+                  onClick={() => handleSort("usageCount")}
+                  data-testid="smoke-runner:admin-tags:header__usage"
+                >
+                  Usage (Master Scenarios){sortIndicator("usageCount")}
+                </th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((tag) => (
+              {paged.map((tag) => (
                 <tr key={tag.id} data-testid={`smoke-runner:admin-tags:row__${tag.id}`}>
                   <td>
                     <span className="tag-pill">{tag.name}</span>
@@ -97,6 +160,51 @@ export default function TagsTable({ tags, deleteAction }: Props) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {filtered.length > 0 && (
+        <div className="pagination-bar">
+          <div className="pagination-page-size">
+            <label htmlFor="tags-page-size">Show</label>
+            <select
+              id="tags-page-size"
+              value={pageSize}
+              onChange={(e) => handlePageSize(Number(e.target.value))}
+              data-testid="smoke-runner:admin-tags:select__page-size"
+            >
+              {PAGE_SIZE_OPTIONS.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+            <span>per page</span>
+          </div>
+
+          <div className="pagination-controls">
+            <button
+              type="button"
+              className="btn btn-sm"
+              disabled={currentPage <= 1}
+              onClick={() => setPage(currentPage - 1)}
+              data-testid="smoke-runner:admin-tags:btn__page-prev"
+            >
+              ← Prev
+            </button>
+            <span className="pagination-status" data-testid="smoke-runner:admin-tags:text__page-status">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              type="button"
+              className="btn btn-sm"
+              disabled={currentPage >= totalPages}
+              onClick={() => setPage(currentPage + 1)}
+              data-testid="smoke-runner:admin-tags:btn__page-next"
+            >
+              Next →
+            </button>
+          </div>
         </div>
       )}
 
