@@ -27,7 +27,7 @@ durable record. Once a plan is approved and the work is done, its lasting record
 
 - [ ] **[P1]** [REQ-023: `data-testid` audit against the skill](specs/REQ-023_datatestid_audit.md) — partially covered ad-hoc, formal audit not done
 - [ ] **[P2]** [REQ-024: Environment / Data Chain Field Schema CRUD](specs/REQ-024_environment_data_chain_schema_crud.md) — still static config, not urgent — ⚠️ DB assumption จะเปลี่ยนเป็น Postgres ตาม REQ-029
-- [x] **[P2]** [REQ-025: Run History view](specs/REQ-025_run_history_view.md) — search + Gate/Environment/date filters + pagination on `/{site}`; Run.name as card headline; client-side so it didn't touch REQ-030/031 files. build clean, e2e 27/27
+- [x] **[P2]** [REQ-025: Run History view](specs/REQ-025_run_history_view.md) — search + Gate/Environment/date filters + pagination on `/{site}`; Run.name as card headline; client-side so it didn't touch REQ-030/031 files. Implemented by another concurrent session, which ran out of context before verifying/committing — picked up, re-verified (build clean, e2e 27/27), and found+fixed a real bug: the filter row's CSS referenced non-existent custom properties, rendering unstyled controls (see spec for detail)
 - [ ] **[P3]** [REQ-026: Migrate old `test_results/*.json`](specs/REQ-026_migrate_old_test_results.md) — best-effort, not started
 - [ ] **[P3]** [REQ-027: Provision real Azure resources + Deploy](specs/REQ-027_provision_azure_deploy.md) — ⚠️ DB provisioning step เปลี่ยนเป็น Postgres hosting ตาม REQ-029 (ยังไม่ตัดสินใจรายละเอียด), ส่วน Evidence/Blob ยังเป็น Azure เหมือนเดิม
 - [ ] **[P4]** [REQ-022: CSV/Excel Scenario Import](specs/REQ-022_csv_excel_scenario_import.md) — confirmed last-priority, not yet planned

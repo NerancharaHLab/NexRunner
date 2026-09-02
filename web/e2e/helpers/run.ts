@@ -6,8 +6,11 @@ import type { Page } from "@playwright/test";
  * can no longer set/predict it up front; it's read back out of the URL Playwright actually lands
  * on after submit.
  */
-export async function createRunViaUI(page: Page, siteKey: string): Promise<string> {
+export async function createRunViaUI(page: Page, siteKey: string, name?: string): Promise<string> {
   await page.goto(`/${siteKey}/new`);
+  if (name) {
+    await page.getByTestId("smoke-runner:new-run:input__name").fill(name);
+  }
   await Promise.all([
     // Anchored to the RUN-{site}-NNNN shape specifically — a looser `[^/]+$` pattern would also
     // match the *current* "/{site}/new" URL before the click even happens (waitForURL resolves
