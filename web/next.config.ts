@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    serverActions: {
+      // REQ-022 Phase 2: default is 1MB (confirmed via the bundled Next.js docs), which would
+      // silently reject a legitimate Scenario import CSV before it ever reaches
+      // scenario-import-actions.ts's own validation — raised to match that feature's own stated
+      // file-size ceiling.
+      bodySizeLimit: "2mb",
+    },
+  },
 };
 
 export default nextConfig;

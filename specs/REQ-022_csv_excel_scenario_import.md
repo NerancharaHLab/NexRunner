@@ -1,6 +1,6 @@
 # REQ-022: Import Scenarios via CSV/Excel
 
-**Status:** 🚧 Phase 1 (backend core) done — no upload UI yet, Excel not started
+**Status:** 🚧 Phase 1 + Phase 2 (backend + Upload UI) done — Excel not started
 **Priority:** P4 (ผู้ใช้ยืนยันย้ายไปทำสุดท้าย 2026-08-31)
 
 ## Context
@@ -54,24 +54,63 @@ Tag ต้อง Strict Match (ห้าม Auto-create), แยก Endpoint Mas
 - ยังไม่มี API route/Server Action ใหม่ (ไม่มี UI ให้เรียกตอนนี้) — ฟังก์ชันพร้อมให้ REQ ถัดไป (ทำ Upload UI)
   เรียกตรง ๆ จาก Server Action ได้เลย แบบเดียวกับ `lib/db/*.ts` ไฟล์อื่นทุกไฟล์ในระบบ
 
+## Phase 2 — Upload UI (ยืนยันครบแล้ว, user ให้ BA+UI+SA brief แบบละเอียดพร้อม workflow diagram, ผมตรวจกับ
+โค้ด/doc จริงก่อนรับ พบ+แก้ 2 จุด, user confirm ให้ทำต่อ)
+
+**2 จุดที่ตรวจแล้วแก้ก่อนรับเข้าแผน:**
+1. **Route/label ผิด** — brief อ้าง `/[site]/scenarios` กับปุ่ม "+ Custom Scenario" แต่ path จริงคือ
+   `/admin/scenarios/[site]` และทั้งสองหน้าใช้ label เดียวกันคือ **"+ Add Scenario"** (เช็คจากไฟล์จริงทั้งคู่)
+   — วางปุ่ม Import คู่กับปุ่มจริงตามที่ตั้งใจ แค่แก้ path/label
+2. **Next.js Server Action body size limit ชนกับ limit ที่ brief ตั้งเอง** — เช็ค Next.js 16 doc ที่ bundle
+   มากับโปรเจกต์ยืนยันว่า default คือ **1MB** เท่านั้น (brief เขียนไม่ฟันธงว่า "1MB หรือ 4MB") ซึ่งชนกับ
+   limit 2MB ที่ brief กำหนดเองตรง ๆ — แก้โดยเพิ่ม `experimental.serverActions.bodySizeLimit: '2mb'` ใน
+   `next.config.ts` จริง
+
+**ส่วนเสริมที่ไม่ได้อยู่ใน brief แต่จำเป็น**: ระบบนี้ไม่เคยมี Toast/Notification component มาก่อนเลย (เช็คแล้ว)
+— ใช้ pattern ที่มีอยู่แล้วแทน (redirect พร้อม `?imported=...` searchParam แล้วโชว์ `.success-banner`
+ใหม่ ที่ style คู่กับ `.error-banner` เดิม) แทนการสร้าง Toast widget ใหม่ทั้งระบบ — บันทึกไว้ให้เห็นชัดว่าเป็น
+การ substitute ไม่ใช่ silently เปลี่ยนโดยไม่บอก
+
+## Implementation (Phase 2)
+
+- `next.config.ts`: เพิ่ม `experimental.serverActions.bodySizeLimit: '2mb'`
+- `public/scenario_import_template.csv` (ใหม่, static file ธรรมดา ไม่ต้องมี route handler) — header
+  ตรงกับที่ parser คาดหวังเป๊ะ (`name,flow,role,critical,steps,criteria,tags,sourceSite`) + ตัวอย่าง 2
+  แถวภาษาไทย ยืนยันแล้วว่า tag ตัวอย่าง (`smoke`, `critical`) มีอยู่จริงใน Tag Catalog ของระบบนี้
+- `lib/actions/scenario-import-actions.ts` (ใหม่, `"use server"`) — โค้ด server ใหม่ที่เดียวของ Phase นี้:
+  - `previewScenarioImportAction(target, formData)`: `requireRole(CAN_EDIT_CONTENT)`, บังคับ limit
+    2MB/100 แถวฝั่ง server (ไม่เชื่อ client-side check อย่างเดียว), เรียก `parseScenarioImportCsv` +
+    `validateScenarioImportRows(raw, await listTags())` คืน `{validRows, errors, totalCount}`
+  - `confirmScenarioImportAction(target, rows)`: `requireRole(CAN_EDIT_CONTENT)`, กัน `rows` ว่าง/เกิน
+    limit อีกชั้น แล้วเรียก `commitScenarioImport(target, rows)`
+- `app/admin/ScenarioImportModal.tsx` (ใหม่, Client Component ใช้ร่วมกันทั้ง 2 หน้า ผ่าน `target` prop)
+  — Drag & Drop + Browse file → preview (error list ถ้ามีปัญหา, บังคับแก้ไฟล์ต้นฉบับแล้ว re-upload ไม่มี
+  inline edit ตามที่ confirm ไว้ / preview table ถ้าผ่านหมด) → Confirm → `router.push()` กลับไปหน้าเดิม
+  พร้อม `?imported=&firstId=&lastId=` (trigger ทั้ง revalidate และ success banner)
+- `app/admin/master-scenarios/page.tsx`, `app/admin/scenarios/[site]/page.tsx`: เพิ่มปุ่ม "Import CSV"
+  คู่กับ "+ Add Scenario" เดิม + render `<ScenarioImportModal>` + อ่าน `?imported=` แสดง
+  `.success-banner`
+- `app/globals.css`: เพิ่ม `.success-banner` (mirror `.error-banner`, ใช้ `--pass-bg`/`--pass-color`)
+
 ## Not done yet (future phases)
 
-- Upload UI (ปุ่ม "Import from CSV" ที่ Master Library + Site Scenario Management, Template download,
-  Preview Modal แสดง error รายแถวก่อนกด Confirm จริง)
-- Excel (`.xlsx`) support
-- API route/Server Action ที่เชื่อม UI เข้ากับ `commitScenarioImport()`
+- Excel (`.xlsx`) support — ยังไม่เริ่ม
 
 ## Verification Log
 
-- [x] `npm run build` clean (ทั้งไฟล์ใหม่และไฟล์ที่แก้)
-- [x] `npm run test:e2e` 27/27 — ไม่มี behavior เปลี่ยนสำหรับ call site เดิมทั้งหมด (optional parameter
-  ล้วน)
-- [x] Script (ไม่ commit) เรียกผ่าน function จริง ยืนยันครบ: valid 3-row CSV (Master target) commit
-  สำเร็จ ได้ id `MST-XXXX` จริง 3 อัน field ตรง (รวม flow case-fix `ipd`→`IPD` และ default เมื่อว่าง);
-  แถวขาด `name` ถูก reject พร้อมระบุ row/column ถูกต้อง (row 3 ตรงกับที่นับรวม header); **ยืนยัน MST
-  sequence counter ไม่ขยับเลยสำหรับไฟล์ที่ reject** (พิสูจน์ dry-run-first ไม่เปลืองเลขจริง); tag ที่ไม่มีใน
-  Catalog ถูก reject พร้อมชื่อ tag ที่ไม่รู้จัก และยืนยันไม่มี Tag ถูก auto-create; ค่า `flow` ที่ไม่ตรง enum
-  ถูก reject; import เข้า Site (ไม่ใช่ Master) ได้ id scheme `{SITE}-CUST-NNNN` ถูกต้อง และ `sourceSite`
-  auto-set เป็น site เอง (เพิกเฉยค่าที่ใส่มาในไฟล์ ตามที่ตั้งใจ)
-- [x] เก็บกวาดข้อมูลทดสอบครบ (ลบ Scenario ที่สร้างระหว่าง verify, ยืนยัน Tag Catalog ไม่มี tag แปลกปลอมจาก
-  script)
+- [x] `npm run build` clean (Phase 1 + Phase 2 ทั้งหมด)
+- [x] `npm run test:e2e` 27/27 (ทั้งสองรอบ — หลัง Phase 1 และหลัง Phase 2)
+- [x] Phase 1: Script (ไม่ commit) เรียกผ่าน function จริง ยืนยันครบ: valid CSV commit สำเร็จ ได้ id
+  `MST-XXXX` จริง field ตรง; แถวขาด `name` ถูก reject พร้อม row/column ถูกต้อง; **ยืนยัน MST sequence
+  counter ไม่ขยับเลยสำหรับไฟล์ที่ reject**; tag ที่ไม่มีใน Catalog ถูก reject ไม่ auto-create; `flow` ผิด
+  enum ถูก reject; Site target ได้ id scheme `{SITE}-CUST-NNNN` ถูกต้อง `sourceSite` auto-set
+- [x] Phase 2: Manual Puppeteer ผ่านเว็บจริงครบ 9 จุด (site ทดสอบแยก, ลบทิ้งหลังเสร็จ): Template
+  download header ตรงกับที่ parser คาดหวังเป๊ะ; Master target — upload CSV ถูกต้อง 2 แถว → preview
+  "All 2 rows valid" → Confirm → success banner โชว์ id range ถูกต้อง (`MST-0023 – MST-0024`) →
+  scenario ใหม่ขึ้นในหน้า list ทันทีไม่ต้อง refresh มือ; upload CSV ที่มีทั้งแถวขาด name และ tag ที่ไม่มีจริง
+  → preview โชว์ error ทั้งคู่ถูกต้อง (row/column ตรง) → ไม่มีปุ่ม Confirm ให้กด มีแค่ Re-upload; upload
+  ไฟล์ 101 แถว → ถูก reject ฝั่ง server จริง (ไม่ใช่แค่ client-side guess) ยืนยัน `bodySizeLimit` config มีผล
+  จริง; Site target — upload พร้อม `sourceSite` column ที่ตั้งใจให้ผิด → ระบบเพิกเฉยค่านั้นจริง ใช้ site
+  เองแทน ได้ id `{SITE}-CUST-0001` ถูกต้อง; qa_engineer ถูก redirect ออกจากหน้าเลย (feature inherit
+  page-level gate เดิม)
+- [x] เก็บกวาดข้อมูลทดสอบครบทั้ง Phase (ลบ Scenario/Site/temp CSV file ที่สร้างระหว่าง verify)

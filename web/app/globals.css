@@ -789,6 +789,25 @@ a.card:hover,
   margin-bottom: 16px;
 }
 
+/* REQ-022 Phase 2: transient success feedback (e.g. after a CSV import commits) — same shape as
+   .error-banner above, same tokens .gate-badge.ready already uses for its success state. This
+   codebase has no separate floating/auto-dismissing Toast widget; this reuses the existing
+   redirect-with-searchParam + banner convention every admin CRUD page's error handling already
+   follows, just for the success case. */
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--pass-bg);
+  color: var(--pass-color);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
 /* ---------- Status buttons (scenario Pass/Fail/Block/Not Run) ---------- */
 
 .status-btn-group {

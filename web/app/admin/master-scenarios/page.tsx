@@ -3,14 +3,15 @@ import { redirect } from "next/navigation";
 import { deleteScenario, listScenariosForSite } from "@/lib/db/scenarios-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT, MASTER_SCENARIO_PARTITION } from "@/lib/types";
+import ScenarioImportModal from "@/app/admin/ScenarioImportModal";
 
 interface PageProps {
-  searchParams: Promise<{ source?: string }>;
+  searchParams: Promise<{ source?: string; imported?: string; firstId?: string; lastId?: string }>;
 }
 
 export default async function MasterScenariosListPage({ searchParams }: PageProps) {
   await requireRole(CAN_EDIT_CONTENT);
-  const { source } = await searchParams;
+  const { source, imported, firstId, lastId } = await searchParams;
   const allScenarios = await listScenariosForSite(MASTER_SCENARIO_PARTITION);
   // REQ-036: distinct sourceSite values actually present, for the filter dropdown — grows
   // organically with the data, no separate list to keep in sync.
@@ -39,14 +40,28 @@ export default async function MasterScenariosListPage({ searchParams }: PageProp
             here does not affect what has already been cloned, until it&apos;s re-cloned.
           </p>
         </div>
-        <Link
-          href="/admin/master-scenarios/new"
-          className="btn btn-primary"
-          data-testid="smoke-runner:admin-master-scenarios:btn__new"
-        >
-          + Add Scenario
-        </Link>
+        <div style={{ display: "flex", gap: 8 }}>
+          <ScenarioImportModal
+            target={{ kind: "master" }}
+            returnPath="/admin/master-scenarios"
+            triggerTestId="smoke-runner:admin-master-scenarios:btn__import-csv"
+          />
+          <Link
+            href="/admin/master-scenarios/new"
+            className="btn btn-primary"
+            data-testid="smoke-runner:admin-master-scenarios:btn__new"
+          >
+            + Add Scenario
+          </Link>
+        </div>
       </div>
+
+      {imported && (
+        <div className="success-banner" data-testid="smoke-runner:admin-master-scenarios:banner__import-success">
+          ✅ Imported {imported} scenario{imported === "1" ? "" : "s"}
+          {firstId && lastId && (firstId === lastId ? ` (${firstId})` : ` (${firstId} – ${lastId})`)}
+        </div>
+      )}
 
       {/* REQ-036: plain GET form, no client component needed — reload with ?source= applied. */}
       {sourceOptions.length > 1 && (

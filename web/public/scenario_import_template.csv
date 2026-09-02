@@ -1,0 +1,7 @@
+name,flow,role,critical,steps,criteria,tags,sourceSite
+ลงทะเบียนคัดกรอง ก่อนเข้าตรวจ OPD,OPD,OPD Doctor / Nurse,TRUE,"1. เปิดหน้าลงทะเบียนผู้ป่วย
+2. กรอกข้อมูลผู้ป่วยและเลือกคลินิก
+3. บันทึกและยืนยันคิว","ลงทะเบียนสำเร็จ ได้ VN และคิวถูกต้อง",smoke;critical,CORE
+บันทึก Vital Sign ก่อนพบแพทย์,OPD,Nurse,FALSE,"1. เปิดหน้า Vital Sign ของผู้ป่วยในคิว
+2. กรอกค่าความดัน ชีพจร อุณหภูมิ
+3. บันทึกผล","บันทึกค่า Vital Sign ครบถ้วนและแสดงในหน้าประวัติ",smoke,CORE

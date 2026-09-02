@@ -4,13 +4,16 @@ import { getScenariosForSite } from "@/lib/scenarios";
 import { deleteScenario } from "@/lib/db/scenarios-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT } from "@/lib/types";
+import ScenarioImportModal from "@/app/admin/ScenarioImportModal";
 
 interface PageProps {
   params: Promise<{ site: string }>;
+  searchParams: Promise<{ imported?: string; firstId?: string; lastId?: string }>;
 }
 
-export default async function ScenariosAdminListPage({ params }: PageProps) {
+export default async function ScenariosAdminListPage({ params, searchParams }: PageProps) {
   const { site } = await params;
+  const { imported, firstId, lastId } = await searchParams;
   const siteFile = await getScenariosForSite(site);
   if (!siteFile) notFound();
 
@@ -48,8 +51,20 @@ export default async function ScenariosAdminListPage({ params }: PageProps) {
           >
             + Add Scenario
           </Link>
+          <ScenarioImportModal
+            target={{ kind: "site", siteKey: site }}
+            returnPath={`/admin/scenarios/${site}`}
+            triggerTestId={`smoke-runner:admin-scenarios:btn__import-csv__${site}`}
+          />
         </div>
       </div>
+
+      {imported && (
+        <div className="success-banner" data-testid="smoke-runner:admin-scenarios:banner__import-success">
+          ✅ Imported {imported} scenario{imported === "1" ? "" : "s"}
+          {firstId && lastId && (firstId === lastId ? ` (${firstId})` : ` (${firstId} – ${lastId})`)}
+        </div>
+      )}
 
       {siteFile.scenarios.length === 0 && (
         <div className="card empty-state">
