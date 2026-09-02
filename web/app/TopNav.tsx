@@ -37,7 +37,7 @@ export default async function TopNav() {
 
   return (
     <nav className="top-nav no-print">
-      <Link href="/" className="top-nav-brand" title="Go to home">
+      <Link href="/" className="top-nav-brand" title="Go to home" data-testid="smoke-runner:top-nav:link__brand">
         <span className="top-nav-mark">TR</span>
         Test Runner
       </Link>

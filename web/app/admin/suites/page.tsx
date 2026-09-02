@@ -18,7 +18,7 @@ export default async function SuitesListPage() {
 
   return (
     <main className="container">
-      <Link href="/admin/scenarios" className="breadcrumb">
+      <Link href="/admin/scenarios" className="breadcrumb" data-testid="smoke-runner:admin-suites:link__breadcrumb">
         ← Back to Manage Scenarios
       </Link>
 

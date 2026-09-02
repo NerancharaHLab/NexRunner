@@ -46,7 +46,7 @@ export default async function EditRunPage({ params, searchParams }: PageProps) {
 
   return (
     <main className="container">
-      <Link href={`/${site}/${runId}`} className="breadcrumb">
+      <Link href={`/${site}/${runId}`} className="breadcrumb" data-testid="smoke-runner:run-edit:link__breadcrumb">
         ← Back to Run Detail
       </Link>
 

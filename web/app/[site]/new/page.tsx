@@ -28,7 +28,7 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
   if (siteEntry && !siteEntry.active) {
     return (
       <main className="container">
-        <Link href={`/${site}`} className="breadcrumb">
+        <Link href={`/${site}`} className="breadcrumb" data-testid="smoke-runner:new-run:link__breadcrumb">
           ← Back to Run List
         </Link>
         <div className="page-header">
@@ -84,7 +84,7 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
 
   return (
     <main className="container">
-      <Link href={`/${site}`} className="breadcrumb">
+      <Link href={`/${site}`} className="breadcrumb" data-testid="smoke-runner:new-run:link__breadcrumb">
         ← Back to Run List
       </Link>
 

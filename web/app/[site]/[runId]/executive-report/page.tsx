@@ -35,7 +35,7 @@ export default async function ExecutiveReportPage({ params }: PageProps) {
   return (
     <main className="container">
       <div className="report-toolbar no-print">
-        <Link href={`/${site}/${runId}`} className="breadcrumb">
+        <Link href={`/${site}/${runId}`} className="breadcrumb" data-testid="smoke-runner:executive-report:link__breadcrumb">
           ← Back to Run Detail
         </Link>
         <PrintButton />

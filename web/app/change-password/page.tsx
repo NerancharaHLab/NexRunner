@@ -90,7 +90,7 @@ export default async function ChangePasswordPage({ searchParams }: PageProps) {
           </div>
         </div>
         <div className="form-footer" style={{ justifyContent: "space-between" }}>
-          <Link href="/" className="breadcrumb">
+          <Link href="/" className="breadcrumb" data-testid="smoke-runner:change-password:link__breadcrumb">
             ← Back to Home
           </Link>
           <button type="submit" className="btn btn-primary" data-testid="smoke-runner:change-password:btn__submit">

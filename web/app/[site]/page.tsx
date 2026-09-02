@@ -19,7 +19,7 @@ export default async function SiteRunsPage({ params }: PageProps) {
 
   return (
     <main className="container">
-      <Link href="/" className="breadcrumb">
+      <Link href="/" className="breadcrumb" data-testid="smoke-runner:run-history:link__breadcrumb">
         ← Choose Another Hospital
       </Link>
 

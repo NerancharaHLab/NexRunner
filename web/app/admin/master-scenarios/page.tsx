@@ -27,7 +27,7 @@ export default async function MasterScenariosListPage({ searchParams }: PageProp
 
   return (
     <main className="container">
-      <Link href="/admin/scenarios" className="breadcrumb">
+      <Link href="/admin/scenarios" className="breadcrumb" data-testid="smoke-runner:admin-master-scenarios:link__breadcrumb">
         ← Back to Manage Scenarios
       </Link>
 

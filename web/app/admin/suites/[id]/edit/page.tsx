@@ -50,7 +50,7 @@ export default async function EditSuitePage({ params, searchParams }: PageProps)
 
   return (
     <main className="container">
-      <Link href="/admin/suites" className="breadcrumb">
+      <Link href="/admin/suites" className="breadcrumb" data-testid="smoke-runner:admin-suite-form:link__breadcrumb">
         ← Back to Suite List
       </Link>
 

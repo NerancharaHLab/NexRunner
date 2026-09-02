@@ -32,7 +32,7 @@ export default async function NewTagPage({ searchParams }: PageProps) {
 
   return (
     <main className="container">
-      <Link href="/admin/tags" className="breadcrumb">
+      <Link href="/admin/tags" className="breadcrumb" data-testid="smoke-runner:admin-tag-form:link__breadcrumb">
         ← Back to Tag List
       </Link>
 

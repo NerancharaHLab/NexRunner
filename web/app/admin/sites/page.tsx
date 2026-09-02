@@ -39,7 +39,7 @@ export default async function SitesAdminPage({ searchParams }: PageProps) {
 
   return (
     <main className="container">
-      <Link href="/admin/scenarios" className="breadcrumb">
+      <Link href="/admin/scenarios" className="breadcrumb" data-testid="smoke-runner:admin-sites:link__breadcrumb">
         ← Back to Manage Scenarios
       </Link>
 

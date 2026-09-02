@@ -36,7 +36,7 @@ export default async function NewSuitePage({ searchParams }: PageProps) {
 
   return (
     <main className="container">
-      <Link href="/admin/suites" className="breadcrumb">
+      <Link href="/admin/suites" className="breadcrumb" data-testid="smoke-runner:admin-suite-form:link__breadcrumb">
         ← Back to Suite List
       </Link>
 
@@ -51,7 +51,7 @@ export default async function NewSuitePage({ searchParams }: PageProps) {
       {masterScenarios.length === 0 && (
         <div className="error-banner">
           No Scenarios in the Master Library yet —{" "}
-          <Link href="/admin/master-scenarios">Add one in the Master Library first</Link>
+          <Link href="/admin/master-scenarios" data-testid="smoke-runner:admin-suite-form:link__create-master-scenario">Add one in the Master Library first</Link>
         </div>
       )}
 

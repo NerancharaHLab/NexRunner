@@ -125,7 +125,12 @@ export default function FilterPicker({ suites, tags }: Props) {
       <div className="filter-picker-pills">
         {pills.map((pill) => (
           <span key={pill.key} className="filter-pill" data-testid={`smoke-runner:new-run:filter-pill__${slug(pill.key)}`}>
-            <button type="button" className="filter-pill-label" onClick={() => openCategoryPanel(pill.key)}>
+            <button
+              type="button"
+              className="filter-pill-label"
+              onClick={() => openCategoryPanel(pill.key)}
+              data-testid={`smoke-runner:new-run:filter-pill-label__${slug(pill.key)}`}
+            >
               {pill.label}
             </button>
             <button
@@ -173,7 +178,12 @@ export default function FilterPicker({ suites, tags }: Props) {
             ))
           ) : (
             <>
-              <button type="button" className="filter-back-link" onClick={() => setOpenCategory(null)}>
+              <button
+                type="button"
+                className="filter-back-link"
+                onClick={() => setOpenCategory(null)}
+                data-testid="smoke-runner:new-run:btn__filter-back"
+              >
                 ← Back
               </button>
               {openCategory === "tagInclude" && (
@@ -184,6 +194,7 @@ export default function FilterPicker({ suites, tags }: Props) {
                       name="filterTagIncludeMode"
                       checked={tagIncludeMode === "OR"}
                       onChange={() => setTagIncludeMode("OR")}
+                      data-testid="smoke-runner:new-run:rad__tag-include-mode-or"
                     />
                     Any (OR)
                   </label>
@@ -193,6 +204,7 @@ export default function FilterPicker({ suites, tags }: Props) {
                       name="filterTagIncludeMode"
                       checked={tagIncludeMode === "AND"}
                       onChange={() => setTagIncludeMode("AND")}
+                      data-testid="smoke-runner:new-run:rad__tag-include-mode-and"
                     />
                     All (AND)
                   </label>

@@ -24,7 +24,7 @@ export default async function ScenariosAdminListPage({ params }: PageProps) {
 
   return (
     <main className="container">
-      <Link href="/admin/scenarios" className="breadcrumb">
+      <Link href="/admin/scenarios" className="breadcrumb" data-testid="smoke-runner:admin-scenarios:link__breadcrumb">
         ← Choose Another Hospital
       </Link>
 

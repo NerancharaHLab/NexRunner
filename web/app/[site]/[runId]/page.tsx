@@ -19,7 +19,7 @@ export default async function RunDetailPage({ params }: PageProps) {
 
   return (
     <main className="container">
-      <Link href={`/${site}`} className="breadcrumb">
+      <Link href={`/${site}`} className="breadcrumb" data-testid="smoke-runner:run-detail:link__breadcrumb">
         ← Back to Run List
       </Link>
 

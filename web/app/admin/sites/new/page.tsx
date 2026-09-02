@@ -33,7 +33,7 @@ export default async function NewSitePage({ searchParams }: PageProps) {
 
   return (
     <main className="container">
-      <Link href="/admin/sites" className="breadcrumb">
+      <Link href="/admin/sites" className="breadcrumb" data-testid="smoke-runner:admin-site-form:link__breadcrumb">
         ← Back to Site List
       </Link>
 

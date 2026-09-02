@@ -53,7 +53,7 @@ export default async function EditMasterScenarioPage({ params, searchParams }: P
 
   return (
     <main className="container">
-      <Link href="/admin/master-scenarios" className="breadcrumb">
+      <Link href="/admin/master-scenarios" className="breadcrumb" data-testid="smoke-runner:admin-scenario-form:link__breadcrumb">
         ← Back to Master Scenario List
       </Link>
 
@@ -157,7 +157,7 @@ export default async function EditMasterScenarioPage({ params, searchParams }: P
         <div className="section-label">Tag</div>
         {tags.length === 0 ? (
           <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: 12 }}>
-            No Tags yet — <Link href="/admin/tags/new">create one on the Manage Tags page</Link>
+            No Tags yet — <Link href="/admin/tags/new" data-testid="smoke-runner:admin-scenario-form:link__create-tag">create one on the Manage Tags page</Link>
           </p>
         ) : (
           tags.map((tag) => (

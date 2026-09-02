@@ -50,7 +50,7 @@ export default async function CloneFromMasterPage({ params, searchParams }: Page
 
   return (
     <main className="container">
-      <Link href={`/admin/scenarios/${site}`} className="breadcrumb">
+      <Link href={`/admin/scenarios/${site}`} className="breadcrumb" data-testid="smoke-runner:clone-from-master:link__breadcrumb">
         ← Back to Scenario List
       </Link>
 
@@ -97,7 +97,7 @@ export default async function CloneFromMasterPage({ params, searchParams }: Page
           {allMasterScenarios.length === 0 ? (
             <>
               No Scenarios in the Master Library yet —{" "}
-              <Link href="/admin/master-scenarios">Add one in the Master Library first</Link>
+              <Link href="/admin/master-scenarios" data-testid="smoke-runner:clone-from-master:link__create-master-scenario">Add one in the Master Library first</Link>
             </>
           ) : (
             `No Scenarios from Source Site "${source}"`

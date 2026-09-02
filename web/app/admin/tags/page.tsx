@@ -37,7 +37,7 @@ export default async function TagsAdminPage({ searchParams }: PageProps) {
 
   return (
     <main className="container">
-      <Link href="/admin/scenarios" className="breadcrumb">
+      <Link href="/admin/scenarios" className="breadcrumb" data-testid="smoke-runner:admin-tags:link__breadcrumb">
         ← Back to Manage Scenarios
       </Link>
 
