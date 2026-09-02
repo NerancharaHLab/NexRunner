@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getRun } from "@/lib/db/tables";
-import { ENVIRONMENTS } from "@/lib/config";
+import { listEnvironments } from "@/lib/db/environments-table";
 import { CreateRunError, updateRunMetadata } from "@/lib/runs";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT } from "@/lib/types";
@@ -18,6 +18,12 @@ export default async function EditRunPage({ params, searchParams }: PageProps) {
 
   const run = await getRun(site, runId);
   if (!run) notFound();
+
+  // includeInactive: true — a Run created under an Environment that's since been deactivated must
+  // still show its actual current value as a selectable option here (unlike the New Run form,
+  // which only offers active ones for a *new* pick), or the <select>'s defaultValue below would
+  // silently fall back to whatever option happens to render first.
+  const environments = await listEnvironments({ includeInactive: true });
 
   async function updateRunAction(formData: FormData) {
     "use server";
@@ -84,9 +90,9 @@ export default async function EditRunPage({ params, searchParams }: PageProps) {
               defaultValue={run.environment}
               data-testid="smoke-runner:run-edit:select__environment"
             >
-              {ENVIRONMENTS.map((env) => (
-                <option key={env} value={env}>
-                  {env}
+              {environments.map((env) => (
+                <option key={env.id} value={env.name}>
+                  {env.name}
                 </option>
               ))}
             </select>

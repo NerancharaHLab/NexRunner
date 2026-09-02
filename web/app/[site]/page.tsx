@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { listRunsForSite } from "@/lib/db/tables";
+import { listEnvironments } from "@/lib/db/environments-table";
 import { getScenariosForSite } from "@/lib/scenarios";
 import { requireUser } from "@/lib/auth/guard";
 import RunHistoryList from "./RunHistoryList";
@@ -16,6 +17,11 @@ export default async function SiteRunsPage({ params }: PageProps) {
   if (!siteFile) notFound();
 
   const runs = await listRunsForSite(site);
+  // includeInactive: true — this only feeds the filter's *priority ordering* (see
+  // RunHistoryList's environmentOptions()), not which values are offered (that's derived from the
+  // runs actually loaded), so a deactivated Environment a historical Run used still sorts sensibly
+  // instead of falling to the alphabetical tail.
+  const environmentOrder = (await listEnvironments({ includeInactive: true })).map((e) => e.name);
 
   return (
     <main className="container">
@@ -45,6 +51,7 @@ export default async function SiteRunsPage({ params }: PageProps) {
       ) : (
         <RunHistoryList
           siteKey={site}
+          environmentOrder={environmentOrder}
           runs={runs.map((run) => ({
             rowKey: run.rowKey,
             name: run.name ?? "",

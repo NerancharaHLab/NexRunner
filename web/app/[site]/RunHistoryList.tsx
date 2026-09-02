@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ENVIRONMENTS } from "@/lib/config";
 import styles from "./RunHistoryList.module.css";
 
 export interface RunHistoryItem {
@@ -23,15 +22,19 @@ export interface RunHistoryItem {
 interface Props {
   siteKey: string;
   runs: RunHistoryItem[];
+  /** Environment Catalog names (REQ-024), in display order — used only to order the filter's
+   *  option list sensibly; which values actually appear is still derived from `runs` below (a
+   *  filter shouldn't offer a value with zero matches). */
+  environmentOrder: string[];
 }
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 type GateFilter = "ALL" | "READY" | "NOT READY";
 
-function environmentOptions(runs: RunHistoryItem[]): string[] {
+function environmentOptions(runs: RunHistoryItem[], environmentOrder: string[]): string[] {
   const seen = new Set(runs.map((r) => r.environment).filter(Boolean));
   const ordered: string[] = [];
-  for (const env of ENVIRONMENTS) {
+  for (const env of environmentOrder) {
     if (seen.has(env)) {
       ordered.push(env);
       seen.delete(env);
@@ -46,7 +49,7 @@ function headline(run: RunHistoryItem): string {
   return named || run.rowKey;
 }
 
-export default function RunHistoryList({ siteKey, runs }: Props) {
+export default function RunHistoryList({ siteKey, runs, environmentOrder }: Props) {
   const [search, setSearch] = useState("");
   const [gate, setGate] = useState<GateFilter>("ALL");
   const [environment, setEnvironment] = useState("");
@@ -55,7 +58,7 @@ export default function RunHistoryList({ siteKey, runs }: Props) {
   const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState(1);
 
-  const envChoices = useMemo(() => environmentOptions(runs), [runs]);
+  const envChoices = useMemo(() => environmentOptions(runs, environmentOrder), [runs, environmentOrder]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

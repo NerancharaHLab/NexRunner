@@ -28,7 +28,8 @@ export default async function TopNav() {
       { href: "/admin/master-scenarios", label: "Master Scenario Library", testid: "smoke-runner:top-nav:link__admin-master-scenarios" },
       { href: "/admin/suites", label: "Manage Suites", testid: "smoke-runner:top-nav:link__admin-suites" },
       { href: "/admin/tags", label: "Manage Tags", testid: "smoke-runner:top-nav:link__admin-tags" },
-      { href: "/admin/sites", label: "Manage Sites", testid: "smoke-runner:top-nav:link__admin-sites" }
+      { href: "/admin/sites", label: "Manage Sites", testid: "smoke-runner:top-nav:link__admin-sites" },
+      { href: "/admin/environments", label: "Manage Environments", testid: "smoke-runner:top-nav:link__admin-environments" }
     );
   }
   if (isAdmin) {

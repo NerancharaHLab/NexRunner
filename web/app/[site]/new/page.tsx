@@ -4,7 +4,7 @@ import { getScenariosForSite } from "@/lib/scenarios";
 import { getSite } from "@/lib/db/sites-table";
 import { listSuites } from "@/lib/db/test-suites-table";
 import { listTags } from "@/lib/db/tags-table";
-import { ENVIRONMENTS } from "@/lib/config";
+import { listEnvironments } from "@/lib/db/environments-table";
 import { createRun, CreateRunError } from "@/lib/runs";
 import { requireUser } from "@/lib/auth/guard";
 import FilterPicker from "./FilterPicker";
@@ -47,6 +47,7 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
   const today = new Date().toISOString().slice(0, 10);
   const suites = await listSuites();
   const tags = await listTags();
+  const environments = await listEnvironments();
 
   async function startRun(formData: FormData) {
     "use server";
@@ -119,9 +120,9 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
                   defaultValue="STAGING"
                   data-testid="smoke-runner:new-run:select__environment"
                 >
-                  {ENVIRONMENTS.map((env) => (
-                    <option key={env} value={env}>
-                      {env}
+                  {environments.map((env) => (
+                    <option key={env.id} value={env.name}>
+                      {env.name}
                     </option>
                   ))}
                 </select>

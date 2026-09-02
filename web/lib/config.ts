@@ -1,15 +1,11 @@
-// Low-churn static config that stayed out of the DB migration (see
-// ~/.claude/plans/streamed-wibbling-lamport.md) — moved out of the old
-// data/scenarios/sites.json now that hospitals/scenarios live in Azure Table
-// Storage instead. Revisit if these start changing often enough to need CRUD.
-
-export const ENVIRONMENTS = [
-  "STAGING",
-  "UAT",
-  "DEVELOPMENT (DEV)",
-  "PRE-PROD",
-  "PRODUCTION (PROD)",
-] as const;
+// Static config for pieces that haven't moved into the DB. ENVIRONMENTS used to live here too
+// (moved to a real admin-managed catalog — see lib/db/environments-table.ts — REQ-024, 2026-09-02).
+//
+// DATA_CHAIN_FIELDS below is dead code — never imported anywhere. The real HN/VN/AN/Bill No.
+// fields on the New Run / Run Edit forms are hardcoded fixed columns on the Run Prisma model, not
+// driven by this array. Left as-is (not deleted, not wired up) pending
+// specs/REQ-037_site_configurable_data_chain_schema.md's BA/SA scoping — whether a genuine dynamic
+// field schema is worth building, or whether the fixed 4 fields already cover real needs.
 
 export interface DataChainField {
   id: string;

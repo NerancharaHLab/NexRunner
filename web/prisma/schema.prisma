@@ -106,6 +106,23 @@ model Tag {
   @@map("tags")
 }
 
+/// REQ-024: admin-managed Environment catalog, replacing the static ENVIRONMENTS array in
+/// lib/config.ts. id is an opaque internal identifier (cuid) -- never shown to end users or
+/// embedded in reports, unlike Master Scenario/Suite/Run's REQ-032 running-number ids, which exist
+/// because those ids DO carry real business meaning. name is copied verbatim into Run.environment
+/// (a plain String column, no FK) at Run creation time -- same denormalized-snapshot convention
+/// already used for suiteNamesJson/tagIncludeNamesJson on Run, so renaming a catalog entry later
+/// never retroactively changes what an already-created Run displays. orderIndex preserves the
+/// intentional STAGING -> UAT -> DEV -> PRE-PROD -> PROD display order (not alphabetical).
+model Environment {
+  id         String  @id @default(cuid())
+  name       String
+  orderIndex Int
+  active     Boolean @default(true)
+
+  @@map("environments")
+}
+
 /// Table "Runs" replacement. Real FK to Site (Postgres now enforces what deleteSite()'s app-level
 /// "no existing Runs" check already guarded — a genuine improvement, no behavior change for
 /// correctly-behaving callers). executedDate stays a plain "YYYY-MM-DD" String (every existing call
