@@ -79,6 +79,18 @@ manual Puppeteer.
   no existing equivalent) and `.floating-action-bar` (new — this app had no fixed/floating UI
   pattern before).
 
+## Follow-up polish (same day, user feedback on screenshots)
+
+- Search box + Group-by `<select>` had shipped with no real styling (bare browser defaults) —
+  missed reusing the app's established `.stats-bar-search`/`.pagination-page-size select` pattern.
+  Fixed: `.scenario-search-bar` now gets a card-style wrapper, the search input a pill shape with an
+  inline SVG search icon and focus-ring, and the `<select>` a custom chevron + the same focus-ring —
+  matching this app's existing input/select polish level elsewhere.
+- User asked to drop the 🩺/🏥/⚙️ emoji icons from the group headers — removed `icon` from
+  `useScenarioGrouping.ts`'s `ScenarioGroup`/`FLOW_GROUPS` entirely (not just hidden in the UI) and
+  from both list components' header rendering. Group headers are now plain text labels
+  ("OPD Journey", "IPD Journey", "General & Supporting").
+
 ## Verification Log
 
 - [x] `npm run build` clean

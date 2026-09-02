@@ -36,7 +36,7 @@ export default function MasterScenarioLibraryList({ scenarios, sourceFilterActiv
           onChange={(e) => setSearch(e.target.value)}
           data-testid="smoke-runner:admin-master-scenarios:input__search"
         />
-        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+        <label className="group-by-control">
           Group by
           <select
             value={groupBy}
@@ -77,10 +77,7 @@ export default function MasterScenarioLibraryList({ scenarios, sourceFilterActiv
               data-testid={`smoke-runner:admin-master-scenarios:group-header__${group.key}`}
             >
               <span className={`chevron ${expanded ? "" : "collapsed"}`}>▼</span>
-              <h3>
-                {group.icon && `${group.icon} `}
-                {group.label}
-              </h3>
+              <h3>{group.label}</h3>
               <span className="stat-pill" data-testid={`smoke-runner:admin-master-scenarios:text__group-count__${group.key}`}>
                 {group.scenarios.length} Scenario{group.scenarios.length === 1 ? "" : "s"}
               </span>

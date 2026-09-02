@@ -13,16 +13,15 @@ export type GroupBy = "flow" | "sourceSite" | "none";
 export interface ScenarioGroup {
   key: string;
   label: string;
-  icon?: string;
   scenarios: ScenarioDef[];
   criticalCount: number;
 }
 
 // Fixed reading order (not alphabetical) — matches the SRS wireframe's OPD -> IPD -> General flow.
-const FLOW_GROUPS: { key: ScenarioDef["flow"]; label: string; icon: string }[] = [
-  { key: "OPD", label: "OPD Journey", icon: "🩺" },
-  { key: "IPD", label: "IPD Journey", icon: "🏥" },
-  { key: "General", label: "General & Supporting", icon: "⚙️" },
+const FLOW_GROUPS: { key: ScenarioDef["flow"]; label: string }[] = [
+  { key: "OPD", label: "OPD Journey" },
+  { key: "IPD", label: "IPD Journey" },
+  { key: "General", label: "General & Supporting" },
 ];
 
 function matchesSearch(sc: ScenarioDef, q: string): boolean {
@@ -60,7 +59,7 @@ function buildGroups(scenarios: ScenarioDef[], groupBy: GroupBy): ScenarioGroup[
   // groupBy === "flow"
   return FLOW_GROUPS.map((g) => {
     const list = scenarios.filter((s) => s.flow === g.key);
-    return { key: g.key, label: g.label, icon: g.icon, scenarios: list, criticalCount: list.filter((s) => s.critical).length };
+    return { key: g.key, label: g.label, scenarios: list, criticalCount: list.filter((s) => s.critical).length };
   }).filter((g) => g.scenarios.length > 0);
 }
 
