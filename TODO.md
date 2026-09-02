@@ -27,7 +27,7 @@ durable record. Once a plan is approved and the work is done, its lasting record
 
 - [ ] **[Unset]** [REQ-037: Site-configurable Data Chain Field Schema](specs/REQ-037_site_configurable_data_chain_schema.md) — split จาก REQ-024, ยังไม่ scope — ต้องตอบคำถามเชิงธุรกิจ/สถาปัตยกรรมก่อน (demand จริงแค่ไหน, EAV/JSONB impact ต่อ query/report, ต้อง snapshot schema แบบ REQ-030 ไหม)
 - [x] **[P2]** [REQ-025: Run History view](specs/REQ-025_run_history_view.md) — search + Gate/Environment/date filters + pagination on `/{site}`; Run.name as card headline; client-side so it didn't touch REQ-030/031 files. Implemented by another concurrent session, which ran out of context before verifying/committing — picked up, re-verified (build clean, e2e 27/27), and found+fixed a real bug: the filter row's CSS referenced non-existent custom properties, rendering unstyled controls (see spec for detail)
-- [ ] **[P3]** [REQ-027: Provision real Azure resources + Deploy](specs/REQ-027_provision_azure_deploy.md) — ⚠️ DB provisioning step เปลี่ยนเป็น Postgres hosting ตาม REQ-029 (ยังไม่ตัดสินใจรายละเอียด), ส่วน Evidence/Blob ยังเป็น Azure เหมือนเดิม
+- [ ] **[P3]** [REQ-027: Provision production resources + Deploy](specs/REQ-027_provision_azure_deploy.md) — 📋 เอกสาร/runbook เตรียมพร้อมแล้ว (spec เดิม stale มาก แก้ให้ตรงกับ Postgres/REQ-029 แล้ว) แต่ตัว provisioning เองเลื่อนไปทำตอนขึ้น production จริง ตามที่ผู้ใช้ยืนยัน — Dev/Test ยังใช้ Docker Postgres + Azurite ต่อไปตามเดิม ไม่บล็อกงานอื่น
 - [ ] **[P4]** [REQ-022: CSV/Excel Scenario Import](specs/REQ-022_csv_excel_scenario_import.md) — confirmed last-priority, not yet planned
 
 ## Completed

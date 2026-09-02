@@ -124,8 +124,15 @@ web/
   - Backup/Restore ข้อมูลใน Volume สำหรับ Local และ Staging Environment
 
 ### 2. Features & System Enhancements
-- **Site Management UI**: หน้า UI สำหรับเพิ่ม แก้ไข และลบรายชื่อโรงพยาบาล/ไซต์ (Full CRUD)
-- **Dynamic Config**: ระบบจัดการ Environment List และ Data Chain Field Schema ผ่าน Admin Portal
-- **Production Cloud Deployment**: ยังไม่ตัดสินใจว่าจะ Host Postgres (สำหรับ DB) ที่ไหน — เป็น Open
-  Question ที่ยังไม่ resolve (ดู REQ-027 ใน TODO.md) ส่วน Evidence ยังคง Deploy คู่กับ Azure Blob
-  Storage Account เหมือนเดิม
+- **Site Management UI (Done)**: Full CRUD (`admin/sites/*`) — เพิ่ม/แก้ไข/Deactivate ไซต์ได้แล้ว
+- **Dynamic Config**:
+  - **Environment List (Done)**: ย้ายจาก static config เข้า Admin-managed catalog แล้ว
+    (`admin/environments/*`) — ดู `specs/REQ-024_environment_data_chain_schema_crud.md`
+  - **Data Chain Field Schema**: ยังเป็น static/hardcoded (HN/VN/AN/Bill เป็นคอลัมน์ตายตัวบน `Run`) —
+    การทำ Dynamic Schema จริง (ต่าง Site ต่าง field ได้) ยังไม่ scope เพราะเป็นงานสถาปัตยกรรมระดับใหญ่ ไม่ใช่
+    แค่ config-to-DB ธรรมดา ดู `specs/REQ-037_site_configurable_data_chain_schema.md` (ยัง Backlog รอ
+    BA/SA scoping)
+- **Production Cloud Deployment**: ยังไม่ Provision จริง — Dev/Test ยังคงใช้ Docker Postgres + Azurite
+  Emulator ต่อไปตามเดิม จนกว่าจะถึงเวลาขึ้น Production จริง ดู `specs/REQ-027_provision_azure_deploy.md`
+  สำหรับ Checklist/Runbook ที่เตรียมไว้ให้ (Host Postgres ที่ไหน, Host ตัวแอปที่ไหน, ขั้นตอน Migrate/Seed/
+  Verify กับของจริง) — ยังต้องรอคนที่มีสิทธิ์ Provision จริงมาตัดสินใจ+ทำ
