@@ -63,8 +63,20 @@ export default function ScenarioBoard({
   const [unlockReason, setUnlockReason] = useState("");
   const [lockActionPending, setLockActionPending] = useState(false);
   const [showLockHistory, setShowLockHistory] = useState(false);
+  // REQ-040: which cards have their Steps/Criteria panel open — per-card, default collapsed, never
+  // gated on `locked` (viewing is read-only, not an edit the lock needs to block).
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const locked = run.locked;
+
+  function toggleExpanded(scenarioId: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(scenarioId)) next.delete(scenarioId);
+      else next.add(scenarioId);
+      return next;
+    });
+  }
 
   /** Refetches the full Run detail after a Lock/Unlock — simpler and more accurate than
    *  fabricating a RunLockEvent client-side (the server is the source of truth for who/when). */
@@ -587,6 +599,29 @@ export default function ScenarioBoard({
               </div>
               <div className="scenario-name">{sc.name}</div>
               <div className="scenario-role">{sc.role}</div>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => toggleExpanded(sc.id)}
+                data-testid={`smoke-runner:scenario-item:btn-toggle-steps__${id}`}
+              >
+                {expandedIds.has(sc.id) ? "▲ Hide" : "▾"} Steps &amp; Criteria
+              </button>
+              {expandedIds.has(sc.id) && (
+                <div
+                  className="scenario-expand-detail"
+                  data-testid={`smoke-runner:scenario-item:detail-steps__${id}`}
+                >
+                  <div className="scenario-steps-box">
+                    <div className="section-label">Steps</div>
+                    {sc.steps}
+                  </div>
+                  <div className="scenario-criteria-box">
+                    <div className="section-label">Criteria</div>
+                    {sc.criteria}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="status-btn-group">
               {(Object.keys(STATUS_LABELS) as ScenarioStatus[]).map((status) => (
