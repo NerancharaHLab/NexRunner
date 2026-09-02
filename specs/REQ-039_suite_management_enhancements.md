@@ -113,6 +113,16 @@ failure surfaces as the same friendly `SiteHasRunsError`-shaped message this app
 everywhere else, not a raw DB constraint error. Not a scope change — same literal behavior the spec
 always intended, just corrected the mechanism.
 
+## Automated test coverage (added 2026-09-02)
+
+The manual verification below was, at the time, exactly that — manual, via scratch Playwright
+scripts deleted after each run. Permanent coverage now exists at
+`e2e/tests/10-suite-management.spec.ts` (4 tests: site-scoped creation + scope badges, list
+search/site-filter, delete-guard plain-vs-warning against a real in-use Suite, and the core
+cross-site scoping check itself). Required a second permanent fixture Site
+(`E2E_SITE_KEY_2`/`e2e/global-setup.ts`) since the scoping behavior only shows up across two real
+Sites.
+
 ## Verification plan (completed)
 
 - [x] `npm run build` clean; `npm run test:e2e` 27/27 (no existing spec touches `/admin/suites*`,

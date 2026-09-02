@@ -16,6 +16,13 @@ import { isActiveUser, parseRoles } from "../lib/types";
 export const E2E_SITE_KEY = "E2E";
 export const E2E_SITE_NAME = "E2E (Automated Test Site)";
 
+// Second permanent fixture site — REQ-039's Suite site-scoping only shows real behavior across
+// two distinct real Sites (a Suite scoped to one site must be absent from the other's New Run
+// picker). No existing spec asserts an exact count of sites/runs anywhere, only per-site row
+// counts, so adding this is safe for the other 9 spec files.
+export const E2E_SITE_KEY_2 = "E2EB";
+export const E2E_SITE_NAME_2 = "E2E Site B (Automated Test Site)";
+
 export const E2E_USERS = {
   admin: { email: "e2e-admin@test.com", password: "E2ePassw0rd!", displayName: "E2E Admin", role: "admin" as const },
   qaLead: { email: "e2e-qalead@test.com", password: "E2ePassw0rd!", displayName: "E2E QA Lead", role: "qa_lead" as const },
@@ -77,6 +84,7 @@ async function ensureUser(user: { email: string; password: string; displayName: 
 export default async function globalSetup() {
   await Promise.all(Object.values(E2E_USERS).map(ensureUser));
   await upsertSite(E2E_SITE_KEY, E2E_SITE_NAME);
+  await upsertSite(E2E_SITE_KEY_2, E2E_SITE_NAME_2);
 
   // Reset to exactly the 3 canonical scenarios — several specs (notably
   // 06-reports, which asserts exact totals) assume the E2E site's scenario

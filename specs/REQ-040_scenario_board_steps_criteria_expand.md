@@ -58,6 +58,13 @@ Manual toggle only, for this pass. Can be revisited if real usage shows testers 
 - No changes to `lib/runs.ts`, `lib/types.ts`, or any server action — purely additive JSX + local
   state in one existing Client Component.
 
+## Automated test coverage (added 2026-09-02)
+
+The verification below was manual-only at the time (scratch Playwright scripts, deleted after
+each run). Permanent coverage now exists at `e2e/tests/11-scenario-board-steps-criteria.spec.ts`
+(2 tests: independent per-card expand/collapse with real content assertions against the seeded
+`E2E_SCENARIOS` fixture, and toggling on a locked Run).
+
 ## Verification plan (completed)
 
 - [x] `npm run build` clean; `npm run test:e2e` 27/27.
