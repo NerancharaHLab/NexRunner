@@ -932,6 +932,24 @@ a.card:hover,
   color: var(--fail-color);
 }
 
+/* REQ-031: Run Lock/Unlock audit log, shown as a small collapsible list under the action row. */
+.lock-history-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.lock-history-list li {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--bg-subtle);
+}
+
 .stat-pill {
   display: inline-flex;
   align-items: center;

@@ -287,6 +287,26 @@ export interface RunEntity {
   tagIncludeMode?: "AND" | "OR";
   tagExcludeIdsJson?: string;
   tagExcludeNamesJson?: string;
+  // REQ-031: Lock/Finalize state. locked=false is the default for every Run ever created before
+  // this feature — absence means "still editable," same backward-compatible convention as every
+  // other optional field in this file. lockedAt/lockedBy record only the *current* lock's
+  // actor/time; the full history (incl. every unlock's required reason) lives in RunLockEvent, not
+  // here — see lib/runs.ts's getRunLockHistory().
+  locked: boolean;
+  lockedAt?: string;
+  lockedBy?: string; // email
+}
+
+/** Postgres table "run_lock_events" replacement — append-only audit log for REQ-031's Lock/Unlock
+ *  actions on a Run. Not nested under RunEntity since a Run can be locked/unlocked more than once
+ *  and every past reason should stay inspectable, not just the latest. */
+export interface RunLockEventEntity {
+  id: string;
+  runPartitionKey: string; // makeRunPartitionKey(siteKey, runId), verbatim — same convention as ScenarioResultEntity
+  action: "LOCK" | "UNLOCK";
+  byEmail: string;
+  reason?: string; // required for UNLOCK (enforced in lib/runs.ts), always absent for LOCK
+  at: string; // ISO timestamp
 }
 
 /** One uploaded evidence screenshot (metadata only — bytes live in Blob Storage, see azure/blob.ts). */
@@ -314,6 +334,16 @@ export interface ScenarioResultEntity {
   // localStorage, just server-side now) — parse with JSON.parse(...) as
   // EvidenceItem[], default "[]" when absent (older rows won't have it yet).
   evidenceJson?: string;
+  // REQ-030: content snapshot of the Scenario as of the moment it entered this Run's scope — see
+  // lib/runs.ts's resolveRunScenarios(). Absent on rows written before this feature (no backfill,
+  // deliberately — see specs/REQ-030_scenario_result_full_snapshot.md), in which case callers fall
+  // back to a live Scenario join exactly as before this feature existed.
+  name?: string;
+  desc?: string;
+  role?: string;
+  flow?: string;
+  steps?: string;
+  criteria?: string;
 }
 
 export function sanitizeScenarioId(id: string): string {
@@ -328,7 +358,10 @@ export function makeRunPartitionKey(siteKey: string, runId: string): string {
 }
 
 export function computeGateResult(m: {
-  scenarios: ScenarioDef[];
+  // Loosened from ScenarioDef[] (REQ-030) — only .id/.critical are ever read here, which lets the
+  // gate recompute run entirely off ScenarioResult rows (via resolveRunScenarios() in
+  // lib/runs.ts) without depending on a live Scenario join.
+  scenarios: { id: string; critical: boolean }[];
   results: Record<string, ScenarioResultEntity>;
 }): { criticalPass: boolean; gateResult: "READY" | "NOT READY" } {
   const critical = m.scenarios.filter((s) => s.critical);

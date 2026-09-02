@@ -147,11 +147,35 @@ model Run {
   tagIncludeMode  String?
   tagExcludeIds   String[] @default([])
   tagExcludeNames String[] @default([])
+  /// REQ-031: once true, lib/runs.ts refuses updateRunMetadata()/updateScenarioResult()/
+  /// addEvidence()/removeEvidence() (RunLockedError, 409) — enforced server-side, not just hidden
+  /// in the UI. lockedAt/lockedBy record the *current* lock's actor/time only; the full
+  /// lock/unlock history (with required unlock reasons) lives in RunLockEvent below, since a flat
+  /// field here would lose history across repeated lock/unlock cycles.
+  locked          Boolean   @default(false)
+  lockedAt        DateTime?
+  lockedBy        String? // email
   // No relation to ScenarioResult — see ScenarioResult's doc comment for why (its
   // runPartitionKey can't be split back into a reliable siteKey/runId FK).
 
   @@id([siteKey, runId])
   @@map("runs")
+}
+
+/// REQ-031: append-only Lock/Unlock audit log for a Run. Same runPartitionKey-verbatim, no-FK
+/// pattern as ScenarioResult above (see its doc comment for why) — not a Run field itself because
+/// a Run can legitimately be locked and unlocked more than once, and the required-reason-on-unlock
+/// rule only has value if every past reason stays inspectable, not just the most recent one.
+model RunLockEvent {
+  id              String   @id @default(cuid())
+  runPartitionKey String // makeRunPartitionKey(siteKey, runId), verbatim
+  action          String // "LOCK" | "UNLOCK"
+  byEmail         String
+  reason          String? // required for UNLOCK (enforced in lib/runs.ts), always null for LOCK
+  at              DateTime @default(now())
+
+  @@index([runPartitionKey])
+  @@map("run_lock_events")
 }
 
 /// Table "ScenarioResults" replacement. evidence is Json (not a normalized child table) — it's a
@@ -175,6 +199,18 @@ model ScenarioResult {
   notes           String
   critical        Boolean
   evidence        Json   @default("[]")
+  /// REQ-030: content snapshot of the Scenario as of the moment it entered this Run's scope
+  /// (createRun() writes these eagerly for every scoped scenario) — the fix for a completed test
+  /// record's displayed content silently changing if the underlying Scenario is later edited or
+  /// deleted. Nullable, not backfilled: rows written before this feature simply have none, and
+  /// lib/runs.ts falls back to a live Scenario join for those (see resolveRunScenarios()) rather
+  /// than fabricate a snapshot from data that may have already drifted.
+  name            String?
+  desc            String?
+  role            String?
+  flow            String?
+  steps           String?
+  criteria        String?
 
   @@id([runPartitionKey, scenarioRowKey])
   @@map("scenario_results")

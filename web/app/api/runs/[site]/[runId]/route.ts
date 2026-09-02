@@ -7,8 +7,9 @@ interface RouteParams {
 }
 
 // GET /api/runs/[site]/[runId] -> run detail: the Run entity + every scenario
-// definition merged with its current result (defaulting to "notrun" for any
-// scenario that has no ScenarioResults row yet).
+// (from its REQ-030 content snapshot where one exists, else a live join for
+// pre-REQ-030 rows) merged with its current result, plus REQ-031's Lock/Unlock
+// history (lockEvents).
 export async function GET(_request: Request, { params }: RouteParams) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;

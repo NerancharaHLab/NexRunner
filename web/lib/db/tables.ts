@@ -1,4 +1,4 @@
-import type { RunEntity, ScenarioResultEntity } from "@/lib/types";
+import type { RunEntity, RunLockEventEntity, ScenarioResultEntity } from "@/lib/types";
 import { prisma } from "./client";
 
 // Prisma-backed replacement for the old Table Storage "Runs" + "ScenarioResults" tables (see
@@ -49,6 +49,9 @@ type RunRow = {
   tagIncludeMode: string | null;
   tagExcludeIds: string[];
   tagExcludeNames: string[];
+  locked: boolean;
+  lockedAt: Date | null;
+  lockedBy: string | null;
 };
 
 function runRowToEntity(row: RunRow): RunEntity {
@@ -76,7 +79,10 @@ function runRowToEntity(row: RunRow): RunEntity {
     criticalPass: row.criticalPass,
     gateResult: row.gateResult as RunEntity["gateResult"],
     savedAt: row.savedAt.toISOString(),
+    locked: row.locked,
   };
+  if (row.lockedAt) entity.lockedAt = row.lockedAt.toISOString();
+  if (row.lockedBy) entity.lockedBy = row.lockedBy;
   // Empty array == "field was never set" == the same "absent means unscoped/unfiltered" tolerance
   // every reader (scopeScenarios() etc.) already has — createRun() never persists a Run with a
   // *_ids array that's non-empty-but-meaningless, so this round-trips correctly.
@@ -130,6 +136,9 @@ function runEntityToData(run: RunEntity) {
     tagIncludeMode: run.tagIncludeMode ?? null,
     tagExcludeIds: parseJsonArray(run.tagExcludeIdsJson),
     tagExcludeNames: parseJsonArray(run.tagExcludeNamesJson),
+    locked: run.locked,
+    lockedAt: run.lockedAt ? new Date(run.lockedAt) : null,
+    lockedBy: run.lockedBy ?? null,
   };
 }
 
@@ -175,8 +184,14 @@ function resultRowToEntity(row: {
   notes: string;
   critical: boolean;
   evidence: unknown;
+  name: string | null;
+  desc: string | null;
+  role: string | null;
+  flow: string | null;
+  steps: string | null;
+  criteria: string | null;
 }): ScenarioResultEntity {
-  return {
+  const entity: ScenarioResultEntity = {
     partitionKey: row.runPartitionKey,
     rowKey: row.scenarioRowKey,
     scenarioId: row.scenarioId,
@@ -185,6 +200,15 @@ function resultRowToEntity(row: {
     critical: row.critical,
     evidenceJson: parseEvidenceJson(row.evidence),
   };
+  // REQ-030 snapshot columns — null on rows written before this feature (no backfill); presence is
+  // keyed off `name` throughout lib/runs.ts (resolveRunScenarios()) to decide snapshot vs. live-join.
+  if (row.name != null) entity.name = row.name;
+  if (row.desc != null) entity.desc = row.desc;
+  if (row.role != null) entity.role = row.role;
+  if (row.flow != null) entity.flow = row.flow;
+  if (row.steps != null) entity.steps = row.steps;
+  if (row.criteria != null) entity.criteria = row.criteria;
+  return entity;
 }
 
 export async function upsertScenarioResult(entity: ScenarioResultEntity): Promise<void> {
@@ -199,6 +223,12 @@ export async function upsertScenarioResult(entity: ScenarioResultEntity): Promis
     notes: entity.notes,
     critical: entity.critical,
     evidence,
+    name: entity.name ?? null,
+    desc: entity.desc ?? null,
+    role: entity.role ?? null,
+    flow: entity.flow ?? null,
+    steps: entity.steps ?? null,
+    criteria: entity.criteria ?? null,
   };
   await prisma.scenarioResult.upsert({
     where: {
@@ -217,4 +247,47 @@ export async function listScenarioResults(
 ): Promise<ScenarioResultEntity[]> {
   const rows = await prisma.scenarioResult.findMany({ where: { runPartitionKey } });
   return rows.map(resultRowToEntity);
+}
+
+// ---------- Run Lock Events (REQ-031) ----------
+
+function lockEventRowToEntity(row: {
+  id: string;
+  runPartitionKey: string;
+  action: string;
+  byEmail: string;
+  reason: string | null;
+  at: Date;
+}): RunLockEventEntity {
+  const entity: RunLockEventEntity = {
+    id: row.id,
+    runPartitionKey: row.runPartitionKey,
+    action: row.action as RunLockEventEntity["action"],
+    byEmail: row.byEmail,
+    at: row.at.toISOString(),
+  };
+  if (row.reason != null) entity.reason = row.reason;
+  return entity;
+}
+
+/** Appends one Lock/Unlock event — this table is write-once-per-row, never updated/merged, unlike
+ *  every other upsert*() in this file (the whole point is preserving every past reason). */
+export async function addRunLockEvent(
+  runPartitionKey: string,
+  action: "LOCK" | "UNLOCK",
+  byEmail: string,
+  reason?: string
+): Promise<void> {
+  await prisma.runLockEvent.create({
+    data: { runPartitionKey, action, byEmail, reason: reason ?? null },
+  });
+}
+
+/** Newest first, matching listRunsForSite()'s ordering convention. */
+export async function listRunLockEvents(runPartitionKey: string): Promise<RunLockEventEntity[]> {
+  const rows = await prisma.runLockEvent.findMany({
+    where: { runPartitionKey },
+    orderBy: { at: "desc" },
+  });
+  return rows.map(lockEventRowToEntity);
 }

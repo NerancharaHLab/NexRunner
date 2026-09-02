@@ -1,6 +1,8 @@
 import { randomUUID } from "crypto";
 import {
+  addRunLockEvent,
   getRun,
+  listRunLockEvents,
   listScenarioResults,
   upsertRun,
   upsertScenarioResult,
@@ -20,6 +22,7 @@ import {
   EVIDENCE_MAX_PER_SCENARIO,
   type EvidenceItem,
   type RunEntity,
+  type RunLockEventEntity,
   type ScenarioDef,
   type ScenarioResultEntity,
   type ScenarioStatus,
@@ -41,55 +44,117 @@ function parseEvidence(json: string | undefined): EvidenceItem[] {
   }
 }
 
+interface ResolvedRunScenario {
+  id: string;
+  critical: boolean;
+  /** Present only when this id had to fall back to a live Scenario join (see below) — absent for
+   *  the normal, protected (REQ-030 snapshot present) case. */
+  def?: ScenarioDef;
+}
+
 /**
- * Narrows a site's full scenario list down to the ones a specific Run
- * actually covers. A Run created without a Suite has no `scenarioIdsJson`
- * and covers every scenario configured for the site — today's original,
- * unchanged behavior. A Suite-scoped Run snapshots its scenario ids at
- * creation time (see createRun()), so this must be used everywhere a run's
- * scenario list or gate result is computed — both getRunDetail() (what the
- * Scenario Board displays) and updateScenarioResult()'s aggregate/gate
- * recompute. Missing the latter would mean a scoped run's gate could never
- * reach READY, since out-of-scope scenarios would count as notrun forever.
+ * Determines exactly which scenarios a Run covers, preferring each scenario's own frozen
+ * `ScenarioResult` snapshot (REQ-030) over the site's *current* live Scenario table. This is the
+ * single place both `getRunDetail()` (rendering) and `updateScenarioResult()` (gate recompute)
+ * source their scenario list from, so "prefer snapshot, fall back to live" only needs to be
+ * correct once.
+ *
+ * Falls back to a live join in exactly two cases, both pre-REQ-030:
+ *  - the Run has no `scenarioIdsJson` at all (created before REQ-030 made this unconditional) —
+ *    covers every scenario currently configured for the site, today's original behavior; or
+ *  - a covered id's `ScenarioResult` row has no snapshot yet (created before REQ-030, or the id
+ *    was scoped but never touched on a pre-REQ-030 Run) — falls back to that one scenario's live
+ *    def. If it no longer exists live either, it's dropped (nothing left to show/count for it —
+ *    same as today's silent-vanish behavior for that one already-imperfect case).
  */
-function scopeScenarios(siteScenarios: ScenarioDef[], run: RunEntity): ScenarioDef[] {
-  if (!run.scenarioIdsJson) return siteScenarios;
-  let ids: Set<string>;
-  try {
-    const parsed = JSON.parse(run.scenarioIdsJson);
-    ids = new Set(Array.isArray(parsed) ? parsed : []);
-  } catch {
-    return siteScenarios;
+async function resolveRunScenarios(
+  siteKey: string,
+  run: RunEntity,
+  results: ScenarioResultEntity[]
+): Promise<ResolvedRunScenario[]> {
+  const resultsByScenarioId = new Map(results.map((r) => [r.scenarioId, r]));
+
+  let orderedIds: string[];
+  if (run.scenarioIdsJson) {
+    try {
+      const parsed = JSON.parse(run.scenarioIdsJson);
+      orderedIds = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      orderedIds = [];
+    }
+  } else {
+    const siteFile = await getScenariosForSite(siteKey);
+    orderedIds = siteFile ? siteFile.scenarios.map((s) => s.id) : [];
   }
-  return siteScenarios.filter((s) => ids.has(s.id));
+
+  const needsLiveFallback = orderedIds.some((id) => !resultsByScenarioId.get(id)?.name);
+  let liveDefsById: Map<string, ScenarioDef> | undefined;
+  if (needsLiveFallback) {
+    const siteFile = await getScenariosForSite(siteKey);
+    liveDefsById = new Map((siteFile?.scenarios ?? []).map((s) => [s.id, s]));
+  }
+
+  const resolved: ResolvedRunScenario[] = [];
+  for (const id of orderedIds) {
+    const result = resultsByScenarioId.get(id);
+    if (result?.name) {
+      resolved.push({ id, critical: result.critical });
+      continue;
+    }
+    const def = liveDefsById?.get(id);
+    if (def) resolved.push({ id, critical: def.critical, def });
+  }
+  return resolved;
 }
 
 /** Shared by GET /api/runs/[site]/[runId] and the run detail page's server-side fetch. */
 export async function getRunDetail(
   siteKey: string,
   runId: string
-): Promise<{ run: RunEntity; scenarios: ScenarioWithResult[] } | undefined> {
-  const siteFile = await getScenariosForSite(siteKey);
-  if (!siteFile) return undefined;
-
-  const [run, results] = await Promise.all([
-    getRun(siteKey, runId),
-    listScenarioResults(makeRunPartitionKey(siteKey, runId)),
-  ]);
+): Promise<{ run: RunEntity; scenarios: ScenarioWithResult[]; lockEvents: RunLockEventEntity[] } | undefined> {
+  const run = await getRun(siteKey, runId);
   if (!run) return undefined;
 
+  const partitionKey = makeRunPartitionKey(siteKey, runId);
+  const [results, lockEvents] = await Promise.all([
+    listScenarioResults(partitionKey),
+    listRunLockEvents(partitionKey),
+  ]);
   const resultsByScenarioId = new Map(results.map((r) => [r.scenarioId, r]));
-  const scenarios: ScenarioWithResult[] = scopeScenarios(siteFile.scenarios, run).map((def) => {
-    const result = resultsByScenarioId.get(def.id);
+  const resolved = await resolveRunScenarios(siteKey, run, results);
+
+  const scenarios: ScenarioWithResult[] = resolved.map(({ id, def }) => {
+    const result = resultsByScenarioId.get(id);
+    if (result?.name) {
+      // Protected path (REQ-030): every displayed field comes from the snapshot taken when this
+      // scenario entered the Run's scope, immune to later edits/deletes of the live Scenario.
+      // tags/sourceSite aren't rendered anywhere on the Board/report, so left blank here.
+      return {
+        id,
+        flow: (result.flow ?? "General") as ScenarioDef["flow"],
+        name: result.name,
+        desc: result.desc ?? "",
+        role: result.role ?? "",
+        critical: result.critical,
+        steps: result.steps ?? "",
+        criteria: result.criteria ?? "",
+        sourceSite: "",
+        status: result.status,
+        notes: result.notes,
+        evidence: parseEvidence(result.evidenceJson),
+      };
+    }
+    // Pre-REQ-030 fallback — def is guaranteed present here (resolveRunScenarios only emits an
+    // entry when it has a snapshot OR a live def to fall back to).
     return {
-      ...def,
+      ...def!,
       status: result?.status ?? "notrun",
       notes: result?.notes ?? "",
       evidence: parseEvidence(result?.evidenceJson),
     };
   });
 
-  return { run, scenarios };
+  return { run, scenarios, lockEvents };
 }
 
 export interface CreateRunInput {
@@ -128,6 +193,16 @@ export class CreateRunError extends Error {
   constructor(message: string, status: number) {
     super(message);
     this.status = status;
+  }
+}
+
+/** REQ-031: thrown by every write path once a Run is locked — enforced here, at the lib/runs.ts
+ *  layer, not just hidden in the UI (same defense-in-depth precedent as createRun()'s inactive-
+ *  site check). 409 Conflict: the request is well-formed, but the resource's current state
+ *  refuses it. */
+export class RunLockedError extends CreateRunError {
+  constructor() {
+    super("This Run is locked and can no longer be edited", 409);
   }
 }
 
@@ -222,13 +297,14 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
     }
   }
 
-  // Snapshot the final scope once, from whichever filter(s) narrowed it —
-  // not just inside the Suite branch above, or a tag-only filter (no Suite
-  // selected) would silently fail to persist its scope at all.
-  const scenarioIdsJson =
-    suiteIdsJson || tagIncludeIdsJson || tagExcludeIdsJson
-      ? JSON.stringify(scopedScenarios.map((s) => s.id))
-      : undefined;
+  // Snapshot the final scope, always (REQ-030) — not just when a Suite/Tag filter narrowed it.
+  // Previously this was only set inside the Suite/Tag branches above, so an unscoped Run had no
+  // frozen id list at all and fell back to "whatever the site's Scenario table currently has,"
+  // the same live-join problem REQ-030 exists to fix, just one level up (membership, not content):
+  // a Scenario deleted later would silently vanish from every historical unscoped Run too. Always
+  // snapshotting here means resolveRunScenarios() (below) never needs that fallback for any Run
+  // created from now on.
+  const scenarioIdsJson = JSON.stringify(scopedScenarios.map((s) => s.id));
 
   const total = scopedScenarios.length;
 
@@ -256,13 +332,40 @@ export async function createRun(input: CreateRunInput): Promise<RunEntity> {
     criticalPass: false,
     gateResult: "NOT READY",
     savedAt: new Date().toISOString(),
+    locked: false,
+    scenarioIdsJson,
     ...(suiteIdsJson && { suiteIdsJson, suiteNamesJson }),
     ...(tagIncludeIdsJson && { tagIncludeIdsJson, tagIncludeNamesJson, tagIncludeMode }),
     ...(tagExcludeIdsJson && { tagExcludeIdsJson, tagExcludeNamesJson }),
-    ...(scenarioIdsJson && { scenarioIdsJson }),
   };
 
   await upsertRun(run);
+
+  // REQ-030: eagerly snapshot every scoped scenario's content into its own ScenarioResult row
+  // right now, not lazily on first Pass/Fail — this is what lets an untouched "Not Run" scenario
+  // still have a real, frozen record (resolveRunScenarios()/getRunDetail() key off this row's
+  // `name` field to decide whether a snapshot exists). Independent primary keys, so Promise.all
+  // is safe — no ordering dependency between rows.
+  const partitionKey = makeRunPartitionKey(input.siteKey, runId);
+  await Promise.all(
+    scopedScenarios.map((def) =>
+      upsertScenarioResult({
+        partitionKey,
+        rowKey: sanitizeScenarioId(def.id),
+        scenarioId: def.id,
+        status: "notrun",
+        notes: "",
+        critical: def.critical,
+        name: def.name,
+        desc: def.desc,
+        role: def.role,
+        flow: def.flow,
+        steps: def.steps,
+        criteria: def.criteria,
+      })
+    )
+  );
+
   return run;
 }
 
@@ -296,6 +399,9 @@ export async function updateRunMetadata(
   const run = await getRun(siteKey, runId);
   if (!run) {
     throw new CreateRunError("Run not found", 404);
+  }
+  if (run.locked) {
+    throw new RunLockedError();
   }
 
   const updated: RunEntity = {
@@ -345,6 +451,9 @@ export async function updateScenarioResult(
   if (!run) {
     throw new CreateRunError("Run not found", 404);
   }
+  if (run.locked) {
+    throw new RunLockedError();
+  }
 
   const partitionKey = makeRunPartitionKey(siteKey, runId);
   const existingResults = await listScenarioResults(partitionKey);
@@ -352,28 +461,31 @@ export async function updateScenarioResult(
 
   const previous = resultsByScenarioId.get(scenarioId);
   const updated: ScenarioResultEntity = {
+    // Spread first so an existing REQ-030 snapshot (name/desc/role/flow/steps/criteria) survives
+    // a status/notes-only update instead of being nulled out by upsertScenarioResult().
+    ...(previous ?? {}),
     partitionKey,
     rowKey: sanitizeScenarioId(scenarioId),
     scenarioId,
     status: input.status ?? previous?.status ?? "notrun",
     notes: input.notes ?? previous?.notes ?? "",
-    critical: scenarioDef.critical,
+    critical: previous ? previous.critical : scenarioDef.critical,
   };
   await upsertScenarioResult(updated);
   resultsByScenarioId.set(scenarioId, updated);
 
-  // Recompute aggregate metrics + gate across only this run's scoped
-  // scenarios (scopeScenarios() — a Suite-scoped run must not count
-  // out-of-scope scenarios as "notrun" forever, or its gate could never
-  // reach READY).
-  const runScenarios = scopeScenarios(siteFile.scenarios, run);
+  // Recompute aggregate metrics + gate across only this run's scoped scenarios, sourced from
+  // resolveRunScenarios() (REQ-030) — the snapshot-first, live-fallback-only-for-legacy-rows rule,
+  // not a live Scenario join. A Suite-scoped run must not count out-of-scope scenarios as "notrun"
+  // forever, or its gate could never reach READY.
+  const runScenarios = await resolveRunScenarios(siteKey, run, [...resultsByScenarioId.values()]);
   const resultsRecord = Object.fromEntries(resultsByScenarioId);
   let passed = 0,
     failed = 0,
     blocked = 0,
     notrun = 0;
-  for (const def of runScenarios) {
-    const status = resultsRecord[def.id]?.status ?? "notrun";
+  for (const rs of runScenarios) {
+    const status = resultsRecord[rs.id]?.status ?? "notrun";
     if (status === "passed") passed++;
     else if (status === "failed") failed++;
     else if (status === "blocked") blocked++;
@@ -444,6 +556,7 @@ export async function addEvidence(
 
   const run = await getRun(siteKey, runId);
   if (!run) throw new CreateRunError("Run not found", 404);
+  if (run.locked) throw new RunLockedError();
 
   const partitionKey = makeRunPartitionKey(siteKey, runId);
   const previous = await findScenarioResult(partitionKey, scenarioId);
@@ -461,13 +574,16 @@ export async function addEvidence(
   const item: EvidenceItem = { id: evidenceId, blobName, uploadedAt: new Date().toISOString() };
   const updatedEvidence = [...evidence, item];
 
+  // Spread the previous row first so an existing REQ-030 snapshot survives an evidence-only
+  // update instead of being nulled out.
   await upsertScenarioResult({
+    ...(previous ?? {}),
     partitionKey,
     rowKey: sanitizeScenarioId(scenarioId),
     scenarioId,
     status: previous?.status ?? "notrun",
     notes: previous?.notes ?? "",
-    critical: scenarioDef.critical,
+    critical: previous ? previous.critical : scenarioDef.critical,
     evidenceJson: JSON.stringify(updatedEvidence),
   });
 
@@ -486,6 +602,10 @@ export async function removeEvidence(
   const scenarioDef = siteFile.scenarios.find((s) => s.id === scenarioId);
   if (!scenarioDef) throw new CreateRunError(`Unknown scenario: ${scenarioId}`, 400);
 
+  const run = await getRun(siteKey, runId);
+  if (!run) throw new CreateRunError("Run not found", 404);
+  if (run.locked) throw new RunLockedError();
+
   const partitionKey = makeRunPartitionKey(siteKey, runId);
   const previous = await findScenarioResult(partitionKey, scenarioId);
   const evidence = parseEvidence(previous?.evidenceJson);
@@ -498,15 +618,73 @@ export async function removeEvidence(
   await deleteEvidenceBlob(target.blobName);
   const updatedEvidence = evidence.filter((e) => e.id !== evidenceId);
 
+  // Spread the previous row first so an existing REQ-030 snapshot survives an evidence-only
+  // update instead of being nulled out.
   await upsertScenarioResult({
+    ...(previous ?? {}),
     partitionKey,
     rowKey: sanitizeScenarioId(scenarioId),
     scenarioId,
     status: previous?.status ?? "notrun",
     notes: previous?.notes ?? "",
-    critical: scenarioDef.critical,
+    critical: previous ? previous.critical : scenarioDef.critical,
     evidenceJson: JSON.stringify(updatedEvidence),
   });
 
   return { evidence: updatedEvidence };
+}
+
+// ---------- Run Lock / Finalize (REQ-031) ----------
+
+/**
+ * Locks a Run. Available to any authenticated user (same permission boundary the Scenario Board
+ * already has — see requireApiUser() at the API route, not requireApiRole()): "the QA who ran it
+ * locks it when done" is a self-service action, not an admin/qa_lead-gated one. Not gated on
+ * gateResult — locking means testing is *done*, not that it passed; a final NOT READY result is
+ * just as legitimate to lock as a READY one.
+ */
+export async function lockRun(siteKey: string, runId: string, byEmail: string): Promise<RunEntity> {
+  const run = await getRun(siteKey, runId);
+  if (!run) throw new CreateRunError("Run not found", 404);
+  if (run.locked) throw new CreateRunError("Run is already locked", 400);
+
+  const updated: RunEntity = {
+    ...run,
+    locked: true,
+    lockedAt: new Date().toISOString(),
+    lockedBy: byEmail,
+  };
+  await upsertRun(updated);
+  await addRunLockEvent(makeRunPartitionKey(siteKey, runId), "LOCK", byEmail);
+  return updated;
+}
+
+/**
+ * Unlocks a Run — restricted to admin/qa_lead at the call site (requireApiRole(CAN_EDIT_CONTENT)
+ * in the route handler, not here, matching updateRunMetadata()'s existing convention). A reason is
+ * required and permanently logged to RunLockEvent (never overwritten — a Run can be locked and
+ * unlocked more than once, and every past reason should stay inspectable).
+ */
+export async function unlockRun(
+  siteKey: string,
+  runId: string,
+  byEmail: string,
+  reason: string
+): Promise<RunEntity> {
+  if (!reason?.trim()) {
+    throw new CreateRunError("A reason is required to unlock a Run", 400);
+  }
+  const run = await getRun(siteKey, runId);
+  if (!run) throw new CreateRunError("Run not found", 404);
+  if (!run.locked) throw new CreateRunError("Run is not locked", 400);
+
+  const updated: RunEntity = { ...run, locked: false, lockedAt: undefined, lockedBy: undefined };
+  await upsertRun(updated);
+  await addRunLockEvent(makeRunPartitionKey(siteKey, runId), "UNLOCK", byEmail, reason.trim());
+  return updated;
+}
+
+/** Newest-first Lock/Unlock history for a Run — used by getRunDetail() to show a Lock History list. */
+export async function getRunLockHistory(siteKey: string, runId: string): Promise<RunLockEventEntity[]> {
+  return listRunLockEvents(makeRunPartitionKey(siteKey, runId));
 }

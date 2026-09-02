@@ -54,18 +54,20 @@ export default async function RunDetailPage({ params }: PageProps) {
             )}
           </p>
         </div>
-        {canEdit && (
-          <Link
-            href={`/${site}/${runId}/edit`}
-            className="btn"
-            data-testid="smoke-runner:run-detail:link__edit-run"
-          >
-            Edit Run
-          </Link>
-        )}
+        {/* The Edit Run link is rendered inside ScenarioBoard (not here) so it reacts live to
+            run.locked — Lock/Unlock happen client-side via fetch(), and this outer Server
+            Component only renders once per page load, so a link gated here would stay frozen at
+            whatever locked/unlocked state the Run was in when the page first loaded. */}
       </div>
 
-      <ScenarioBoard site={site} runId={runId} initialRun={detail.run} initialScenarios={detail.scenarios} />
+      <ScenarioBoard
+        site={site}
+        runId={runId}
+        initialRun={detail.run}
+        initialScenarios={detail.scenarios}
+        initialLockEvents={detail.lockEvents}
+        canUnlock={canEdit}
+      />
     </main>
   );
 }

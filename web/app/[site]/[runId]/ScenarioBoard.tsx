@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import type { EvidenceItem, RunEntity, ScenarioStatus } from "@/lib/types";
+import type { EvidenceItem, RunEntity, RunLockEventEntity, ScenarioStatus } from "@/lib/types";
 import { EVIDENCE_MAX_PER_SCENARIO } from "@/lib/types";
 import type { ScenarioWithResult } from "@/lib/runs";
 import LinearReportModal from "./LinearReportModal";
@@ -12,6 +12,10 @@ interface Props {
   runId: string;
   initialRun: RunEntity;
   initialScenarios: ScenarioWithResult[];
+  /** REQ-031 Lock/Unlock audit log, newest first. */
+  initialLockEvents: RunLockEventEntity[];
+  /** admin/qa_lead only — Unlock is the escalation-required side of Lock/Unlock. */
+  canUnlock: boolean;
 }
 
 const STATUS_LABELS: Record<ScenarioStatus, string> = {
@@ -34,9 +38,17 @@ function matchesFilter(status: ScenarioStatus, mode: FilterMode): boolean {
   return status === "passed";
 }
 
-export default function ScenarioBoard({ site, runId, initialRun, initialScenarios }: Props) {
+export default function ScenarioBoard({
+  site,
+  runId,
+  initialRun,
+  initialScenarios,
+  initialLockEvents,
+  canUnlock,
+}: Props) {
   const [run, setRun] = useState(initialRun);
   const [scenarios, setScenarios] = useState(initialScenarios);
+  const [lockEvents, setLockEvents] = useState(initialLockEvents);
   const [, startTransition] = useTransition();
   const [showLinearReport, setShowLinearReport] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
@@ -46,6 +58,55 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [showPassAllConfirm, setShowPassAllConfirm] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const [showLockConfirm, setShowLockConfirm] = useState(false);
+  const [showUnlockConfirm, setShowUnlockConfirm] = useState(false);
+  const [unlockReason, setUnlockReason] = useState("");
+  const [lockActionPending, setLockActionPending] = useState(false);
+  const [showLockHistory, setShowLockHistory] = useState(false);
+
+  const locked = run.locked;
+
+  /** Refetches the full Run detail after a Lock/Unlock — simpler and more accurate than
+   *  fabricating a RunLockEvent client-side (the server is the source of truth for who/when). */
+  async function refreshRunDetail() {
+    const res = await fetch(`/api/runs/${site}/${runId}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    setRun(data.run as RunEntity);
+    setLockEvents(data.lockEvents as typeof lockEvents);
+  }
+
+  async function lockRunNow() {
+    setLockActionPending(true);
+    const res = await fetch(`/api/runs/${site}/${runId}/lock`, { method: "POST" });
+    setLockActionPending(false);
+    setShowLockConfirm(false);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(`Lock failed: ${err.error || res.statusText}`);
+      return;
+    }
+    await refreshRunDetail();
+  }
+
+  async function unlockRunNow() {
+    if (!unlockReason.trim()) return;
+    setLockActionPending(true);
+    const res = await fetch(`/api/runs/${site}/${runId}/unlock`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason: unlockReason.trim() }),
+    });
+    setLockActionPending(false);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(`Unlock failed: ${err.error || res.statusText}`);
+      return;
+    }
+    setShowUnlockConfirm(false);
+    setUnlockReason("");
+    await refreshRunDetail();
+  }
 
   async function patchScenario(scenarioId: string, body: { status?: ScenarioStatus; notes?: string }): Promise<boolean> {
     const res = await fetch(
@@ -67,6 +128,9 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
   }
 
   function setStatus(scenarioId: string, status: ScenarioStatus) {
+    // Guarded here (not just via disabled buttons) because the 1/2/3 keyboard shortcut calls this
+    // directly, bypassing any button's disabled state — see the keydown handler below.
+    if (locked) return;
     setScenarios((prev) =>
       prev.map((s) => (s.id === scenarioId ? { ...s, status } : s))
     );
@@ -80,6 +144,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
   }
 
   function commitNotes(scenarioId: string, notes: string) {
+    if (locked) return;
     startTransition(async () => {
       const ok = await patchScenario(scenarioId, { notes });
       if (ok) {
@@ -102,6 +167,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
   }
 
   async function passAllRemaining() {
+    if (locked) return;
     const targets = scenarios.filter((s) => s.status === "notrun");
     setShowPassAllConfirm(false);
     setBulkProgress({ done: 0, total: targets.length });
@@ -123,6 +189,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
   }
 
   async function uploadEvidence(scenarioId: string, blob: Blob) {
+    if (locked) return;
     const current = scenarios.find((s) => s.id === scenarioId);
     if (current && current.evidence.length >= EVIDENCE_MAX_PER_SCENARIO) {
       alert(`You can attach up to ${EVIDENCE_MAX_PER_SCENARIO} images per Scenario`);
@@ -160,6 +227,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
   }
 
   async function removeEvidenceItem(scenarioId: string, evidenceId: string) {
+    if (locked) return;
     const res = await fetch(
       `/api/runs/${site}/${runId}/scenarios/${encodeURIComponent(scenarioId)}/evidence/${evidenceId}`,
       { method: "DELETE" }
@@ -264,7 +332,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
           type="button"
           className="btn btn-sm"
           onClick={() => setShowPassAllConfirm(true)}
-          disabled={!hasUnfinished || bulkProgress !== null}
+          disabled={!hasUnfinished || bulkProgress !== null || locked}
           data-testid="smoke-runner:run-detail:btn__pass-all-remaining"
         >
           {bulkProgress ? `Passing... ${bulkProgress.done}/${bulkProgress.total}` : "Pass All Remaining"}
@@ -338,6 +406,20 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
+          {/* Rendered here (not in the parent Server Component) so it reacts live to run.locked —
+              Lock/Unlock happen client-side via fetch(), and the parent page only renders once
+              per page load, so a link gated there would stay frozen at whatever locked state the
+              Run was in when the page first loaded. canUnlock doubles as "can edit metadata" —
+              both are the same CAN_EDIT_CONTENT (admin/qa_lead) check. */}
+          {canUnlock && !locked && (
+            <Link
+              href={`/${site}/${runId}/edit`}
+              className="btn"
+              data-testid="smoke-runner:run-detail:link__edit-run"
+            >
+              Edit Run
+            </Link>
+          )}
           <button
             type="button"
             className="btn"
@@ -353,11 +435,139 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
           >
             Executive Report
           </Link>
+          {locked ? (
+            <span className="gate-badge notready" data-testid="smoke-runner:run-detail:badge__locked">
+              🔒 Locked by {run.lockedBy || "unknown"}
+              {run.lockedAt && ` · ${new Date(run.lockedAt).toLocaleString()}`}
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setShowLockConfirm(true)}
+              data-testid="smoke-runner:run-detail:btn__lock-run"
+            >
+              Lock Run
+            </button>
+          )}
+          {locked && canUnlock && (
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => setShowUnlockConfirm(true)}
+              data-testid="smoke-runner:run-detail:btn__unlock-run"
+            >
+              Unlock
+            </button>
+          )}
+          {lockEvents.length > 0 && (
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => setShowLockHistory((v) => !v)}
+              data-testid="smoke-runner:run-detail:btn__toggle-lock-history"
+            >
+              {showLockHistory ? "Hide" : "Show"} Lock History
+            </button>
+          )}
         </div>
+        {showLockHistory && lockEvents.length > 0 && (
+          <ul className="lock-history-list" data-testid="smoke-runner:run-detail:list__lock-history">
+            {lockEvents.map((ev) => (
+              <li key={ev.id}>
+                <strong>{ev.action}</strong> by {ev.byEmail} · {new Date(ev.at).toLocaleString()}
+                {ev.reason && <> — “{ev.reason}”</>}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {showLinearReport && (
         <LinearReportModal run={run} scenarios={scenarios} onClose={() => setShowLinearReport(false)} />
+      )}
+
+      {showLockConfirm && (
+        <div
+          className="modal-overlay"
+          data-testid="smoke-runner:lock-confirm:modal__dialog"
+          onClick={() => setShowLockConfirm(false)}
+        >
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Lock this Run?</h3>
+            </div>
+            <p>
+              Once locked, results, notes, evidence, and Run metadata can&apos;t be edited until an
+              admin or QA Lead unlocks it. Anyone can lock a Run they&apos;ve finished testing —
+              only admin/QA Lead can unlock it.
+            </p>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => setShowLockConfirm(false)}
+                data-testid="smoke-runner:lock-confirm:btn__cancel"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={lockRunNow}
+                disabled={lockActionPending}
+                data-testid="smoke-runner:lock-confirm:btn__confirm"
+              >
+                {lockActionPending ? "Locking..." : "Yes, Lock Run"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showUnlockConfirm && (
+        <div
+          className="modal-overlay"
+          data-testid="smoke-runner:unlock-confirm:modal__dialog"
+          onClick={() => setShowUnlockConfirm(false)}
+        >
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Unlock this Run?</h3>
+            </div>
+            <p>A reason is required and will be permanently logged.</p>
+            <textarea
+              className="notes-input"
+              style={{ width: "100%", minHeight: 80 }}
+              placeholder="Why does this Run need to be unlocked?"
+              value={unlockReason}
+              onChange={(e) => setUnlockReason(e.target.value)}
+              data-testid="smoke-runner:unlock-confirm:input__reason"
+            />
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => {
+                  setShowUnlockConfirm(false);
+                  setUnlockReason("");
+                }}
+                data-testid="smoke-runner:unlock-confirm:btn__cancel"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={unlockRunNow}
+                disabled={lockActionPending || !unlockReason.trim()}
+                data-testid="smoke-runner:unlock-confirm:btn__confirm"
+              >
+                {lockActionPending ? "Unlocking..." : "Yes, Unlock Run"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {visibleScenarios.map((sc, index) => {
@@ -387,6 +597,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
                   data-status={status}
                   data-testid={`smoke-runner:scenario-item:btn-${status}__${id}`}
                   onClick={() => setStatus(sc.id, status)}
+                  disabled={locked}
                 >
                   {STATUS_LABELS[status]}
                 </button>
@@ -401,6 +612,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
                 data-testid={`smoke-runner:scenario-item:input-notes__${id}`}
                 onChange={(e) => setNotes(sc.id, e.target.value)}
                 onBlur={(e) => commitNotes(sc.id, e.target.value)}
+                readOnly={locked}
               />
               <span
                 className={`save-indicator ${justSavedId === sc.id ? "visible" : ""}`}
@@ -418,6 +630,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
                   className="btn btn-sm"
                   onClick={() => document.getElementById(`evidence-file-${id}`)?.click()}
                   data-testid={`smoke-runner:scenario-item:btn-attach-evidence__${id}`}
+                  disabled={locked}
                 >
                   Attach Image
                 </button>
@@ -461,6 +674,7 @@ export default function ScenarioBoard({ site, runId, initialRun, initialScenario
                           e.stopPropagation();
                           removeEvidenceItem(sc.id, ev.id);
                         }}
+                        disabled={locked}
                       >
                         ×
                       </button>
