@@ -1,5 +1,11 @@
+import type { Prisma } from "@prisma/client";
 import { sanitizeScenarioId, type ScenarioDef } from "@/lib/types";
 import { prisma } from "./client";
+
+/** See lib/db/id-sequence.ts's identical Db type doc comment — same optional-transaction-client
+ *  convention, added for REQ-022's bulk import (several createScenario() calls need to commit
+ *  atomically alongside the id reservations that produced their ids). */
+type Db = typeof prisma | Prisma.TransactionClient;
 
 // Prisma-backed replacement for the old Table Storage "Scenarios" table (see
 // specs/REQ-029_postgres_migration.md). Same exported function names/signatures as the old
@@ -62,7 +68,7 @@ export interface ScenarioInput {
   sourceSite?: string;
 }
 
-export async function createScenario(siteKey: string, input: ScenarioInput): Promise<void> {
+export async function createScenario(siteKey: string, input: ScenarioInput, db: Db = prisma): Promise<void> {
   const rowKey = sanitizeScenarioId(input.id);
   // "Replace" semantics like the old upsertEntity(entity, "Replace") — creating/re-creating a
   // scenario should fully define every field, never leave stale properties behind.
@@ -81,7 +87,7 @@ export async function createScenario(siteKey: string, input: ScenarioInput): Pro
     // it already.
     sourceSite: input.sourceSite?.trim().toUpperCase() || "CORE",
   };
-  await prisma.scenario.upsert({
+  await db.scenario.upsert({
     where: { siteKey_rowKey: { siteKey, rowKey } },
     create: { siteKey, rowKey, ...data },
     update: data,
