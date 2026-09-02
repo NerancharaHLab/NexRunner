@@ -1,41 +1,51 @@
 # REQ-037: Site-configurable Data Chain Field Schema
 
-**Status:** 🔲 Backlog — split out of REQ-024, not scoped, not started
-**Priority:** Unset (needs BA/SA scoping before triage)
+**Status:** ⛔ Won't Fix / Shelved — by architecture decision (2026-09-02), closed without
+implementation
+**Priority:** ~~Unset~~ (moot — decided not to build)
 
 ## Context
 
-Split out of [REQ-024](REQ-024_environment_data_chain_schema_crud.md) (2026-09-02) after discovering
-its premise didn't hold: `DATA_CHAIN_FIELDS` in `lib/config.ts` is **dead code**, never imported or
-read anywhere in the app. The real HN/VN/AN/Bill No. fields visible on the New Run / Run Edit forms
-are hardcoded fixed columns on the `Run` Prisma model (`hn`, `vn`, `an`, `bill` — plain `String`
-columns), not driven by any schema/config at all.
+Split out of [REQ-024](REQ-024_environment_data_chain_schema_crud.md) after discovering
+`DATA_CHAIN_FIELDS` in `lib/config.ts` was dead code — the real HN/VN/AN/Bill No. fields are
+hardcoded fixed columns on the `Run` Prisma model, not driven by any schema. This file recorded 4
+open questions that needed BA/SA input before any design work could start (business justification,
+schema/query impact, audit/snapshot boundary, per-site vs. per-label scope).
 
-So "Data Chain Field Schema CRUD" isn't "move an existing config into the DB" (REQ-024's original,
-low-risk framing) — it's building a genuinely new **dynamic, presumably per-Site, custom-field
-system** from nothing. That's a different-order task: real Run-model architecture change, not a
-CRUD-page mirror of Suites/Tags. Deliberately NOT bundled into REQ-024's Environment CRUD work so
-that quick win isn't blocked on this larger decision.
+## Decision: reject dynamic schema, keep the 4 fixed fields
 
-## Open questions (BA/SA scoping required before any EnterPlanMode work — none of these are answered yet)
+User provided a full BA+SA analysis answering all 4 questions. Recorded here as the closing
+reference for this backlog item:
 
-1. **Business justification**: do hospital sites actually need custom/variable Data Chain fields, or
-   do HN/VN/AN/Bill No. already cover ~95%+ of real cases? If every real site just needs the same 4
-   fields, this REQ may not be worth building at all — worth confirming demand before designing
-   anything.
-2. **Schema & query impact**: if fields become dynamic (JSONB or EAV-style storage instead of fixed
-   typed columns), every current fixed-column consumer needs a redesign — indexing/searching a Run
-   by HN/VN, the New Run/Run Edit forms, Linear Report, Executive Report. Materially more complex
-   than today's plain `WHERE hn = ...`-style access.
-3. **Audit/snapshot boundary (compliance)**: if a Site adds/removes/renames a custom field later,
-   does that retroactively affect how old Runs display their Data Chain values? This is the same
-   class of problem [REQ-030](REQ-030_scenario_result_full_snapshot.md) solved for Scenario content
-   — would a dynamic field schema need its own schema-level snapshot on top of REQ-030's
-   value-level one, and is that scope worth it?
-4. **Per-site vs. global**: do different hospital sites actually need genuinely different field
-   *sets*, or just different labels/placeholders on the same fixed 4 fields (a much lighter ask)?
+1. **Business justification — no real demand.** In Thai hospital HIS practice (public, university
+   e.g. NUH, and private), the Patient Journey / Revenue Cycle is anchored on exactly these 4
+   identifiers: HN (patient identity), VN (OPD visit), AN (IPD admission), Bill No./Invoice
+   (finance/discharge). For a Smoke Test Runner scoped to Happy-Path/core-integration testing of
+   OPD/IPD flows, these 4 cover 99%+ of real cross-verification needs — anything else (Lab Order
+   No., X-ray Accession No., Prescription No.) is a Scenario-level sub-identifier, not a Run-level
+   Data Chain anchor.
+2. **Schema/query impact — negative ROI.** Flat columns today give fast `WHERE hn = ?` (plain
+   B-tree index), type-safe direct field access in the Run display, Linear Report, and Executive
+   Report. Moving to JSONB/EAV would need GIN indexing, lose type safety (`Record<string, string>`
+   everywhere), and force every report pipeline to do dynamic key mapping — real cost with no
+   matching business need funding it.
+3. **Audit/snapshot boundary — real compliance hazard.** A Site freely adding/removing/renaming
+   field definitions over time raises exactly the "what did this field mean 6 months ago" question
+   [REQ-030](REQ-030_scenario_result_full_snapshot.md) exists to prevent for Scenario content — would
+   require a schema-level snapshot layered on top of REQ-030's value-level one, adding real
+   complexity with no business need behind it.
+4. **Per-site fields vs. per-site labels — at most a labeling difference.** Different hospitals may
+   call HN something else locally ("เลขประจำตัวผู้ป่วย") or Bill No. "Receipt No."/"Invoice No.", but
+   the underlying entity never actually changes. Not a case for structural per-site fields.
 
-## Non-goals (for now)
+**Conclusion**: keep `hn`/`vn`/`an`/`bill` as fixed typed columns on `Run` — simple, type-safe,
+performant, matches Thai HIS standard practice universally. Closed as Won't Fix to prevent future
+scope creep back into this idea without a genuine new business driver.
 
-Not scoped, not designed, not started. This file exists to hold the backlog intent and the specific
-questions raised during REQ-024's split — not a spec to implement against.
+**If a real future need appears**, the lowest-impact path noted (not designed, not scheduled): an
+optional `customMetadata: Json?` field on `Run` for free-form key-value context, kept entirely
+separate from the 4 core anchors rather than replacing them.
+
+## Non-goals
+
+Not scoped further, not designed, not implemented. Nothing to verify — no code changed.
