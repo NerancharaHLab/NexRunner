@@ -60,6 +60,24 @@ a {
   text-decoration: none;
 }
 
+/* Generic inline text link — the global reset above makes every bare <a> invisible-as-a-link
+   (inherits surrounding color, no underline), which is correct for nav/breadcrumb/card links that
+   carry their own distinct styling, but leaves a plain inline link (like the CSV template download
+   inside a modal's body text) looking exactly like the sentence around it. Apply this class to any
+   <a> that sits inline in body copy and needs to actually read as clickable. */
+.text-link {
+  color: var(--accent-color);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 2px;
+  font-weight: 600;
+  transition: text-decoration-color 0.12s var(--ease-standard);
+}
+
+.text-link:hover {
+  text-decoration-color: currentColor;
+}
+
 :focus-visible {
   outline: 2px solid var(--accent-color);
   outline-offset: 2px;

@@ -98,6 +98,7 @@ export default function ScenarioImportModal({ target, returnPath, triggerTestId 
               <a
                 href="/scenario_import_template.csv"
                 download
+                className="text-link"
                 data-testid="smoke-runner:scenario-import:btn__download-template"
               >
                 Download the CSV template

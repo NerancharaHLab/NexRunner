@@ -41,6 +41,18 @@ durable record. Once a plan is approved and the work is done, its lasting record
 
 ## Completed
 
+- [x] **[P4]** (bookkeeping-only, no spec file) "Download the CSV template" link in the Import
+  Scenarios modal (`app/admin/ScenarioImportModal.tsx`) rendered as plain grey text, indistinguishable
+  from its surrounding sentence — user screenshot showed it with no visible link affordance. Root
+  cause: this app's global CSS resets every bare `<a>` to `color: inherit; text-decoration: none`
+  (`app/globals.css:58`) and this particular link never got its own styling on top of that. Added a
+  small reusable `.text-link` class (accent color, underline-on-hover, matches the
+  `.forgot-password summary` treatment already used elsewhere) and applied it here. Verified: build
+  clean, e2e 27/27, screenshot + computed-style check confirm it now renders blue/underlined/bold.
+  Same class-less-link pattern likely exists on a couple of other inline "create one first" links
+  (e.g. `link__create-tag`, `link__create-master-scenario`, both inside `.error-banner`) — not fixed
+  yet, flagged for later if it turns out to matter there too (those sit inside a colored banner
+  already, so the "looks unclickable" problem is less severe there than in plain body text)
 - [x] **[P1]** [REQ-001: Trunk-based Git Setup + Strict Project Isolation Rule](specs/REQ-001_trunk_based_git_setup.md)
 - [x] **[P0]** [REQ-017: Scaffold Next.js app + Azure Table Storage client + core vertical slice](specs/REQ-017_scaffold_nextjs_azure.md)
 - [x] **[P0]** [REQ-018: Fastify split & revert (architecture detour)](specs/REQ-018_fastify_split_and_revert.md)
