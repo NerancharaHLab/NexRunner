@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { listScenariosForSite } from "@/lib/db/scenarios-table";
+import { listSites } from "@/lib/db/sites-table";
 import { deleteSuite, getSuite, updateSuite } from "@/lib/db/test-suites-table";
 import { requireRole } from "@/lib/auth/guard";
-import { CAN_EDIT_CONTENT, MASTER_SCENARIO_PARTITION } from "@/lib/types";
+import { CAN_EDIT_CONTENT, MASTER_SCENARIO_PARTITION, type ScenarioDef } from "@/lib/types";
+import SuiteScenarioPicker from "@/app/admin/suites/SuiteScenarioPicker";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -19,6 +21,17 @@ export default async function EditSuitePage({ params, searchParams }: PageProps)
   const suite = await getSuite(suiteId);
   if (!suite) notFound();
   const masterScenarios = await listScenariosForSite(MASTER_SCENARIO_PARTITION);
+  const sites = await listSites();
+  // REQ-039: each site's own Custom Scenarios only — never its cloned-from-Master duplicates,
+  // which keep the Master's own MST- id (see SuiteScenarioPicker.tsx's scopeLabelFor comment).
+  const customBySiteEntries = await Promise.all(
+    sites.map(async (site) => {
+      const all = await listScenariosForSite(site.id);
+      const custom = all.filter((sc) => sc.id.includes("-CUST-"));
+      return [site.id, custom] as [string, ScenarioDef[]];
+    })
+  );
+  const customScenariosBySite = Object.fromEntries(customBySiteEntries);
 
   async function updateSuiteAction(formData: FormData) {
     "use server";
@@ -29,7 +42,14 @@ export default async function EditSuitePage({ params, searchParams }: PageProps)
         `/admin/suites/${encodeURIComponent(suiteId)}/edit?error=${encodeURIComponent("Suite name is required")}`
       );
     }
-    const scenarioIds = masterScenarios.map((sc) => sc.id).filter((scId) => formData.get(`sc_${scId}`) === "on");
+    const siteId = String(formData.get("siteId") || "").trim() || null;
+    // Re-derive the valid pool for the *submitted* siteId server-side — same reasoning as
+    // new/page.tsx's createSuiteAction.
+    const validIds = new Set([
+      ...masterScenarios.map((sc) => sc.id),
+      ...(siteId ? customScenariosBySite[siteId] ?? [] : []).map((sc) => sc.id),
+    ]);
+    const scenarioIds = [...validIds].filter((scId) => formData.get(`sc_${scId}`) === "on");
     // id is system-generated and immutable (REQ-032) — never read from the form, always the
     // existing id from the route param, so even a bypassed/tampered request can't rename it.
     await updateSuite(suiteId, {
@@ -37,6 +57,7 @@ export default async function EditSuitePage({ params, searchParams }: PageProps)
       name,
       description: String(formData.get("description") || ""),
       scenarioIds,
+      siteId,
     });
     redirect("/admin/suites");
   }
@@ -86,19 +107,13 @@ export default async function EditSuitePage({ params, searchParams }: PageProps)
           </div>
         </div>
 
-        <div className="section-label">Scenarios in this Suite (from Master Library)</div>
-        {masterScenarios.map((sc) => (
-          <label key={sc.id} className="checkbox-row" htmlFor={`sc_${sc.id}`} style={{ display: "flex", width: "100%" }}>
-            <input
-              type="checkbox"
-              id={`sc_${sc.id}`}
-              name={`sc_${sc.id}`}
-              defaultChecked={suite.scenarioIds.includes(sc.id)}
-              data-testid={`smoke-runner:admin-suite-form:chk-scenario__${sc.id.replace(/[^a-zA-Z0-9]/g, "")}`}
-            />
-            <strong>{sc.id}</strong>&nbsp;— {sc.name}
-          </label>
-        ))}
+        <SuiteScenarioPicker
+          masterScenarios={masterScenarios}
+          customScenariosBySite={customScenariosBySite}
+          sites={sites}
+          initialSiteId={suite.siteId}
+          initialScenarioIds={suite.scenarioIds}
+        />
 
         <div className="form-footer">
           <button type="submit" className="btn btn-primary" data-testid="smoke-runner:admin-suite-form:btn__save">

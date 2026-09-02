@@ -53,6 +53,7 @@ model Site {
   name   String
   active Boolean @default(true)
   runs   Run[]
+  suites Suite[]
 
   @@map("sites")
 }
@@ -93,7 +94,20 @@ model Suite {
   name        String
   description String
   scenarioIds String[] @default([])
+  /// REQ-039: which real, currently-provisioned Site's Custom Scenarios this Suite may draw from
+  /// (in addition to the Master Library, which every Suite can always draw from) — null means
+  /// "Global" (Master Library only). Deliberately a REAL FK to Site.id, unlike Scenario.sourceSite
+  /// above: sourceSite is allowed to name a not-yet-provisioned hospital, but this field gates which
+  /// site's scenarios actually get offered in the picker, so a typo'd/nonexistent site here would be
+  /// a real bug, not a legitimate case. onDelete: Restrict explicit here as a DB-level safety net —
+  /// Prisma's own default for an OPTIONAL relation is actually SetNull (would silently turn a
+  /// Site's Suites into "Global" ones on delete), not Restrict, so this must be spelled out to match
+  /// the actual intent ("a Site with Suites attached can't be deleted"); the friendly app-level
+  /// guard lives in deleteSite() (lib/db/sites-table.ts), same shape as its existing Runs check.
+  siteId String?
+  site   Site?   @relation(fields: [siteId], references: [id], onDelete: Restrict)
 
+  @@index([siteId])
   @@map("suites")
 }
 

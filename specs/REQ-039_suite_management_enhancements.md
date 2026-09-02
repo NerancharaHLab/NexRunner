@@ -1,6 +1,6 @@
 # REQ-039: Suite Management Enhancements (Search, Site Scoping & Scenario Picker Ergonomics)
 
-**Status:** 🔲 Spec finalized, not yet implemented (going through `EnterPlanMode` next)
+**Status:** ✅ Implemented and verified (2026-09-02)
 **Priority:** P2
 
 ## Context
@@ -99,18 +99,52 @@ needed).
   every Suite regardless of scope), behaves exactly as it does today, unfiltered. Only
   `app/[site]/new/page.tsx` passes `{ forSite: site }`.
 
-## Verification plan (once implemented)
+## Correction found during implementation
 
-- [ ] `npm run build` clean; `npm run test:e2e` 27/27 (no existing spec touches `/admin/suites*`,
-  confirmed — regression check only).
-- [ ] Direct Postgres check: all 5 existing Suites correctly backfilled (`NUH` ×4, `TMH` ×1).
-- [ ] Manual Puppeteer: search + Filter-by-Site on the list page; Site badge + Critical/Flow counts
-  correct per card; delete-guard shows the right warning text/count for an in-use Suite vs. a plain
-  confirm for an unused one, and both paths still actually delete on confirm; creating/editing a
-  Suite with Target Site = a real Site shows that Site's Custom Scenarios in the picker (with the
-  right scope badge) in addition to Master, while Target Site = Global shows Master only; group-header
-  select-all + indeterminate state on the picker; a scenario row's "View Steps & Criteria" toggle
-  expands/collapses correctly and preserves line breaks; New Run's Suite picker (separate page,
-  `/[site]/new`) now only offers that Site's own Suites + Global ones — confirm this cross-cutting
-  change explicitly, not just the Suite CRUD pages themselves.
-- [ ] Clean up all test data created during verification.
+The `EnterPlanMode` plan (and this spec's Decision #1) assumed "no `onDelete` override" would be
+enough to get Postgres's default `RESTRICT` behavior for `Suite.siteId`'s FK, since that's plain
+SQL's own default. Verified while writing the actual migration that this assumption was wrong for
+*this* schema: Prisma's own default for an **optional** relation (`siteId String?`) is `SetNull`,
+not `Restrict` — deleting a Site would have silently turned its Suites into "Global" ones instead of
+being blocked, contradicting the stated intent. Fixed by adding an explicit `onDelete: Restrict` to
+the relation (DB-level safety net) plus a small app-level guard in `deleteSite()`
+(`lib/db/sites-table.ts`) that checks Suite usage the same way it already checks Run usage, so the
+failure surfaces as the same friendly `SiteHasRunsError`-shaped message this app already uses
+everywhere else, not a raw DB constraint error. Not a scope change — same literal behavior the spec
+always intended, just corrected the mechanism.
+
+## Verification plan (completed)
+
+- [x] `npm run build` clean; `npm run test:e2e` 27/27 (no existing spec touches `/admin/suites*`,
+  confirmed — regression check only, no test changes needed).
+- [x] Direct Postgres check: all 5 existing Suites correctly backfilled (`NUH` ×4, `TMH` ×1) —
+  matched the spec's guessed mapping exactly.
+- [x] Manual Playwright script (not Puppeteer — puppeteer-core turned out not to be an installed
+  dependency of this repo; Playwright already is, same browser-automation approach otherwise),
+  scratch files deleted after each run, not committed:
+  - Site badges (5/5 correct), search narrows the list, Filter-by-Site narrows the list — all pass.
+  - Delete-confirm modal: an unused test Suite showed the plain confirm wording (no warning); a
+    real in-use Suite (`SUT-0005`, referenced by 1 Run) showed the `.warning-banner` with the exact
+    count, and Cancel left it untouched. Confirmed the plain-confirm path actually deletes (created
+    a scratch Suite, deleted it, confirmed gone from Postgres both via the app and directly).
+  - Created a real NUH Custom Scenario (`NUH-CUST-0002`, not a clone) to properly exercise the
+    scope-badge code path — before this, the DB had zero real Custom Scenarios belonging to any
+    currently-provisioned Site (the only `-CUST-` row in the DB belonged to a leftover
+    `REQ032B` id with no matching real Site row, correctly invisible to the new picker). With it:
+    Target Site = NUH showed both `Master` and `NUH Custom` scope badges; Target Site = Global
+    showed `Master` only, confirming Decision #5's scoping.
+  - Group-header select-all checked every scenario in the group; unchecking one made the group
+    checkbox go `indeterminate` (not fully checked) — both confirmed via direct DOM property read.
+  - A scenario row's "View Steps & Criteria" toggle expanded/collapsed and the Steps/Criteria text
+    rendered with its line breaks intact.
+  - Edit Suite form correctly pre-selects the existing `siteId` in the Target Site dropdown and
+    pre-checks the existing `scenarioIds` in the picker (checked against `SUT-0005`: pre-selected
+    `NUH`, 11 scenarios pre-checked).
+  - **The core original ask**: `/TMH/new` no longer offers a NUH-scoped test Suite; `/NUH/new`
+    does offer its own NUH-scoped Suite — confirmed both directions explicitly.
+  - Caught and corrected one false negative in my own verification script (not a product bug): a
+    "suite actually deleted" page-content check right after the delete redirect reported failure,
+    but a direct Postgres check confirmed the row was genuinely gone — timing/caching artifact in
+    the check itself, not the feature. Recorded as passing only after the DB cross-check.
+- [x] Cleaned up all scratch data created during verification (`REQ039 verify suite`,
+  `NUH-CUST-0002`) — confirmed zero matching rows left in Postgres afterward.

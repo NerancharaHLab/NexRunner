@@ -1,12 +1,53 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { deleteSuite, listSuites } from "@/lib/db/test-suites-table";
+import { deleteSuite, getSuiteUsageCounts, listSuites } from "@/lib/db/test-suites-table";
+import { listScenariosForSite } from "@/lib/db/scenarios-table";
+import { listSites } from "@/lib/db/sites-table";
 import { requireRole } from "@/lib/auth/guard";
-import { CAN_EDIT_CONTENT } from "@/lib/types";
+import { CAN_EDIT_CONTENT, MASTER_SCENARIO_PARTITION, type ScenarioDef } from "@/lib/types";
+import SuitesList, { type SuiteRow } from "./SuitesList";
 
 export default async function SuitesListPage() {
   await requireRole(CAN_EDIT_CONTENT);
   const suites = await listSuites();
+  // includeInactive so a Suite still scoped to a since-deactivated Site resolves its badge/name
+  // correctly instead of falling back to the raw id (same precedent as REQ-024's Edit Run form).
+  const sites = await listSites({ includeInactive: true });
+  const usageCounts = await getSuiteUsageCounts();
+
+  const masterScenarios = await listScenariosForSite(MASTER_SCENARIO_PARTITION);
+  const customBySiteEntries = await Promise.all(
+    sites.map(async (site) => {
+      const all = await listScenariosForSite(site.id);
+      return [site.id, all.filter((sc) => sc.id.includes("-CUST-"))] as [string, ScenarioDef[]];
+    })
+  );
+  const scenarioById = new Map<string, ScenarioDef>(
+    [...masterScenarios, ...customBySiteEntries.flatMap(([, list]) => list)].map((sc) => [sc.id, sc])
+  );
+
+  const rows: SuiteRow[] = suites.map((suite) => {
+    const resolved = suite.scenarioIds.map((id) => scenarioById.get(id)).filter((sc): sc is ScenarioDef => !!sc);
+    const flowCounts: Record<ScenarioDef["flow"], number> = { OPD: 0, IPD: 0, General: 0 };
+    for (const sc of resolved) flowCounts[sc.flow] += 1;
+    const flowBreakdown = (["OPD", "IPD", "General"] as const)
+      .filter((f) => flowCounts[f] > 0)
+      .map((f) => `${f} ${flowCounts[f]}`)
+      .join(" · ");
+    const siteLabel = suite.siteId ? sites.find((s) => s.id === suite.siteId)?.name ?? suite.siteId : "Global";
+
+    return {
+      id: suite.id,
+      name: suite.name,
+      description: suite.description,
+      siteId: suite.siteId ?? null,
+      siteLabel,
+      scenarioCount: resolved.length,
+      criticalCount: resolved.filter((sc) => sc.critical).length,
+      flowBreakdown,
+      usageCount: usageCounts[suite.id] ?? 0,
+    };
+  });
 
   async function deleteSuiteAction(formData: FormData) {
     "use server";
@@ -26,8 +67,9 @@ export default async function SuitesListPage() {
         <div>
           <h1>Manage Suites</h1>
           <p className="subtitle">
-            Group Master Scenarios into test Suites — select a Suite when starting a new Run to
-            test only the Scenarios in that Suite.
+            Group Master (and, for a site-scoped Suite, that site&apos;s own Custom) Scenarios into
+            test Suites — select a Suite when starting a new Run to test only the Scenarios in
+            that Suite.
           </p>
         </div>
         <Link href="/admin/suites/new" className="btn btn-primary" data-testid="smoke-runner:admin-suites:btn__new">
@@ -35,51 +77,7 @@ export default async function SuitesListPage() {
         </Link>
       </div>
 
-      {suites.length === 0 && (
-        <div className="card empty-state">
-          <div className="empty-icon">—</div>
-          No Suites yet
-        </div>
-      )}
-
-      {suites.map((suite) => (
-        <div
-          key={suite.id}
-          className="card"
-          data-testid={`smoke-runner:admin-suites:row__${suite.id.replace(/[^a-zA-Z0-9]/g, "")}`}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-            <div>
-              <strong>{suite.name}</strong>
-              <span className="stat-pill" style={{ marginLeft: 8 }}>
-                {suite.scenarioIds.length} Scenario
-              </span>
-              {suite.description && (
-                <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: 4 }}>{suite.description}</div>
-              )}
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <Link
-                href={`/admin/suites/${encodeURIComponent(suite.id)}/edit`}
-                className="btn"
-                data-testid={`smoke-runner:admin-suites:btn-edit__${suite.id.replace(/[^a-zA-Z0-9]/g, "")}`}
-              >
-                Edit
-              </Link>
-              <form action={deleteSuiteAction}>
-                <input type="hidden" name="suiteId" value={suite.id} />
-                <button
-                  type="submit"
-                  className="btn btn-danger-text"
-                  data-testid={`smoke-runner:admin-suites:btn-delete__${suite.id.replace(/[^a-zA-Z0-9]/g, "")}`}
-                >
-                  Delete
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      ))}
+      <SuitesList suites={rows} sites={sites.filter((s) => s.active)} deleteAction={deleteSuiteAction} />
     </main>
   );
 }

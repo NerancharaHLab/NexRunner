@@ -11,12 +11,27 @@ function rowToDef(row: {
   name: string;
   description: string;
   scenarioIds: string[];
+  siteId: string | null;
 }): SuiteDef {
-  return { id: row.suiteId, name: row.name, description: row.description, scenarioIds: row.scenarioIds };
+  return {
+    id: row.suiteId,
+    name: row.name,
+    description: row.description,
+    scenarioIds: row.scenarioIds,
+    siteId: row.siteId,
+  };
 }
 
-export async function listSuites(): Promise<SuiteDef[]> {
-  const rows = await prisma.suite.findMany();
+/**
+ * REQ-039: `forSite` scopes the list to that Site's own Suites + Global ones (siteId === null) —
+ * used only by the New Run page's Suite picker (`app/[site]/new/page.tsx`), which is the actual
+ * business complaint this REQ exists to fix. Every other call site (the Suite CRUD admin pages,
+ * which manage every Suite regardless of scope) omits it and keeps today's unfiltered behavior.
+ */
+export async function listSuites(opts?: { forSite?: string }): Promise<SuiteDef[]> {
+  const rows = await prisma.suite.findMany({
+    where: opts?.forSite ? { OR: [{ siteId: opts.forSite }, { siteId: null }] } : undefined,
+  });
   return rows.map(rowToDef).sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -25,11 +40,30 @@ export async function getSuite(suiteId: string): Promise<SuiteDef | undefined> {
   return row ? rowToDef(row) : undefined;
 }
 
+/**
+ * Usage count per Suite — how many Runs still reference it (`Run.suiteIds`, a native Postgres
+ * text[]). Mirrors getTagUsageCounts()'s shape (lib/db/tags-table.ts): one query, tallied in JS.
+ * Used only to WARN on delete (REQ-039 Decision #4) — Suite deletion is never actually blocked,
+ * since a Run's own scenario snapshot (REQ-030/031) is already independent of the Suite's continued
+ * existence.
+ */
+export async function getSuiteUsageCounts(): Promise<Record<string, number>> {
+  const runs = await prisma.run.findMany({ select: { suiteIds: true } });
+  const counts: Record<string, number> = {};
+  for (const run of runs) {
+    for (const id of run.suiteIds) {
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+  }
+  return counts;
+}
+
 export interface SuiteInput {
   id: string;
   name: string;
   description: string;
   scenarioIds: string[];
+  siteId?: string | null;
 }
 
 export async function createSuite(input: SuiteInput): Promise<void> {
@@ -39,6 +73,7 @@ export async function createSuite(input: SuiteInput): Promise<void> {
     name: input.name,
     description: input.description,
     scenarioIds: input.scenarioIds,
+    siteId: input.siteId ?? null,
   };
   await prisma.suite.upsert({ where: { id }, create: { id, ...data }, update: data });
 }

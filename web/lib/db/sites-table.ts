@@ -60,16 +60,25 @@ export async function updateSiteActive(id: string, active: boolean): Promise<voi
 }
 
 /**
- * Deletes a Site, but only if it has no Runs — Run history is an audit trail that must never
- * silently disappear because someone deleted the site it belongs to; Deactivate is the reversible
- * alternative for "stop using this site." Scenario rows for the site are NOT cleaned up (same
- * tolerance the app already has elsewhere for orphaned references), same as before.
+ * Deletes a Site, but only if it has no Runs and no Suites still scoped to it — Run history is an
+ * audit trail that must never silently disappear because someone deleted the site it belongs to;
+ * Deactivate is the reversible alternative for "stop using this site." (REQ-039: Suite.siteId is a
+ * real FK with no onDelete override, i.e. Postgres would reject the delete outright once a Suite
+ * references this site — this app-level check exists so that shows up as the same friendly guard
+ * as the Runs case above, not a raw DB constraint error.) Scenario rows for the site are NOT
+ * cleaned up (same tolerance the app already has elsewhere for orphaned references), same as before.
  */
 export async function deleteSite(id: string): Promise<void> {
   const runs = await listRunsForSite(id);
   if (runs.length > 0) {
     throw new SiteHasRunsError(
       `Cannot delete — this site has ${runs.length} existing Run(s). Deactivate it instead.`
+    );
+  }
+  const suiteCount = await prisma.suite.count({ where: { siteId: id } });
+  if (suiteCount > 0) {
+    throw new SiteHasRunsError(
+      `Cannot delete — this site has ${suiteCount} Suite(s) still scoped to it. Deactivate it instead.`
     );
   }
   await prisma.site.delete({ where: { id } });

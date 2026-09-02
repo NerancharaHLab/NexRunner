@@ -45,7 +45,10 @@ export default async function NewRunPage({ params, searchParams }: PageProps) {
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  const suites = await listSuites();
+  // REQ-039: this Site's own Suites + Global ones only — was fully unfiltered before, so a Run
+  // being created for one hospital offered every other hospital's Suites too. The actual original
+  // business complaint behind the whole REQ.
+  const suites = await listSuites({ forSite: site });
   const tags = await listTags();
   const environments = await listEnvironments();
 

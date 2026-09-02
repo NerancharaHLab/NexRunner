@@ -59,8 +59,9 @@ export interface HospitalSiteEntry {
 export const MASTER_SCENARIO_PARTITION = "__MASTER__";
 
 /** Azure Table Storage entity: table "Suites". PartitionKey = "SUITE" (fixed), RowKey = suite id.
- *  A Suite is a named group of Master Scenario ids (many-to-many — a scenario can be in more than
- *  one Suite) used to scope which scenarios a Run covers. See azure/test-suites-table.ts.
+ *  A Suite is a named group of scenario ids (many-to-many — a scenario can be in more than one
+ *  Suite) used to scope which scenarios a Run covers — Master Scenario ids always, plus (REQ-039)
+ *  a site-scoped Suite's own Site's Custom Scenario ids too. See azure/test-suites-table.ts.
  *  Note the file/table name is deliberately "Suites", spelled out fully in code — never
  *  abbreviated near "Sites" (Hospital Sites, a completely different table) to avoid mix-ups. */
 export const SUITE_PARTITION = "SUITE";
@@ -71,7 +72,7 @@ export interface SuiteEntity {
   suiteId: string; // original, unsanitized
   name: string;
   description: string;
-  scenarioIdsJson: string; // JSON-stringified string[] of Master Scenario ids
+  scenarioIdsJson: string; // JSON-stringified string[] of Master (+ own Site's Custom) scenario ids
 }
 
 /** App-facing Suite shape (Table Storage internals hidden by azure/test-suites-table.ts). */
@@ -80,6 +81,9 @@ export interface SuiteDef {
   name: string;
   description: string;
   scenarioIds: string[];
+  /** REQ-039: real Site.id this Suite is scoped to, or undefined/null for "Global" (Master Library
+   *  only). See Suite.siteId's schema comment for why this is a real FK, unlike sourceSite. */
+  siteId?: string | null;
 }
 
 export function parseSuiteScenarioIds(entity: { scenarioIdsJson?: string }): string[] {
