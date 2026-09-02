@@ -4,6 +4,7 @@ import { deleteScenario, listScenariosForSite } from "@/lib/db/scenarios-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT, MASTER_SCENARIO_PARTITION } from "@/lib/types";
 import ScenarioImportModal from "@/app/admin/ScenarioImportModal";
+import MasterScenarioLibraryList from "./MasterScenarioLibraryList";
 
 interface PageProps {
   searchParams: Promise<{ source?: string; imported?: string; firstId?: string; lastId?: string }>;
@@ -91,57 +92,11 @@ export default async function MasterScenariosListPage({ searchParams }: PageProp
         </form>
       )}
 
-      {scenarios.length === 0 && (
-        <div className="card empty-state">
-          <div className="empty-icon">—</div>
-          No Scenarios in the Master Library yet
-        </div>
-      )}
-
-      {scenarios.map((sc) => (
-        <div
-          key={sc.id}
-          className="card"
-          data-testid={`smoke-runner:admin-master-scenarios:row__${sc.id.replace(/[^a-zA-Z0-9]/g, "")}`}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-            <div>
-              <strong>{sc.id}</strong>
-              {sc.critical && <span className="critical-badge">Critical Flow</span>}
-              <span
-                className="tag-pill"
-                style={{ marginLeft: 8 }}
-                data-testid={`smoke-runner:admin-master-scenarios:badge-source__${sc.id.replace(/[^a-zA-Z0-9]/g, "")}`}
-              >
-                {sc.sourceSite}
-              </span>
-              <div>{sc.name}</div>
-              <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                {sc.flow} · {sc.role}
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <Link
-                href={`/admin/master-scenarios/${encodeURIComponent(sc.id)}/edit`}
-                className="btn"
-                data-testid={`smoke-runner:admin-master-scenarios:btn-edit__${sc.id.replace(/[^a-zA-Z0-9]/g, "")}`}
-              >
-                Edit
-              </Link>
-              <form action={deleteScenarioAction}>
-                <input type="hidden" name="scenarioId" value={sc.id} />
-                <button
-                  type="submit"
-                  className="btn btn-danger-text"
-                  data-testid={`smoke-runner:admin-master-scenarios:btn-delete__${sc.id.replace(/[^a-zA-Z0-9]/g, "")}`}
-                >
-                  Delete
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      ))}
+      <MasterScenarioLibraryList
+        scenarios={scenarios}
+        sourceFilterActive={!!source}
+        deleteScenarioAction={deleteScenarioAction}
+      />
     </main>
   );
 }

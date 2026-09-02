@@ -4,6 +4,7 @@ import { getScenariosForSite } from "@/lib/scenarios";
 import { cloneScenario, listScenariosForSite } from "@/lib/db/scenarios-table";
 import { requireRole } from "@/lib/auth/guard";
 import { CAN_EDIT_CONTENT, MASTER_SCENARIO_PARTITION } from "@/lib/types";
+import CloneFromMasterList from "./CloneFromMasterList";
 
 interface PageProps {
   params: Promise<{ site: string }>;
@@ -104,63 +105,13 @@ export default async function CloneFromMasterPage({ params, searchParams }: Page
           )}
         </div>
       ) : (
-        <form action={cloneAction} className="card">
-          {masterScenarios.map((sc) => {
-            const alreadyExists = existingIds.has(sc.id);
-            return (
-              <label
-                key={sc.id}
-                className="checkbox-row"
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  width: "100%",
-                  padding: "10px 0",
-                  borderBottom: "1px solid var(--border-subtle)",
-                }}
-                htmlFor={`clone_${sc.id}`}
-              >
-                <input
-                  type="checkbox"
-                  id={`clone_${sc.id}`}
-                  name={`clone_${sc.id}`}
-                  data-testid={`smoke-runner:clone-from-master:chk__${sc.id.replace(/[^a-zA-Z0-9]/g, "")}`}
-                />
-                <div>
-                  <div>
-                    <strong>{sc.id}</strong>
-                    {sc.critical && <span className="critical-badge">Critical Flow</span>}
-                    <span
-                      className="tag-pill"
-                      style={{ marginLeft: 8 }}
-                      data-testid={`smoke-runner:clone-from-master:badge-source__${sc.id.replace(/[^a-zA-Z0-9]/g, "")}`}
-                    >
-                      {sc.sourceSite}
-                    </span>
-                    {alreadyExists && (
-                      <span className="stat-pill block" style={{ marginLeft: 8 }}>
-                        Already exists — will overwrite
-                      </span>
-                    )}
-                  </div>
-                  <div>{sc.name}</div>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                    {sc.flow} · {sc.role}
-                  </div>
-                </div>
-              </label>
-            );
-          })}
-          <div className="form-footer">
-            <button
-              type="submit"
-              className="btn btn-primary"
-              data-testid="smoke-runner:clone-from-master:btn__clone"
-            >
-              Clone to {siteFile.siteName}
-            </button>
-          </div>
-        </form>
+        <CloneFromMasterList
+          scenarios={masterScenarios}
+          existingIds={existingIds}
+          sourceFilterActive={!!source}
+          siteName={siteFile.siteName}
+          cloneAction={cloneAction}
+        />
       )}
     </main>
   );

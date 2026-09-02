@@ -1607,6 +1607,90 @@ a.card:hover,
   color: var(--text-secondary);
 }
 
+/* ---------- Master Scenario Library / Clone-from-Master: grouping, search, batch select ---------- */
+
+.scenario-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.scenario-group-header:hover {
+  background: var(--border-subtle);
+}
+
+.scenario-group-header .chevron {
+  transition: transform 0.15s var(--ease-standard);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.scenario-group-header .chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
+.scenario-group-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  flex: 1;
+}
+
+.scenario-group-body {
+  margin: 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scenario-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.scenario-search-bar input[type="text"] {
+  flex: 1 1 260px;
+}
+
+/* REQ: Clone-from-Master's batch-select Floating Action Bar — appears once >=1 Scenario is
+   checked, stays anchored to the bottom of the viewport so the user never has to scroll back up
+   to submit. */
+.floating-action-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--foreground);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.floating-action-bar .btn {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.floating-action-bar .btn-primary {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #fff;
+}
+
 @media print {
   .no-print {
     display: none !important;
