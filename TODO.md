@@ -41,6 +41,18 @@ durable record. Once a plan is approved and the work is done, its lasting record
 
 ## Completed
 
+- [x] **[P4]** (bookkeeping-only, no spec file) `public/scenario_import_template.csv` — finally
+  committed the content fix that had been sitting on disk since the CSV import template round
+  (3 richer sample rows incl. `desc`, tag `reporting`→`report` corrected against the real Tag
+  Catalog). Also fixed a real bug the user hit opening it in Excel: Thai text rendered as mojibake
+  (`ภาษาอะไรอ่านไม่ออก` — screenshot showed garbled characters). Root cause: the file had no UTF-8 BOM,
+  and Excel on Mac doesn't reliably auto-detect UTF-8 for non-ASCII CSV without one — it guessed a
+  legacy encoding instead. Fixed by prepending a UTF-8 BOM (`EF BB BF`). Verified this doesn't break
+  the actual import: `file.text()` (used in `lib/actions/scenario-import-actions.ts`) decodes via
+  the WHATWG UTF-8-decode algorithm, which strips a leading BOM by spec — confirmed with Node's
+  `TextDecoder` (same algorithm) that the decoded string still starts cleanly with `name,desc,...`,
+  and re-ran the real `papaparse` header/row parsing against the BOM'd file to confirm zero errors
+  and correct Thai content
 - [x] **[P4]** (bookkeeping-only, no spec file) "Download the CSV template" link in the Import
   Scenarios modal (`app/admin/ScenarioImportModal.tsx`) rendered as plain grey text, indistinguishable
   from its surrounding sentence — user screenshot showed it with no visible link affordance. Root
