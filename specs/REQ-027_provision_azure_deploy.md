@@ -44,8 +44,11 @@ role shown in the screenshot), migration/seed commands — are written up in ful
    Not decided. **The production `Dockerfile` (`web/Dockerfile`) exists now** regardless of this
    decision — it's needed for any container-based host (App Service, Container Apps, or otherwise),
    and does nothing platform-specific.
-3. **Azure Storage Account for Evidence blobs** — unchanged from the original plan; a real Storage
-   Account replaces the local Azurite emulator. Lower-risk, more mechanical than 1-2.
+3. **Evidence storage — now resolved** ([REQ-041](REQ-041_seaweedfs_evidence_storage.md),
+   2026-09-03): moved off the original Azure Blob Storage plan to SeaweedFS, connected via its
+   S3-compatible gateway (`@aws-sdk/client-s3`). Local dev now runs a real SeaweedFS container
+   (`web/docker-compose.yml`'s `seaweedfs` service) instead of the Azurite emulator. Production
+   still needs a real SeaweedFS deployment + credentials — see `docs/devops_handoff.md` §2/§5.
 
 **Once decisions are made, the mechanical steps** (env vars, migrate/seed commands, verification
 checklist) are all in `docs/devops_handoff.md` — this file only tracks the open decisions above.

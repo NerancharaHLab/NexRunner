@@ -6,9 +6,9 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests",
   outputDir: "./test-results",
-  // Tests run against one shared local dev server + Azurite (not a per-test
-  // sandbox), and several specs create/edit real rows (users, scenarios,
-  // runs) — serialize instead of racing against a single backend.
+  // Tests run against one shared local dev server + Docker Postgres/SeaweedFS
+  // (not a per-test sandbox), and several specs create/edit real rows (users,
+  // scenarios, runs) — serialize instead of racing against a single backend.
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

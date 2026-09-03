@@ -34,9 +34,6 @@ yarn-error.log*
 .env*
 !.env.local.example
 
-# local Azurite storage emulator data
-/.azurite
-
 # Playwright E2E run artifacts (report/trace/screenshots) — not source
 /e2e/playwright-report/
 /e2e/test-results/

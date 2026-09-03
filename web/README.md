@@ -21,8 +21,8 @@
 
 - **Frontend & Backend**: Next.js 16 (App Router, Turbopack, Server Actions)
 - **Database**: PostgreSQL via Prisma ORM (Users/Sites/Scenarios/Suites/Tags/Runs/ScenarioResults) — runs in Docker locally
-- **Evidence Storage**: Azure Blob Storage (screenshots only — the DB itself is not on Azure)
-- **Local Emulator**: Docker Postgres (DB) + Azurite (Blob only)
+- **Evidence Storage**: SeaweedFS (screenshots only, via its S3-compatible gateway — `@aws-sdk/client-s3`)
+- **Local Dev**: Docker Compose runs both Postgres (DB) and SeaweedFS (Evidence) as real containers
 - **Authentication**: Email + Password (Session JWT with httpOnly Cookie)
 - **Testing**: Playwright (End-to-End Test Suite)
 
@@ -36,7 +36,7 @@ npm install
 ```
 
 ### 2. ตั้งค่า Environment Variables
-คัดลอกไฟล์ `.env.local.example` เป็น `.env.local` (ค่าเริ่มต้นพร้อมชี้ไปยัง Azurite Emulator):
+คัดลอกไฟล์ `.env.local.example` เป็น `.env.local` (ค่าเริ่มต้นพร้อมชี้ไปยัง SeaweedFS container ในเครื่อง):
 ```bash
 cp .env.local.example .env.local
 ```
@@ -44,12 +44,12 @@ cp .env.local.example .env.local
 ### 3. สร้าง Database Schema (รันครั้งแรกครั้งเดียว หรือหลัง Schema เปลี่ยน)
 ต้องมี [Docker](https://www.docker.com/) รันอยู่ก่อน:
 ```bash
-npm run db:up       # docker compose up -d db — สร้าง Postgres container
+npm run db:up       # docker compose up -d — สร้าง Postgres + SeaweedFS container
 npm run db:migrate  # prisma migrate dev — สร้าง Schema
 ```
 
-### 4. รัน Dev Server พร้อม Azurite Emulator
-รันทั้ง Docker Postgres, Azurite และ Next.js ในคำสั่งเดียว (`predev:all` จะเรียก `db:up` ให้อัตโนมัติ):
+### 4. รัน Dev Server
+รันทั้ง Docker Postgres, SeaweedFS และ Next.js ในคำสั่งเดียว (`predev:all` จะเรียก `docker compose up -d` ให้อัตโนมัติ):
 ```bash
 npm run dev:all
 ```
@@ -87,7 +87,7 @@ npm run test:e2e:ui
 | Variable | Description | ตัวอย่าง (Local) |
 |---|---|---|
 | `DATABASE_URL` | Postgres Connection String (Prisma) | `postgresql://smoke_test_runner:smoke_test_runner_dev@localhost:5435/smoke_test_runner?schema=public` |
-| `AZURE_STORAGE_CONNECTION_STRING` | Connection String สำหรับ Azure Blob Storage (Evidence เท่านั้น) | Default Azurite connection string |
+| `S3_ENDPOINT` / `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` / `S3_BUCKET` | S3-compatible endpoint สำหรับ SeaweedFS (Evidence เท่านั้น) | ชี้ไปยัง SeaweedFS container ในเครื่อง (`http://localhost:8333`, placeholder credentials) |
 | `AUTH_SECRET` | Secret Key สำหรับ Sign JWT Token | สตริงสุ่ม 32-byte (`openssl rand -base64 32`) |
 
 ---
@@ -104,7 +104,7 @@ web/
 ├── lib/
 │   ├── auth/             # Session, Password Hashing & Role Guards
 │   ├── db/               # Prisma-backed data access (Users/Sites/Scenarios/Suites/Tags/Runs)
-│   ├── azure/            # Azure Blob Storage Client (Evidence images only)
+│   ├── storage/          # SeaweedFS (S3-compatible) Client (Evidence images only)
 │   └── types.ts          # Type Definitions & Schemas
 ├── prisma/               # schema.prisma, migrations/, seed.ts
 ├── e2e/                  # Playwright Test Specs & Fixtures
@@ -118,9 +118,12 @@ web/
 ### 1. Docker & Data Persistence Plan (Docker Volume)
 - **Database (Done)**: `docker-compose.yml` รัน PostgreSQL ใน Named Volume (`pgdata`) แล้ว — ดู
   `specs/REQ-029_postgres_migration.md` ที่ root repo สำหรับรายละเอียดการย้ายจาก Azure Table Storage
+- **Evidence Storage (Done)**: ย้ายจาก Azure Blob Storage/Azurite ไป SeaweedFS แล้ว (REQ-041) —
+  รันเป็น container จริงใน `docker-compose.yml` เดียวกับ Postgres (Named Volume `seaweeddata`) ไม่ต้อง
+  รันแยกผ่าน npm script อีกต่อไป
+- **Production `Dockerfile` (Done)**: multi-stage build สำหรับ Next.js เอง (`web/Dockerfile`) — ดู
+  `docs/devops_handoff.md` ที่ root repo
 - **ยังไม่ทำ**:
-  - Multi-stage `Dockerfile` สำหรับ Build และ Run Next.js เองในระดับ Production
-  - เพิ่ม Azurite (Blob) เข้า `docker-compose.yml` เดียวกัน (ตอนนี้ยังรันแยกผ่าน `npm run azurite`)
   - Backup/Restore ข้อมูลใน Volume สำหรับ Local และ Staging Environment
 
 ### 2. Features & System Enhancements
@@ -132,7 +135,8 @@ web/
     การทำ Dynamic Schema จริง (ต่าง Site ต่าง field ได้) ยังไม่ scope เพราะเป็นงานสถาปัตยกรรมระดับใหญ่ ไม่ใช่
     แค่ config-to-DB ธรรมดา ดู `specs/REQ-037_site_configurable_data_chain_schema.md` (ยัง Backlog รอ
     BA/SA scoping)
-- **Production Cloud Deployment**: ยังไม่ Provision จริง — Dev/Test ยังคงใช้ Docker Postgres + Azurite
-  Emulator ต่อไปตามเดิม จนกว่าจะถึงเวลาขึ้น Production จริง ดู `specs/REQ-027_provision_azure_deploy.md`
-  สำหรับ Checklist/Runbook ที่เตรียมไว้ให้ (Host Postgres ที่ไหน, Host ตัวแอปที่ไหน, ขั้นตอน Migrate/Seed/
-  Verify กับของจริง) — ยังต้องรอคนที่มีสิทธิ์ Provision จริงมาตัดสินใจ+ทำ
+- **Production Cloud Deployment**: ยังไม่ Provision จริง — Dev/Test ยังคงใช้ Docker Postgres + SeaweedFS
+  container ต่อไปตามเดิม จนกว่าจะถึงเวลาขึ้น Production จริง ดู `specs/REQ-027_provision_azure_deploy.md`
+  และ `docs/devops_handoff.md` (root repo) สำหรับ Checklist/Runbook ที่เตรียมไว้ให้ — DB จะเป็น schema
+  ใหม่ใน `dev_cortex` database ที่มีอยู่แล้ว (ตัดสินใจแล้ว), Storage เป็น SeaweedFS จริง (ตัดสินใจแล้วเช่นกัน)
+  — ยังต้องรอ DevOps Provision จริง

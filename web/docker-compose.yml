@@ -1,6 +1,7 @@
-# Local PostgreSQL for dev — see specs/REQ-029_postgres_migration.md at the repo root for why this
-# replaced Azure Table Storage. Evidence images stay on Azure Blob Storage (still Azurite-emulated
-# locally, see .env.local's AZURE_STORAGE_CONNECTION_STRING) — this compose file only covers the DB.
+# Local PostgreSQL + SeaweedFS for dev — see specs/REQ-029_postgres_migration.md (DB) and
+# specs/REQ-041_seaweedfs_evidence_storage.md (Evidence storage, replacing Azure Blob Storage/
+# Azurite) at the repo root for why. Both come up together via `npm run db:up` (name kept from
+# before REQ-041 for muscle memory, even though it now also brings up SeaweedFS) or `npm run dev:all`.
 services:
   db:
     image: postgres:16-alpine
@@ -21,5 +22,30 @@ services:
       timeout: 3s
       retries: 10
 
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    restart: unless-stopped
+    # All-in-one server (master + volume + filer) with the S3 gateway enabled — verified locally
+    # (REQ-041) that this exact command brings up a working S3-compatible endpoint that
+    # @aws-sdk/client-s3 can create buckets / put / get / delete against. No IAM config passed, so
+    # it accepts any access key/secret — fine for local dev (see .env.local.example's S3_* vars),
+    # never how the real production SeaweedFS deployment would be configured.
+    command: ["server", "-s3", "-s3.port=8333", "-dir=/data"]
+    ports:
+      - "8333:8333" # S3 API gateway — what lib/storage/blob.ts talks to
+      - "9333:9333" # master UI/API
+      - "8080:8080" # volume server UI/API
+    volumes:
+      - seaweeddata:/data
+    healthcheck:
+      # 127.0.0.1, not localhost — verified locally that "localhost" resolves to ::1 (IPv6) first
+      # inside this container while the S3 server only binds IPv4, so a "localhost" healthcheck
+      # fails with "connection refused" forever even once the server is genuinely up.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8333"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
 volumes:
   pgdata:
+  seaweeddata:

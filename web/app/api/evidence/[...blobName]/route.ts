@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { downloadEvidenceBlob } from "@/lib/azure/blob";
+import { downloadEvidenceBlob } from "@/lib/storage/blob";
 import { requireApiUser } from "@/lib/auth/guard";
 
 interface RouteParams {

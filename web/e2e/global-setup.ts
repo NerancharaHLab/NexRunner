@@ -3,8 +3,8 @@ import path from "path";
 // Runs once before the whole suite (see playwright.config.ts's `globalSetup`).
 // Loads .env.local the same way the app's own dev server does (Next.js reads
 // it automatically; this standalone Node process — not spawned via `npm run
-// dev` — needs it loaded explicitly since it talks to Azurite directly
-// through the same lib/azure/* modules the app uses).
+// dev` — needs it loaded explicitly since it talks to Postgres directly
+// through the same lib/db/* modules the app uses).
 process.loadEnvFile(path.resolve(__dirname, "../.env.local"));
 
 import { createUser, getUserByEmail } from "../lib/db/users-table";

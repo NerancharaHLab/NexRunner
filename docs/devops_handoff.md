@@ -30,12 +30,14 @@ as a sibling of the schemas already there (`ehr`, `hivent`, `user_management`, `
 ## 2. Required environment variables
 
 Source of truth: [`web/.env.local.example`](../web/.env.local.example) (the dev-time version of
-these same 3 variables).
+these same variables).
 
 | Variable | Production value |
 |---|---|
 | `DATABASE_URL` | Real Postgres connection string, **must end in `?schema=<the schema name from §1>`** (e.g. `?schema=test_runner`) — this is the exact mechanism that scopes every query to that schema and nothing else in `dev_cortex`. Same query-param convention the local dev URL already uses with `?schema=public`. |
-| `AZURE_STORAGE_CONNECTION_STRING` | A real Azure Storage Account (Blob) connection string — replaces the local Azurite emulator used in dev. Evidence images (screenshots attached to test results) are stored here, nothing else. |
+| `S3_ENDPOINT` | Real SeaweedFS S3-gateway endpoint URL (REQ-041 — Evidence storage moved off Azure Blob Storage to SeaweedFS, connected via its S3-compatible API through `@aws-sdk/client-s3`). Replaces the local Docker SeaweedFS container used in dev. |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | Real SeaweedFS credentials. Local dev uses placeholder `"dev"`/`"dev"` values because the dev container runs with no IAM config at all — production SeaweedFS almost certainly should have real IAM credentials configured, unlike dev. |
+| `S3_BUCKET` | Bucket name for Evidence images — defaults to `"evidence"` in code if unset; only set this if a different bucket name is required. |
 | `AUTH_SECRET` | A fresh secret generated with `openssl rand -base64 32`. **Never reuse the value committed in `.env.local.example`** — that value is a known dev-only secret. Signs the login session JWT. |
 
 No other environment variables are required. `PORT` defaults to `3000` (see the `Dockerfile`).
@@ -80,7 +82,9 @@ docker build --target migrator -t test-runner-migrate .  # one-off migration run
 docker run --rm -e DATABASE_URL="..." test-runner-migrate
 docker run -d -p 3000:3000 \
   -e DATABASE_URL="..." \
-  -e AZURE_STORAGE_CONNECTION_STRING="..." \
+  -e S3_ENDPOINT="..." \
+  -e S3_ACCESS_KEY_ID="..." \
+  -e S3_SECRET_ACCESS_KEY="..." \
   -e AUTH_SECRET="..." \
   test-runner
 ```
@@ -93,18 +97,27 @@ Postgres over the network with a scratch `?schema=docker_verify_test` connection
 `/login` over a real published port. Both scratch resources (the schema, the seeded test user) were
 torn down after. This derisks the exact deploy pattern `dev_cortex` will use — a per-service schema
 inside a shared database — as far as it's possible to without the real credentials. See §5 for what
-is still genuinely unverified (the real `dev_cortex` connection itself, real Azure Storage).
+is still genuinely unverified (the real `dev_cortex` connection itself, real SeaweedFS).
+
+**Evidence storage separately verified end to end** (REQ-041, also 2026-09-03): pulled and ran
+SeaweedFS's own Docker image locally (`server -s3 -s3.port=8333`, see
+[`web/docker-compose.yml`](../web/docker-compose.yml)'s `seaweedfs` service), confirmed a real
+`@aws-sdk/client-s3` script against it (bucket create, put, get, delete, and the exact `NoSuchKey`
+404 shape `lib/storage/blob.ts` handles), then confirmed the real app's Evidence upload/lightbox/
+delete UI against that same container — a real object appears in SeaweedFS after upload and is
+genuinely gone after delete, not just hidden in the UI.
 
 ## 5. What is NOT verified yet — do this before trusting a real deploy
 
-This codebase has **never** been run against a real Postgres host or real Azure Storage Account —
-only Docker Postgres + the Azurite emulator, locally. Before trusting a production deploy:
+This codebase has **never** been run against a real Postgres host or a real (non-local-Docker)
+SeaweedFS deployment. Before trusting a production deploy:
 
 1. Run the two one-time setup commands from §3 against the real `dev_cortex`/new-schema connection.
 2. Run a full manual smoke pass against the real running app: log in (with the seeded admin user),
    create a Site, clone a Master Scenario into it, create a Run, Pass/Fail a Scenario, upload an
    Evidence image and confirm it actually round-trips (visible thumbnail → lightbox → the underlying
-   blob URL is genuinely reachable, not a local-emulator URL that happens to still resolve).
+   object is genuinely reachable through the real SeaweedFS endpoint, not the local Docker
+   container's URL that happens to still resolve).
 3. `npm run test:e2e` is **not** meant to run against this production setup — it's hard-scoped to
-   the local dev server + Docker Postgres + Azurite (see `web/e2e/playwright.config.ts`'s
+   the local dev server + Docker Postgres + Docker SeaweedFS (see `web/e2e/playwright.config.ts`'s
    `webServer` block). Don't point it at production.

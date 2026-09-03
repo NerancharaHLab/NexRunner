@@ -7,7 +7,7 @@ import {
   upsertRun,
   upsertScenarioResult,
 } from "@/lib/db/tables";
-import { deleteEvidenceBlob, uploadEvidenceBlob } from "@/lib/azure/blob";
+import { deleteEvidenceBlob, uploadEvidenceBlob } from "@/lib/storage/blob";
 import { getSuite } from "@/lib/db/test-suites-table";
 import { getSite } from "@/lib/db/sites-table";
 import { listTags } from "@/lib/db/tags-table";
