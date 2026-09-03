@@ -54,6 +54,20 @@ durable record. Once a plan is approved and the work is done, its lasting record
 
 ## Completed
 
+- [x] **[P4]** (bookkeeping-only, no spec file) `web/Dockerfile` + `web/.dockerignore` still said
+  `AZURE_STORAGE_CONNECTION_STRING`/referenced `.azurite` after REQ-041 moved Evidence storage to
+  SeaweedFS — fixed both comments to the real `S3_*` env vars. Rebuilt the `runner` target against
+  the post-REQ-041 dependency tree (azurite removed, `@aws-sdk/client-s3` added) and booted it
+  against the real local Postgres+SeaweedFS containers with the new `S3_*` vars — real `200` on
+  `/login`, confirmed. Rebuilding the `migrator` target hit a real environment failure partway
+  through — **the disk is at 100% capacity (118MB free of 228GB)**, which is also what corrupted
+  Docker Desktop's storage twice already today; this specific build's `RUN` steps all completed and
+  cached successfully (visible in the build log), it only failed at the final layer-export step
+  with a disk I/O error, and that failure then took the Docker daemon itself down entirely
+  (`docker ps` → raw protocol error). Did not keep retrying — flagged to the user directly instead
+  of forcing it. The `migrator` stage's actual commands are unchanged from an earlier same-day
+  verification that did pass end-to-end; only its comment text changed here. **Follow-up needed**:
+  free disk space, then redo the `migrator` target's build+run verification for real
 - [x] **[P4]** (bookkeeping-only, no spec file) `public/scenario_import_template.csv` — finally
   committed the content fix that had been sitting on disk since the CSV import template round
   (3 richer sample rows incl. `desc`, tag `reporting`→`report` corrected against the real Tag

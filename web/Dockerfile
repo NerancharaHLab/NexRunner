@@ -1,9 +1,11 @@
 # Test Runner — production image. See docs/devops_handoff.md (repo root) for the env vars this
-# image expects at runtime (DATABASE_URL, AZURE_STORAGE_CONNECTION_STRING, AUTH_SECRET) and for the
-# one-off `npx prisma migrate deploy` command that must be run once against the real database
-# BEFORE the app can serve traffic. Deliberately NOT run automatically on container start (avoids a
-# migration race if more than one replica starts at once) — use the `migrator` build target below
-# for that instead, as its own one-off Job/step, not the default `runner` target.
+# image expects at runtime (DATABASE_URL, S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY,
+# S3_BUCKET, AUTH_SECRET — REQ-041 moved Evidence storage off Azure Blob Storage to SeaweedFS, so
+# the 4 S3_* vars replace what used to be one AZURE_STORAGE_CONNECTION_STRING) and for the one-off
+# `npx prisma migrate deploy` command that must be run once against the real database BEFORE the
+# app can serve traffic. Deliberately NOT run automatically on container start (avoids a migration
+# race if more than one replica starts at once) — use the `migrator` build target below for that
+# instead, as its own one-off Job/step, not the default `runner` target.
 #
 # Multi-stage build using Next.js's `output: "standalone"` (next.config.ts) — traces only the
 # node_modules the app actually needs into a small final image. This app has no native/node-gyp

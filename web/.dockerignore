@@ -1,10 +1,9 @@
 # Keep the Docker build context small and reproducible — everything here either gets reinstalled/
 # regenerated inside the image (node_modules, .next, Prisma client) or is dev-only/secret and must
-# never be baked into a shipped image (.env*, .azurite, e2e artifacts).
+# never be baked into a shipped image (.env*, e2e artifacts).
 node_modules
 .next
 .git
-.azurite
 .env*
 !.env.local.example
 e2e/playwright-report
